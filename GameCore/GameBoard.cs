@@ -48,8 +48,8 @@ namespace GameCore
                     board[r,c] = EMPTY;
                 }
             }
-            playerOneLocation = new PlayerCoordinate(0, 4);
-            playerTwoLocation = new PlayerCoordinate(8, 4);
+            playerOneLocation = new PlayerCoordinate(8, 4);
+            playerTwoLocation = new PlayerCoordinate(0, 4);
             board[playerOneLocation.Row, playerOneLocation.Col] = PLAYER_1;
             board[playerTwoLocation.Row, playerTwoLocation.Col] = PLAYER_2;
 
