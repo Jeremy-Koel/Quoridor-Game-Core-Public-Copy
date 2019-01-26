@@ -1,8 +1,9 @@
 
 \.vs/*
 
-GameCore/obj/*
+GameCore/obj/
+GameCore/bin/
 
-GameCore/bin/*
-
-GameCore/bin/Release/*
+*.dll
+*.json
+*.pdb
