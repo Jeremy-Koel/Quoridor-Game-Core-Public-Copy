@@ -1,5 +1,6 @@
 
-\.vs/GameCore/v15/
+\.vs/*
 
-GameCore/obj/
-GameCore/bin/
+GameCore/obj/*
+
+GameCore/bin/*
