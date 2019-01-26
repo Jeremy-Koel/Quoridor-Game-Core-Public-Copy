@@ -4,3 +4,5 @@
 GameCore/obj/*
 
 GameCore/bin/*
+
+GameCore/bin/Release/*
