@@ -29,4 +29,20 @@ namespace GameCore
         public int Row { get => row; set => row = value; }
         public int Col { get => col; set => col = value; }
     }
+
+    // Jacob 
+    public KeyValuePair<int, int> coordinateToNotation = new KeyValuePair<int, int>();
+
+    void fixCoordinateToNotation()
+    {
+        coordinateToNotation(12, 1);
+        coordinateToNotation(10, 2);
+        coordinateToNotation(8, 3);
+        coordinateToNotation(6, 4);
+        coordinateToNotation(4, 5);
+        coordinateToNotation(2, 6);
+        coordinateToNotation(0, 7);
+
+    }
 }
+
