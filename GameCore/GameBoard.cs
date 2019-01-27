@@ -169,6 +169,11 @@ namespace GameCore
         {
             bool onBoard = IsMoveInBounds(wall.StartRow, wall.StartCol) 
                         && IsMoveInBounds(wall.EndRow, wall.EndCol);
+            if (!onBoard)
+            {
+                return false;
+            }
+
             bool onWallSpace = IsOddSpace(wall.StartRow, wall.StartCol, wall.Orientation) 
                             && IsOddSpace(wall.EndRow, wall.EndCol, wall.Orientation);
             bool isEmpty = false;
@@ -177,8 +182,7 @@ namespace GameCore
                 isEmpty = IsEmptyWallSpace(wall.StartRow, wall.StartCol) 
                        && IsEmptyWallSpace(wall.EndRow, wall.EndCol);
             }
-            return onBoard 
-                && onWallSpace 
+            return onWallSpace 
                 && isEmpty;
         }
 
@@ -205,14 +209,20 @@ namespace GameCore
         private bool IsValidPlayerMove(PlayerEnum player, PlayerCoordinate start, PlayerCoordinate destination)
         {
             bool inBounds = IsMoveInBounds(destination.Row, destination.Col);
+            if (!inBounds)
+            {
+                return false;
+            }
+
             bool onSpace = IsMoveOnSpace(destination);
+            bool notBlocked = !IsMoveBlocked(start, destination);
             bool destinationEmpty = IsDestinationEmpty(start, destination);
             bool canReach = (IsDestinationAdjacent(start, destination)) 
-                         || (IsJump(player, start, destination));
+                         || (IsValidJump(player, start, destination));
 
-            return inBounds 
-                && destinationEmpty 
+            return destinationEmpty 
                 && onSpace
+                && notBlocked
                 && canReach;
         }
 
@@ -241,10 +251,17 @@ namespace GameCore
             return board[destination.Row, destination.Col] == SPACE;
         }
 
-        private bool IsJump(PlayerEnum player, PlayerCoordinate start, PlayerCoordinate destination)
+        private bool IsMoveBlocked(PlayerCoordinate start, PlayerCoordinate destination)
         {
-            int midRow = (start.Row + destination.Row) / 2;
-            int midCol = (start.Col + destination.Col) / 2;
+            Tuple<int, int> midpoint = FindMidpoint(start, destination);
+            return board[midpoint.Item1, midpoint.Item2] == WALL;
+        }
+
+        private bool IsValidJump(PlayerEnum player, PlayerCoordinate start, PlayerCoordinate destination)
+        {
+            Tuple<int,int> midpoint = FindMidpoint(start, destination);
+            int midRow = midpoint.Item1;
+            int midCol = midpoint.Item2;
 
             int opponentRow, opponentCol;
             if (player == PlayerEnum.ONE)
@@ -260,6 +277,11 @@ namespace GameCore
 
             // TODO - deal with diagonal jumps 
             return midRow == opponentRow && midCol == opponentCol;
+        }
+
+        private Tuple<int, int> FindMidpoint(PlayerCoordinate start, PlayerCoordinate destination)
+        {
+            return new Tuple<int, int>((start.Row + destination.Row) / 2, (start.Col + destination.Col) / 2);
         }
 
     }
