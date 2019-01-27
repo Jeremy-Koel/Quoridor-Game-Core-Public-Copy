@@ -7,6 +7,7 @@ namespace GameCore
     {
         private static char SPACE = '#';
         private static char WALL = '*';
+        private static char NO_WALL = ' ';
         private static char PLAYER_1 = '1';
         private static char PLAYER_2 = '2';
         private static int TOTAL_ROWS = 17;
@@ -34,16 +35,25 @@ namespace GameCore
         {
             if (instance == null)
             {
-                instance = new GameBoard();
+                instance = new GameBoard("e1","e9");
             }
             return instance;
         }
 
-        private GameBoard()
+        public static GameBoard GetInstance(string playerOneStart, string playerTwoStart)
+        {
+            if (instance == null)
+            {
+                instance = new GameBoard(playerOneStart, playerTwoStart);
+            }
+            return instance;
+        }
+
+        private GameBoard(string playerOneStart, string playerTwoStart)
         {
             gameOver = false;
-            playerOneLocation = new PlayerCoordinate("e1");
-            playerTwoLocation = new PlayerCoordinate("e9");
+            playerOneLocation = new PlayerCoordinate(playerOneStart);
+            playerTwoLocation = new PlayerCoordinate(playerTwoStart);
 
             // init gameboard 
             board = new char[TOTAL_ROWS, TOTAL_COLS];
@@ -57,7 +67,7 @@ namespace GameCore
                     }
                     else
                     {
-                        board[r, c] = ' ';
+                        board[r, c] = NO_WALL;
                     }
                 }
             }
@@ -82,7 +92,7 @@ namespace GameCore
                     break;
             }
 
-            if (IsValidPlayerMove(startCoordinate, destinationCoordinate))
+            if (IsValidPlayerMove(player, startCoordinate, destinationCoordinate))
             {
                 board[startCoordinate.Row, startCoordinate.Col] = SPACE;
                 switch (player)
@@ -189,24 +199,17 @@ namespace GameCore
 
         private bool IsEmptyWallSpace(int row, int col)
         {
-            return board[row, col] == ' ';
+            return board[row, col] == NO_WALL;
         }
 
-        private bool IsValidPlayerMove(PlayerCoordinate start, PlayerCoordinate destination)
+        private bool IsValidPlayerMove(PlayerEnum player, PlayerCoordinate start, PlayerCoordinate destination)
         {
             bool inBounds = IsMoveInBounds(destination.Row, destination.Col);
             bool onSpace = IsMoveOnSpace(destination);
             bool destinationEmpty = IsDestinationEmpty(start, destination);
+            bool canReach = (IsDestinationAdjacent(start, destination)) 
+                         || (IsJump(player, start, destination));
 
-            bool canReach = false;
-            if (IsDestinationAdjacent(start, destination))
-            {
-                canReach = true;
-            }
-            else // is it a jump? 
-            {
-                // TODO - validate jumps 
-            }
             return inBounds 
                 && destinationEmpty 
                 && onSpace
@@ -236,6 +239,27 @@ namespace GameCore
         private bool IsDestinationEmpty(PlayerCoordinate start, PlayerCoordinate destination)
         {
             return board[destination.Row, destination.Col] == SPACE;
+        }
+
+        private bool IsJump(PlayerEnum player, PlayerCoordinate start, PlayerCoordinate destination)
+        {
+            int midRow = (start.Row + destination.Row) / 2;
+            int midCol = (start.Col + destination.Col) / 2;
+
+            int opponentRow, opponentCol;
+            if (player == PlayerEnum.ONE)
+            {
+                opponentRow = playerTwoLocation.Row;
+                opponentCol = playerTwoLocation.Col;
+            }
+            else
+            {
+                opponentRow = playerOneLocation.Row;
+                opponentCol = playerOneLocation.Col;
+            }
+
+            // TODO - deal with diagonal jumps 
+            return midRow == opponentRow && midCol == opponentCol;
         }
 
     }

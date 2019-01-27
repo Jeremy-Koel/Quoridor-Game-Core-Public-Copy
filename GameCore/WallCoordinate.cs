@@ -38,21 +38,20 @@ namespace GameCore
             {
                 orientation = WallOrientation.Horizontal;
             }
-
-            string referenceSpace = str.Substring(0, 2);
-            PlayerCoordinate pc = new PlayerCoordinate(referenceSpace);
+            
+            PlayerCoordinate referenceCoordinate = new PlayerCoordinate(str.Substring(0, 2));
 
             if (orientation == WallOrientation.Vertical)
             {
-                startRow = pc.Row;
-                startCol = pc.Col + 1;
+                startRow = referenceCoordinate.Row;
+                startCol = referenceCoordinate.Col + 1;
                 endRow = startRow - 1;
                 endCol = startCol;
             }
             else
             {
-                startRow = pc.Row - 1;
-                startCol = pc.Col;
+                startRow = referenceCoordinate.Row - 1;
+                startCol = referenceCoordinate.Col;
                 endRow = startRow;
                 endCol = startCol + 1;
             }
