@@ -6,6 +6,22 @@ namespace GameCore
 {
     class PlayerCoordinate
     {
+        private static Dictionary<char, int> colTranslationMap;
+
+        static PlayerCoordinate()
+        {
+            colTranslationMap = new Dictionary<char, int>();
+            colTranslationMap.Add('a', 0);
+            colTranslationMap.Add('b', 2);
+            colTranslationMap.Add('c', 4);
+            colTranslationMap.Add('d', 6);
+            colTranslationMap.Add('e', 8);
+            colTranslationMap.Add('f', 10);
+            colTranslationMap.Add('g', 12);
+            colTranslationMap.Add('h', 14);
+            colTranslationMap.Add('i', 16);
+        }
+
         private int row;
         private int col;
 
@@ -15,9 +31,8 @@ namespace GameCore
             {
                 throw new Exception("Invalid coordinate format");
             }
-            row = Int32.Parse(str[1].ToString()) - 1; // incoming notation is one-indexed 
-            char c = Char.ToLower(str[0]);
-            col = (c - 'a'); 
+            row = (Int32.Parse(str[1].ToString()) * 2) - 2;
+            col = colTranslationMap[str[0]];
         }
 
         public PlayerCoordinate(int row, int col)
@@ -31,7 +46,7 @@ namespace GameCore
     }
 
     // Jacob 
-    public KeyValuePair<int, int> coordinateToNotation = new KeyValuePair<int, int>();
+    /*public KeyValuePair<int, int> coordinateToNotation = new KeyValuePair<int, int>();
 
     void fixCoordinateToNotation()
     {
@@ -43,6 +58,6 @@ namespace GameCore
         coordinateToNotation(2, 6);
         coordinateToNotation(0, 7);
 
-    }
+    }*/
 }
 
