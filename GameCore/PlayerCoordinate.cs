@@ -6,10 +6,22 @@ namespace GameCore
 {
     class PlayerCoordinate
     {
+        private static Dictionary<char, int> rowTranslationMap;
         private static Dictionary<char, int> colTranslationMap;
 
         static PlayerCoordinate()
         {
+            rowTranslationMap = new Dictionary<char, int>();
+            rowTranslationMap.Add('1', 16);
+            rowTranslationMap.Add('2', 14);
+            rowTranslationMap.Add('3', 12);
+            rowTranslationMap.Add('4', 10);
+            rowTranslationMap.Add('5', 8);
+            rowTranslationMap.Add('6', 6);
+            rowTranslationMap.Add('7', 4);
+            rowTranslationMap.Add('8', 2);
+            rowTranslationMap.Add('9', 0);
+
             colTranslationMap = new Dictionary<char, int>();
             colTranslationMap.Add('a', 0);
             colTranslationMap.Add('b', 2);
@@ -31,7 +43,7 @@ namespace GameCore
             {
                 throw new Exception("Invalid coordinate format");
             }
-            row = (Int32.Parse(str[1].ToString()) * 2) - 2;
+            row = rowTranslationMap[str[1]];
             col = colTranslationMap[str[0]];
         }
 
