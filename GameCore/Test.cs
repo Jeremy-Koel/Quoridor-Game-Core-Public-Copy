@@ -10,19 +10,22 @@ namespace GameCore
         {
             GameBoard board = GameBoard.GetInstance();
             board.PrintBoard();
-
-            Console.Write("\n"); 
+            Console.Write("\n\n");
+            Console.ReadKey();
             
             board.MovePiece(GameBoard.PlayerEnum.ONE, new PlayerCoordinate("e2"));
             board.PrintBoard();
+            Console.Write("\n\n");
+            Console.ReadKey();
 
-            Console.Write("\n");
-            
-            board.MovePiece(GameBoard.PlayerEnum.TWO, new PlayerCoordinate("f9"));
+            board.PlaceWall(GameBoard.PlayerEnum.TWO, new WallCoordinate("e2h"));
             board.PrintBoard();
+            Console.Write("\n\n");
+            Console.ReadKey();
 
-            Console.Write("\n");
-            
+            board.PlaceWall(GameBoard.PlayerEnum.TWO, new WallCoordinate("i1h")); // invalid move for testing 
+            board.PrintBoard();
+            Console.Write("\n\n");
             Console.ReadKey();
         }
     }
