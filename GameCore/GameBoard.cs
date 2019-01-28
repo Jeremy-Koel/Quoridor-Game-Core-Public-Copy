@@ -217,8 +217,10 @@ namespace GameCore
             bool onSpace = IsMoveOnSpace(destination);
             bool notBlocked = !IsMoveBlocked(start, destination);
             bool destinationEmpty = IsDestinationEmpty(start, destination);
-            bool canReach = (IsDestinationAdjacent(start, destination)) 
-                         || (IsValidJump(player, start, destination));
+
+            bool adjacent = (IsDestinationAdjacent(start, destination));
+            bool validJump = (IsValidJump(player, start, destination));
+            bool canReach = adjacent || validJump;
 
             return destinationEmpty 
                 && onSpace
@@ -253,8 +255,30 @@ namespace GameCore
 
         private bool IsMoveBlocked(PlayerCoordinate start, PlayerCoordinate destination)
         {
-            Tuple<int, int> midpoint = FindMidpoint(start, destination);
-            return board[midpoint.Item1, midpoint.Item2] == WALL;
+            bool blocked = false;
+            if (start.Row == destination.Row)
+            {
+                if (start.Col < destination.Col)
+                {
+                    blocked = (board[start.Row,start.Col+1] == WALL) || (board[destination.Row,destination.Col-1] == WALL);
+                }
+                else
+                {
+                    blocked = (board[start.Row, start.Col - 1] == WALL) || (board[destination.Row, destination.Col + 1] == WALL);
+                }
+            }
+            else if (start.Col == destination.Col)
+            {
+                if (start.Row < destination.Row)
+                {
+                    blocked = (board[start.Row + 1,start.Col] == WALL) || (board[destination.Row - 1,destination.Col] == WALL);
+                }
+                else
+                {
+                    blocked = (board[start.Row - 1,start.Col] == WALL) || (board[destination.Row + 1,destination.Col] == WALL);
+                }
+            }
+            return blocked;
         }
 
         private bool IsValidJump(PlayerEnum player, PlayerCoordinate start, PlayerCoordinate destination)
@@ -276,7 +300,9 @@ namespace GameCore
             }
 
             // TODO - deal with diagonal jumps 
-            return midRow == opponentRow && midCol == opponentCol;
+            return midRow == opponentRow
+                && midCol == opponentCol
+                && (Math.Abs(destination.Row - start.Row) == 4 || Math.Abs(destination.Col - start.Col) == 4);
         }
 
         private Tuple<int, int> FindMidpoint(PlayerCoordinate start, PlayerCoordinate destination)

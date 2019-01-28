@@ -8,30 +8,20 @@ namespace GameCore
     {
         static void Main(string[] args)
         {
-            GameBoard board = GameBoard.GetInstance("e5","e6");
-            board.PrintBoard();
-            Console.Write("\n\n");
-            Console.ReadKey();
-
-            board.PlaceWall(GameBoard.PlayerEnum.ONE, new WallCoordinate("e6h"));
-            board.PrintBoard();
-            Console.Write("\n\n");
-            Console.ReadKey();
-
-            board.MovePiece(GameBoard.PlayerEnum.ONE, new PlayerCoordinate("e7"));
-            board.PrintBoard();
-            Console.Write("\n\n");
-            Console.ReadKey();
-            /*
-            board.PlaceWall(GameBoard.PlayerEnum.TWO, new WallCoordinate("e2h")); // invalid move for testing 
+            GameBoard board = GameBoard.GetInstance("e4","f4");
             board.PrintBoard();
             Console.Write("\n\n");
             Console.ReadKey();
             
-            board.PlaceWall(GameBoard.PlayerEnum.TWO, new WallCoordinate("i1h")); // invalid move for testing 
+            board.PlaceWall(GameBoard.PlayerEnum.ONE, new WallCoordinate("d4v"));
             board.PrintBoard();
             Console.Write("\n\n");
-            Console.ReadKey();*/
+            Console.ReadKey();
+            
+            board.MovePiece(GameBoard.PlayerEnum.TWO, new PlayerCoordinate("d4"));
+            board.PrintBoard();
+            Console.Write("\n\n");
+            Console.ReadKey();
         }
     }
 }
