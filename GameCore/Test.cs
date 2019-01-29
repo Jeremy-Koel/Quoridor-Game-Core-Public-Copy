@@ -8,17 +8,17 @@ namespace GameCore
     {
         static void Main(string[] args)
         {
-            GameBoard board = GameBoard.GetInstance("e4","f4");
+            GameBoard board = GameBoard.GetInstance("e1","e9");
             board.PrintBoard();
             Console.Write("\n\n");
             Console.ReadKey();
-            
-            board.PlaceWall(GameBoard.PlayerEnum.ONE, new WallCoordinate("d4v"));
+
+            board.MovePiece(GameBoard.PlayerEnum.ONE, new PlayerCoordinate("e2"));
             board.PrintBoard();
             Console.Write("\n\n");
             Console.ReadKey();
-            
-            board.MovePiece(GameBoard.PlayerEnum.TWO, new PlayerCoordinate("d4"));
+
+            board.PlaceWall(GameBoard.PlayerEnum.TWO, new WallCoordinate("e3h"));
             board.PrintBoard();
             Console.Write("\n\n");
             Console.ReadKey();
