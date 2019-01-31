@@ -5,9 +5,9 @@ namespace GameCore
 {
     class GameBoard
     {
-        public static char SPACE = '#';
+        public static char PLAYER_SPACE = '#';
         public static char WALL = '*';
-        public static char NO_WALL = ' ';
+        public static char WALL_SPACE = ' ';
         public static char PLAYER_1 = '1';
         public static char PLAYER_2 = '2';
         public static int TOTAL_ROWS = 17;
@@ -60,11 +60,11 @@ namespace GameCore
                 {
                     if ((r % 2 == 0) && (c % 2 == 0))
                     {
-                        board[r, c] = SPACE;
+                        board[r, c] = PLAYER_SPACE;
                     }
                     else
                     {
-                        board[r, c] = NO_WALL;
+                        board[r, c] = WALL_SPACE;
                     }
                 }
             }
@@ -114,7 +114,7 @@ namespace GameCore
 
             if (IsValidPlayerMove(player, startCoordinate, destinationCoordinate))
             {
-                board[startCoordinate.Row, startCoordinate.Col] = SPACE;
+                board[startCoordinate.Row, startCoordinate.Col] = PLAYER_SPACE;
                 switch (player)
                 {
                     case PlayerEnum.ONE:
@@ -210,27 +210,26 @@ namespace GameCore
 
         private bool IsEmptyWallSpace(int row, int col)
         {
-            return board[row, col] == NO_WALL;
+            return board[row, col] == WALL_SPACE;
         }
 
         private bool IsValidPlayerMove(PlayerEnum player, PlayerCoordinate start, PlayerCoordinate destination)
         {
-            bool inBounds = IsMoveInBounds(destination.Row, destination.Col);
-            if (!inBounds)
+            if (GameOver 
+                || !IsMoveInBounds(destination.Row, destination.Col))
             {
                 return false;
             }
 
-            bool onSpace = IsMoveOnSpace(destination);
+            bool onPlayerSpace = IsMoveOnOpenSpace(player, destination);
             bool notBlocked = !IsMoveBlocked(start, destination);
-            bool destinationEmpty = IsDestinationEmpty(start, destination);
-
-            bool adjacent = (IsDestinationAdjacent(start, destination));
-            bool validJump = (IsValidJump(player, start, destination));
-            bool canReach = adjacent || validJump;
-
-            return destinationEmpty 
-                && onSpace
+            bool canReach = IsDestinationAdjacent(start, destination);
+            if (!canReach)
+            {
+                canReach = IsValidJump(player, start, destination);
+            }
+            
+            return onPlayerSpace
                 && notBlocked
                 && canReach;
         }
@@ -243,21 +242,28 @@ namespace GameCore
                 && col < TOTAL_COLS;
         }
 
-        private bool IsMoveOnSpace(PlayerCoordinate destination)
+        private bool IsMoveOnOpenSpace(PlayerEnum player, PlayerCoordinate destination)
         {
-            return destination.Row % 2 == 0  // odd rows are walls 
+            bool onPlayerSpace = destination.Row % 2 == 0  // odd rows are walls 
                 && destination.Col % 2 == 0; // odd cols are walls 
+
+            bool isSpaceEmpty;
+            if (player == PlayerEnum.ONE)
+            {
+                isSpaceEmpty = !(destination.Row == playerTwoLocation.Row && destination.Col == playerTwoLocation.Col);
+            }
+            else
+            {
+                isSpaceEmpty = !(destination.Row == playerOneLocation.Row && destination.Col == playerOneLocation.Col);
+            }
+
+            return onPlayerSpace && isSpaceEmpty;
         }
 
         private bool IsDestinationAdjacent(PlayerCoordinate start, PlayerCoordinate destination)
         {
             return (Math.Abs(destination.Row - start.Row) == 2 || Math.Abs(destination.Row - start.Row) == 0)
-                && (Math.Abs(destination.Col - start.Col) == 2 || Math.Abs(destination.Col - start.Col) == 0);
-        }
-
-        private bool IsDestinationEmpty(PlayerCoordinate start, PlayerCoordinate destination)
-        {
-            return board[destination.Row, destination.Col] == SPACE;
+               ^ (Math.Abs(destination.Col - start.Col) == 2 || Math.Abs(destination.Col - start.Col) == 0);
         }
 
         private bool IsMoveBlocked(PlayerCoordinate start, PlayerCoordinate destination)
@@ -290,10 +296,10 @@ namespace GameCore
 
         private bool IsValidJump(PlayerEnum player, PlayerCoordinate start, PlayerCoordinate destination)
         {
+            // Jumping over? 
             Tuple<int,int> midpoint = FindMidpoint(start, destination);
             int midRow = midpoint.Item1;
             int midCol = midpoint.Item2;
-
             int opponentRow, opponentCol;
             if (player == PlayerEnum.ONE)
             {
@@ -305,11 +311,42 @@ namespace GameCore
                 opponentRow = playerOneLocation.Row;
                 opponentCol = playerOneLocation.Col;
             }
-
-            // TODO - deal with diagonal jumps 
-            return midRow == opponentRow
+            bool overJump = midRow == opponentRow
                 && midCol == opponentCol
                 && (Math.Abs(destination.Row - start.Row) == 4 || Math.Abs(destination.Col - start.Col) == 4);
+
+            // Diagonal jump? 
+            bool diagonalJump = false;
+            char opponentChar = (player == PlayerEnum.ONE) ? PLAYER_1 : PLAYER_2;
+            if (start.Row != destination.Row && start.Col != destination.Col)
+            {
+                if (destination.Row == start.Row - 2 && destination.Col == start.Col + 2) // NE
+                {
+                    diagonalJump =
+                        (board[destination.Row - 2, destination.Col] == opponentChar || board[destination.Row, destination.Col + 2] == opponentChar)
+                        && (board[start.Row - 3, start.Col] == WALL || board[start.Row, start.Col + 3] == WALL);
+                }
+                else if (destination.Row == start.Row - 2 && destination.Col == start.Col - 2) // NW
+                {
+                    diagonalJump =
+                        (board[destination.Row - 2, destination.Col] == opponentChar || board[destination.Row, destination.Col - 2] == opponentChar)
+                        && (board[start.Row - 3, start.Col] == WALL || board[start.Row, start.Col - 3] == WALL);
+                }
+                else if (destination.Row == start.Row + 2 && destination.Col == start.Col - 2) // SW
+                {
+                    diagonalJump =
+                        (board[destination.Row + 2, destination.Col] == opponentChar || board[destination.Row, destination.Col - 2] == opponentChar)
+                        && (board[start.Row,start.Col-3] == WALL || board[start.Row+3,start.Col] == WALL);
+                }
+                else if (destination.Row == start.Row + 2 && destination.Col == start.Col + 2) // SE 
+                {
+                    diagonalJump =
+                        (board[destination.Row + 2, destination.Col] == opponentChar || board[destination.Row, destination.Col + 2] == opponentChar)
+                        && (board[start.Row,start.Col+3] == WALL || board[start.Row+3,start.Col] == WALL);
+                }
+            }
+
+            return overJump || diagonalJump;
         }
 
         private Tuple<int, int> FindMidpoint(PlayerCoordinate start, PlayerCoordinate destination)
