@@ -14,7 +14,7 @@ namespace GameCore
 
         static void TestWallPlacement()
         {
-            GameBoard board = GameBoard.GetInstance("e1", "e9");
+            GameBoard board = GameBoard.GetInstance();
             board.PlaceWall(GameBoard.PlayerEnum.ONE, new WallCoordinate("a4h"));
             board.PlaceWall(GameBoard.PlayerEnum.TWO, new WallCoordinate("c4h"));
             board.PlaceWall(GameBoard.PlayerEnum.ONE, new WallCoordinate("e4h"));
@@ -30,10 +30,10 @@ namespace GameCore
 
         static void TestDiagonalJump()
         {
-            GameBoard board = GameBoard.GetInstance("e4", "e5");
-            board.PlaceWall(GameBoard.PlayerEnum.TWO, new WallCoordinate("d5h"));
-            board.MovePiece(GameBoard.PlayerEnum.ONE, new PlayerCoordinate("d5")); 
-
+            GameBoard board = GameBoard.GetInstance(GameBoard.PlayerEnum.ONE, "i4", "i5");
+            board.PlaceWall(GameBoard.PlayerEnum.ONE, new WallCoordinate("h3h"));
+            board.MovePiece(GameBoard.PlayerEnum.TWO, new PlayerCoordinate("h4"));
+            
             board.PrintBoard();
             Console.WriteLine();
             Console.ReadKey();

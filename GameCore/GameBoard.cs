@@ -18,48 +18,50 @@ namespace GameCore
         private PlayerCoordinate playerOneLocation;
         private PlayerCoordinate playerTwoLocation;
         private char[,] board;
+        private bool gameOver;
+        private bool playerOneWin;
+        private bool playerTwoWin;
         private PlayerEnum whoseTurn;
-
-        public bool GameOver { get; set; }
-        public bool PlayerOneWin { get; set; }
-        public bool PlayerTwoWin { get; set; }
 
         public enum PlayerEnum
         {
             ONE, TWO
         }
 
-        public static GameBoard SetPlayersTurn()
+        public void SetPlayerTurnRandom()
         {
             Random randomNumber = new Random();
             int oneOrTwo = randomNumber.Next(1, 2);
             if (oneOrTwo == 1)
-                whoseTurn = ONE;
+                whoseTurn = PlayerEnum.ONE;
             else if (oneOrTwo == 2)
-                whoseTurn = TWO;
+                whoseTurn = PlayerEnum.TWO;
         }
 
         public static GameBoard GetInstance()
         {
             if (instance == null)
             {
-                instance = new GameBoard("e1","e9");
+                instance = new GameBoard(PlayerEnum.ONE, "e1","e9");
             }
             return instance;
         }
 
-        public static GameBoard GetInstance(string playerOneStart, string playerTwoStart)
+        public static GameBoard GetInstance(PlayerEnum startingPlayer, string playerOneStart, string playerTwoStart)
         {
             if (instance == null)
             {
-                instance = new GameBoard(playerOneStart, playerTwoStart);
+                instance = new GameBoard(startingPlayer, playerOneStart, playerTwoStart);
             }
             return instance;
         }
 
-        private GameBoard(string playerOneStart, string playerTwoStart)
+        private GameBoard(PlayerEnum startingPlayer, string playerOneStart, string playerTwoStart)
         {
-            GameOver = false;
+            gameOver = false;
+            playerOneWin = false;
+            playerTwoWin = false;
+            whoseTurn = startingPlayer;
             playerOneLocation = new PlayerCoordinate(playerOneStart);
             playerTwoLocation = new PlayerCoordinate(playerTwoStart);
 
@@ -104,9 +106,21 @@ namespace GameCore
             }
         }
 
+        private void changeTurn()
+        {
+            if (whoseTurn == PlayerEnum.ONE)
+            {
+                whoseTurn = PlayerEnum.TWO;
+            }
+            else if (whoseTurn == PlayerEnum.TWO)
+            {
+                whoseTurn = PlayerEnum.ONE;
+            }
+        }
+
         public bool MovePiece(PlayerEnum player, PlayerCoordinate destinationCoordinate)
         {
-            if (GameOver || player != whoseTurn)
+            if (gameOver || player != whoseTurn)
             {
                 return false;
             }
@@ -145,30 +159,34 @@ namespace GameCore
             // check for win 
             if (playerOneLocation.Row == 0)
             {
-                PlayerOneWin = true;
+                playerOneWin = true;
             }
             if (playerTwoLocation.Row == TOTAL_ROWS)
             {
-                PlayerTwoWin = true;
+                playerTwoWin = true;
             }
-            GameOver = PlayerOneWin || PlayerTwoWin;
+            gameOver = playerOneWin || playerTwoWin;
 
+            // Mark that this player has taken their turn 
+            changeTurn();
             return retValue;
         }
 
         public bool PlaceWall(PlayerEnum player, WallCoordinate wallCoordinate)
         {
-            if (GameOver)
+            if (gameOver || whoseTurn != player)
             {
                 return false;
             }
-
+            
             if (IsValidWallPlacement(wallCoordinate) && CanPlayersReachGoal(wallCoordinate))
             {
                 board[wallCoordinate.StartRow, wallCoordinate.StartCol] = board[wallCoordinate.EndRow, wallCoordinate.EndCol] = WALL;
+                // Mark that this player has taken their turn 
+                changeTurn();
                 return true;
             }
-
+            
             return false;
         }
 
@@ -178,10 +196,8 @@ namespace GameCore
             char[,] copy = board.Clone() as char[,];
             copy[wallCoordinate.StartRow, wallCoordinate.StartCol] = copy[wallCoordinate.EndRow, wallCoordinate.EndCol] = WALL;
 
-            bool canPlayerOneReachGoal = false;
-            bool canPlayerTwoReachGoal = false;
-            canPlayerOneReachGoal = BoardUtil.CanReachGoal(copy, 0, playerOneLocation.Row, playerOneLocation.Col);
-            canPlayerTwoReachGoal = BoardUtil.CanReachGoal(copy, 16, playerTwoLocation.Row, playerTwoLocation.Col);
+            bool canPlayerOneReachGoal = BoardUtil.CanReachGoal(copy, 0, playerOneLocation.Row, playerOneLocation.Col);
+            bool canPlayerTwoReachGoal = BoardUtil.CanReachGoal(copy, 16, playerTwoLocation.Row, playerTwoLocation.Col);
             return canPlayerOneReachGoal && canPlayerTwoReachGoal;
         }
 
@@ -196,12 +212,8 @@ namespace GameCore
 
             bool onWallSpace = IsOddSpace(wall.StartRow, wall.StartCol, wall.Orientation) 
                             && IsOddSpace(wall.EndRow, wall.EndCol, wall.Orientation);
-            bool isEmpty = false;
-            if (onBoard)
-            {
-                isEmpty = IsEmptyWallSpace(wall.StartRow, wall.StartCol) 
+            bool isEmpty = IsEmptyWallSpace(wall.StartRow, wall.StartCol)
                        && IsEmptyWallSpace(wall.EndRow, wall.EndCol);
-            }
             return onWallSpace 
                 && isEmpty;
         }
@@ -228,7 +240,7 @@ namespace GameCore
 
         private bool IsValidPlayerMove(PlayerEnum player, PlayerCoordinate start, PlayerCoordinate destination)
         {
-            if (GameOver 
+            if (gameOver 
                 || !IsMoveInBounds(destination.Row, destination.Col))
             {
                 return false;
@@ -275,8 +287,9 @@ namespace GameCore
 
         private bool IsDestinationAdjacent(PlayerCoordinate start, PlayerCoordinate destination)
         {
-            return (Math.Abs(destination.Row - start.Row) == 2 || Math.Abs(destination.Row - start.Row) == 0)
-               ^ (Math.Abs(destination.Col - start.Col) == 2 || Math.Abs(destination.Col - start.Col) == 0);
+            bool diffRow = Math.Abs(destination.Row - start.Row) == 2;
+            bool diffCol = Math.Abs(destination.Col - start.Col) == 2;
+            return diffRow || diffCol; // Only north south east and west are considered adjacent 
         }
 
         private bool IsMoveBlocked(PlayerCoordinate start, PlayerCoordinate destination)
@@ -330,7 +343,7 @@ namespace GameCore
 
             // Diagonal jump? 
             bool diagonalJump = false;
-            char opponentChar = (player == PlayerEnum.ONE) ? PLAYER_1 : PLAYER_2;
+            char opponentChar = (player == PlayerEnum.ONE) ? PLAYER_1 : PLAYER_2;   
             if (start.Row != destination.Row && start.Col != destination.Col)
             {
                 if (destination.Row == start.Row - 2 && destination.Col == start.Col + 2) // NE
