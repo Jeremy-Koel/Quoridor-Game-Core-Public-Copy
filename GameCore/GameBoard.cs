@@ -5,26 +5,23 @@ namespace GameCore
 {
     class GameBoard
     {
-        private static char SPACE = '#';
-        private static char WALL = '*';
-        private static char NO_WALL = ' ';
-        private static char PLAYER_1 = '1';
-        private static char PLAYER_2 = '2';
-        private static int TOTAL_ROWS = 17;
-        private static int TOTAL_COLS = 17;
+        public static char SPACE = '#';
+        public static char WALL = '*';
+        public static char NO_WALL = ' ';
+        public static char PLAYER_1 = '1';
+        public static char PLAYER_2 = '2';
+        public static int TOTAL_ROWS = 17;
+        public static int TOTAL_COLS = 17;
 
         private static GameBoard instance;
 
         private PlayerCoordinate playerOneLocation;
         private PlayerCoordinate playerTwoLocation;
         private char[,] board;
-        private bool gameOver;
-        private bool playerOneWin;
-        private bool playerTwoWin;
 
-        public bool GameOver { get => gameOver; set => gameOver = value; }
-        public bool PlayerOneWin { get => playerOneWin; set => playerOneWin = value; }
-        public bool PalyerTwoWin { get => playerTwoWin; set => playerTwoWin = value; }
+        public bool GameOver { get; set; }
+        public bool PlayerOneWin { get; set; }
+        public bool PalyerTwoWin { get; set; }
 
         public enum PlayerEnum
         {
@@ -51,11 +48,11 @@ namespace GameCore
 
         private GameBoard(string playerOneStart, string playerTwoStart)
         {
-            gameOver = false;
+            GameOver = false;
             playerOneLocation = new PlayerCoordinate(playerOneStart);
             playerTwoLocation = new PlayerCoordinate(playerTwoStart);
 
-            // init gameboard 
+            // Init gameboard 
             board = new char[TOTAL_ROWS, TOTAL_COLS];
             for (int r = 0; r < TOTAL_ROWS; ++r)
             {
@@ -73,9 +70,32 @@ namespace GameCore
             }
         }
 
+        public void PrintBoard()
+        {
+            for (int r = 0; r < TOTAL_ROWS; ++r)
+            {
+                for (int c = 0; c < TOTAL_COLS; ++c)
+                {
+                    if (r == playerOneLocation.Row && c == playerOneLocation.Col)
+                    {
+                        Console.Write(PLAYER_1);
+                    }
+                    else if (r == playerTwoLocation.Row && c == playerTwoLocation.Col)
+                    {
+                        Console.Write(PLAYER_2);
+                    }
+                    else
+                    {
+                        Console.Write(board[r, c]);
+                    }
+                }
+                Console.Write("\n");
+            }
+        }
+
         public bool MovePiece(PlayerEnum player, PlayerCoordinate destinationCoordinate)
         {
-            if (gameOver)
+            if (GameOver)
             {
                 return false;
             }
@@ -112,57 +132,44 @@ namespace GameCore
             // check for win 
             if (playerOneLocation.Row == 0)
             {
-                playerOneWin = true;
+                PlayerOneWin = true;
             }
-            if (playerTwoLocation.Row == 16)
+            if (playerTwoLocation.Row == TOTAL_ROWS)
             {
-                playerTwoWin = true;
+                PalyerTwoWin = true;
             }
-            gameOver = playerOneWin || playerTwoWin;
+            GameOver = PlayerOneWin || PalyerTwoWin;
 
             return retValue;
         }
 
         public bool PlaceWall(PlayerEnum player, WallCoordinate wallCoordinate)
         {
-            if (gameOver)
+            if (GameOver)
             {
                 return false;
             }
 
-            bool retValue = false;
-            if (IsValidWallPlacement(wallCoordinate))
+            if (IsValidWallPlacement(wallCoordinate) && CanPlayersReachGoal(wallCoordinate))
             {
-                // TODO - check to ensure player has path to goal 
-
-                retValue = true;
                 board[wallCoordinate.StartRow, wallCoordinate.StartCol] = board[wallCoordinate.EndRow, wallCoordinate.EndCol] = WALL;
+                return true;
             }
 
-            return retValue;
+            return false;
         }
 
-        public void PrintBoard()
+        private bool CanPlayersReachGoal(WallCoordinate wallCoordinate)
         {
-            for (int r = 0; r < TOTAL_ROWS; ++r)
-            {
-                for (int c = 0; c < TOTAL_COLS; ++c)
-                {
-                    if (r == playerOneLocation.Row && c == playerOneLocation.Col)
-                    {
-                        Console.Write(PLAYER_1);
-                    }
-                    else if (r == playerTwoLocation.Row && c == playerTwoLocation.Col)
-                    {
-                        Console.Write(PLAYER_2);
-                    }
-                    else
-                    {
-                        Console.Write(board[r, c]);
-                    }
-                }
-                Console.Write("\n");
-            }
+            // Make a copy of the board, we don't want to change the original yet 
+            char[,] copy = board.Clone() as char[,];
+            copy[wallCoordinate.StartRow, wallCoordinate.StartCol] = copy[wallCoordinate.EndRow, wallCoordinate.EndCol] = WALL;
+
+            bool canPlayerOneReachGoal = false;
+            bool canPlayerTwoReachGoal = false;
+            canPlayerOneReachGoal = BoardUtil.CanReachGoal(copy, 0, playerOneLocation.Row, playerOneLocation.Col);
+            canPlayerTwoReachGoal = BoardUtil.CanReachGoal(copy, 16, playerTwoLocation.Row, playerTwoLocation.Col);
+            return canPlayerOneReachGoal && canPlayerTwoReachGoal;
         }
 
         private bool IsValidWallPlacement(WallCoordinate wall)

@@ -11,17 +11,11 @@ namespace GameCore
             Vertical, Horizontal
         }
 
-        private int startRow;
-        private int startCol;
-        private int endRow;
-        private int endCol;
-        private WallOrientation orientation;
-        
-        internal WallOrientation Orientation { get => orientation; set => orientation = value; }
-        public int StartRow { get => startRow; set => startRow = value; }
-        public int StartCol { get => startCol; set => startCol = value; }
-        public int EndRow { get => endRow; set => endRow = value; }
-        public int EndCol { get => endCol; set => endCol = value; }
+        internal WallOrientation Orientation { get; set; }
+        public int StartRow { get; set; }
+        public int StartCol { get; set; }
+        public int EndRow { get; set; }
+        public int EndCol { get; set; }
 
         public WallCoordinate(string str)
         {
@@ -32,28 +26,28 @@ namespace GameCore
 
             if (str[2] == 'v')
             {
-                orientation = WallOrientation.Vertical;
+                Orientation = WallOrientation.Vertical;
             }
             else
             {
-                orientation = WallOrientation.Horizontal;
+                Orientation = WallOrientation.Horizontal;
             }
             
             PlayerCoordinate referenceCoordinate = new PlayerCoordinate(str.Substring(0, 2));
 
-            if (orientation == WallOrientation.Vertical)
+            if (Orientation == WallOrientation.Vertical)
             {
-                startRow = referenceCoordinate.Row;
-                startCol = referenceCoordinate.Col + 1;
-                endRow = startRow - 1;
-                endCol = startCol;
+                StartRow = referenceCoordinate.Row;
+                StartCol = referenceCoordinate.Col + 1;
+                EndRow = StartRow - 2;
+                EndCol = StartCol;
             }
             else
             {
-                startRow = referenceCoordinate.Row - 1;
-                startCol = referenceCoordinate.Col;
-                endRow = startRow;
-                endCol = startCol + 1;
+                StartRow = referenceCoordinate.Row - 1;
+                StartCol = referenceCoordinate.Col;
+                EndRow = StartRow;
+                EndCol = StartCol + 2;
             }
 
         }

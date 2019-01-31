@@ -21,7 +21,7 @@ namespace GameCore
             playerRowTranslationMap.Add('7', 4);
             playerRowTranslationMap.Add('8', 2);
             playerRowTranslationMap.Add('9', 0);
-
+            
             playerColTranslationMap = new Dictionary<char, int>();
             playerColTranslationMap.Add('a', 0);
             playerColTranslationMap.Add('b', 2);
@@ -43,6 +43,68 @@ namespace GameCore
         {
             return playerColTranslationMap[c];
         }
-        
+
+        // BFS to find if indicated player can reach their target row 
+        public static bool CanReachGoal(char[,] gameBoard, int goalRow, int startX, int startY)
+        {
+            HashSet<Tuple<int, int>> markedSet = new HashSet<Tuple<int, int>>();
+            Queue<Tuple<int, int>> queue = new Queue<Tuple<int, int>>();
+
+            Tuple<int, int> startNode = new Tuple<int, int>(startX, startY);
+            markedSet.Add(startNode);
+            queue.Enqueue(startNode);
+
+            while (queue.Count > 0)
+            {
+                Tuple<int, int> current = queue.Dequeue();
+                if (current.Item1 == goalRow)
+                {
+                    return true;
+                }
+
+                if (current.Item2 + 2 < GameBoard.TOTAL_COLS
+                    && gameBoard[current.Item1, current.Item2 + 1] != GameBoard.WALL) // Can move East
+                {
+                    Tuple<int, int> neighbor = new Tuple<int, int>(current.Item1, current.Item2 + 2);
+                    if (!markedSet.Contains(neighbor))
+                    {
+                        markedSet.Add(neighbor);
+                        queue.Enqueue(neighbor);
+                    }
+                }
+                if (current.Item2 - 2 >= 0
+                    && gameBoard[current.Item1, current.Item2 - 1] != GameBoard.WALL) // Can move West 
+                {
+                    Tuple<int, int> neighbor = new Tuple<int, int>(current.Item1, current.Item2 - 2);
+                    if (!markedSet.Contains(neighbor))
+                    {
+                        markedSet.Add(neighbor);
+                        queue.Enqueue(neighbor);
+                    }
+                }
+                if (current.Item1 - 2  >= 0
+                    && gameBoard[current.Item1 - 1, current.Item2] != GameBoard.WALL) // Can move North 
+                {
+                    Tuple<int, int> neighbor = new Tuple<int, int>(current.Item1 - 2, current.Item2);
+                    if (!markedSet.Contains(neighbor))
+                    {
+                        markedSet.Add(neighbor);
+                        queue.Enqueue(neighbor);
+                    }
+                }
+                if (current.Item1 + 2 < GameBoard.TOTAL_COLS
+                    && gameBoard[current.Item1 + 1, current.Item2] != GameBoard.WALL) // Can move South 
+                {
+                    Tuple<int, int> neighbor = new Tuple<int, int>(current.Item1 + 2, current.Item2);
+                    if (!markedSet.Contains(neighbor))
+                    {
+                        markedSet.Add(neighbor);
+                        queue.Enqueue(neighbor);
+                    }
+                }
+            }
+            return false;
+        }
+
     }
 }
