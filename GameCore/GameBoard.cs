@@ -18,14 +18,25 @@ namespace GameCore
         private PlayerCoordinate playerOneLocation;
         private PlayerCoordinate playerTwoLocation;
         private char[,] board;
+        private PlayerEnum whoseTurn;
 
         public bool GameOver { get; set; }
         public bool PlayerOneWin { get; set; }
-        public bool PalyerTwoWin { get; set; }
+        public bool PlayerTwoWin { get; set; }
 
         public enum PlayerEnum
         {
             ONE, TWO
+        }
+
+        public static GameBoard SetPlayersTurn()
+        {
+            Random randomNumber = new Random();
+            int oneOrTwo = randomNumber.Next(1, 2);
+            if (oneOrTwo == 1)
+                whoseTurn = ONE;
+            else if (oneOrTwo == 2)
+                whoseTurn = TWO;
         }
 
         public static GameBoard GetInstance()
@@ -95,11 +106,11 @@ namespace GameCore
 
         public bool MovePiece(PlayerEnum player, PlayerCoordinate destinationCoordinate)
         {
-            if (GameOver)
+            if (GameOver || player != whoseTurn)
             {
                 return false;
             }
-            
+
             bool retValue = false;
             PlayerCoordinate startCoordinate = null;
             switch (player)
@@ -120,10 +131,12 @@ namespace GameCore
                     case PlayerEnum.ONE:
                         playerOneLocation.Row = destinationCoordinate.Row;
                         playerOneLocation.Col = destinationCoordinate.Col;
+                        whoseTurn = PlayerEnum.TWO;
                         break;
                     case PlayerEnum.TWO:
                         playerTwoLocation.Row = destinationCoordinate.Row;
                         playerTwoLocation.Col = destinationCoordinate.Col;
+                        whoseTurn = PlayerEnum.ONE;
                         break;
                 }
                 retValue = true;
@@ -136,9 +149,9 @@ namespace GameCore
             }
             if (playerTwoLocation.Row == TOTAL_ROWS)
             {
-                PalyerTwoWin = true;
+                PlayerTwoWin = true;
             }
-            GameOver = PlayerOneWin || PalyerTwoWin;
+            GameOver = PlayerOneWin || PlayerTwoWin;
 
             return retValue;
         }
