@@ -105,6 +105,7 @@ namespace GameCore
                             {
                                 board.PrintBoard();
                                 currentPlayer = 2;
+                                player1walls--;
                             }
                             else
                             {
@@ -124,6 +125,7 @@ namespace GameCore
                             {
                                 board.PrintBoard();
                                 currentPlayer = 1;
+                                player2walls--;
                             }
                             else
                             {
@@ -136,7 +138,7 @@ namespace GameCore
 
                 if (currentPlayer == 1) {
                     if (player1walls > 0) {
-                        Console.Write("P1 -- 1 for move;  2 for wall;  q for quit:  ");
+                        Console.Write("P1 -- 1 for move;  2 for wall (" + player1walls + ");  q for quit:  ");
                         input = Console.ReadLine().ToCharArray()[0];
                     }
                     else {
@@ -146,7 +148,7 @@ namespace GameCore
                 }
                 if (currentPlayer == 2) {
                     if (player2walls > 0) {
-                        Console.Write("P2 -- 1 for move;  2 for wall;  q for quit:  ");
+                        Console.Write("P2 -- 1 for move;  2 for wall (" + player2walls + ");  q for quit:  ");
                         input = Console.ReadLine().ToCharArray()[0];
                     }
                     else {
@@ -155,7 +157,6 @@ namespace GameCore
                     }
                 }
             }
-            board.PrintBoard();
         }
 
 
