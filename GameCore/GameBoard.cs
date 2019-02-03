@@ -168,7 +168,7 @@ namespace GameCore
             gameOver = playerOneWin || playerTwoWin;
 
             // Mark that this player has taken their turn 
-            changeTurn();
+            // changeTurn();
             return retValue;
         }
 

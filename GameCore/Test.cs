@@ -42,7 +42,7 @@ namespace GameCore
 
         static void CLI()
         {
-            GameBoard board = GameBoard.GetInstance();
+            GameBoard board = GameBoard.GetInstance(GameBoard.PlayerEnum.ONE, "e1", "e9");
             int currentPlayer = 0, player1walls = 10, player2walls = 10;
             Random randomNumber = new Random();
             int oneOrTwo = randomNumber.Next(1, 2);
@@ -52,76 +52,110 @@ namespace GameCore
                 currentPlayer = 2;
             char input;
             string coordinates = "";
-            cout << "1 for move;  2 for wall;  q for quit:  ";
-            cin >> input;
+            Console.Write("1 for move;  2 for wall;  q for quit:  ");
+            input = Console.ReadLine().ToCharArray()[0];
+            bool validMove;
             while (input != 'q') {
                 if (input == '1') {
-                    if (currentPlayer == 1) {
-                        cout << "P1 -- Enter move coordinates:  ";
-                        cin >> coordinates;
-                        if (board.MovePiece(GameBoard.PlayerEnum.ONE, new PlayerCoordinate(coordinates) == true)) {
-                            currentPlayer = 2;
-                        }
-                        else {
-                            cout << "Invalid move";
-                        }
+                    if (currentPlayer == 1) { 
+                        do
+                        {
+                            validMove = true;
+                            Console.Write("P1 -- Enter move coordinates:  ");
+                            coordinates = Console.ReadLine();
+                            if (board.MovePiece(GameBoard.PlayerEnum.ONE, new PlayerCoordinate(coordinates)) == true)
+                            {
+                                board.PrintBoard();
+                                currentPlayer = 2;
+                            }
+                            else
+                            {
+                                Console.Write("Invalid move. Try again;  ");
+                                validMove = false;
+                            }
+                        } while (validMove == false);
                     }
                     else if (currentPlayer == 2) {
-                        cout << "P2 -- Enter move coordinates:  ";
-                        cin >> coordinates;
-                        if (board.MovePiece(GameBoard.PlayerEnum.TWO, new PlayerCoordinate(coordinates)) == true) {
-                            currentPlayer = 1;
-                        }
-                        else {
-                            cout << "Invalid move";
-                        }
+                        do
+                        {
+                            validMove = true;
+                            Console.Write("P2 -- Enter move coordinates:  ");
+                            coordinates = Console.ReadLine();
+                            if (board.MovePiece(GameBoard.PlayerEnum.TWO, new PlayerCoordinate(coordinates)) == true)
+                            {
+                                board.PrintBoard();
+                                currentPlayer = 1;
+                            }
+                            else
+                            {
+                                Console.Write("Invalid move. Try again;  ");
+                                validMove = false;
+                            }
+                        } while (validMove == false);
                     }
                 }
                 else if (input == '2') {
                     if (currentPlayer == 1 && player1walls > 0) {
-                        cout << "P1 -- Enter wall coordinates:  ";
-                        cin >> coordinates;
-                        if (board.PlaceWall(GameBoard.PlayerEnum.ONE, new WallCoordinate(coordnates)) == true) {
-                            currentPlayer = 2;
-                        }
-                        else {
-                            cout << "Invalid wall";
-                        }
+                        do
+                        {
+                            validMove = true;
+                            Console.Write("P1 -- Enter wall coordinates:  ");
+                            coordinates = Console.ReadLine();
+                            if (board.PlaceWall(GameBoard.PlayerEnum.ONE, new WallCoordinate(coordinates)) == true)
+                            {
+                                board.PrintBoard();
+                                currentPlayer = 2;
+                            }
+                            else
+                            {
+                                Console.Write("Invalid wall. Try again;  ");
+                                validMove = false;
+                            }
+                        } while (validMove == false);
                         
                     }
                     else if (currentPlayer == 2 && player2walls > 0) {
-                        cout << "P2 -- Enter wall coordinates:  ";
-                        cin >> coordinates;
-                        if (board.PlaceWall(GameBoard.PlayerEnum.TWO, new WallCoordinate(coordinates)) == true) {
-                            currentPlayer = 1;
-                        }
-                        else {
-                            cout << "Invalid wall";
-                        }
+                        do
+                        {
+                            validMove = true;
+                            Console.Write("P2 -- Enter wall coordinates:  ");
+                            coordinates = Console.ReadLine();
+                            if (board.PlaceWall(GameBoard.PlayerEnum.TWO, new WallCoordinate(coordinates)) == true)
+                            {
+                                board.PrintBoard();
+                                currentPlayer = 1;
+                            }
+                            else
+                            {
+                                Console.Write("Invalid wall. Try again;  ");
+                                validMove = false;
+                            }
+                        } while (validMove == false);
                     }
                 }
 
                 if (currentPlayer == 1) {
                     if (player1walls > 0) {
-                        cout << "P1 -- 1 for move;  2 for wall;  q for quit:  ";
-                        cin >> input;
+                        Console.Write("P1 -- 1 for move;  2 for wall;  q for quit:  ");
+                        input = Console.ReadLine().ToCharArray()[0];
                     }
                     else {
-                        cout << "P1 -- 1 for move;  q for quit:  ";
-                        cin >> input;
+                        Console.Write("P1 -- 1 for move;  q for quit:  ");
+                        input = Console.ReadLine().ToCharArray()[0];
                     }
                 }
                 if (currentPlayer == 2) {
                     if (player2walls > 0) {
-                        cout << "P2 -- 1 for move;  2 for wall;  q for quit:  ";
-                        cin >> input;
+                        Console.Write("P2 -- 1 for move;  2 for wall;  q for quit:  ");
+                        input = Console.ReadLine().ToCharArray()[0];
                     }
                     else {
-                        cout << "P2 -- 1 for move;  q for quit:  ";
-                        cin >> input;
+                        Console.Write("P2 -- 1 for move;  q for quit:  ");
+                        input = Console.ReadLine().ToCharArray()[0];
                     }
                 }
             }
+            board.PrintBoard();
         }
 
 
