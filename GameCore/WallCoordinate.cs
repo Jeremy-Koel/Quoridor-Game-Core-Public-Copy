@@ -4,7 +4,7 @@ using System.Text;
 
 namespace GameCore
 {
-    class WallCoordinate
+    public class WallCoordinate
     {
         public enum WallOrientation
         {

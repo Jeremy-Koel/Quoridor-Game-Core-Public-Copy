@@ -4,7 +4,7 @@ using System.Text;
 
 namespace GameCore
 {
-    class PlayerCoordinate
+    public class PlayerCoordinate
     {
         public int Row { get; set; }
         public int Col { get; set; }

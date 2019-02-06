@@ -8,7 +8,7 @@ namespace GameCore
     /*
      * MonteCarloNode is 
      */
-    class MonteCarloNode
+    public class MonteCarloNode
     {
         private static List<MonteCarloNode> children;
         private static MonteCarloNode parent;

@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace GameCore
 {
-    class GameBoard
+    public class GameBoard
     {
         public static char PLAYER_SPACE = '#';
         public static char WALL = '*';

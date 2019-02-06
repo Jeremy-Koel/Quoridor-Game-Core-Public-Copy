@@ -4,7 +4,7 @@ using System.Text;
 
 namespace GameCore
 {
-    class BoardUtil
+    public class BoardUtil
     {
         private static Dictionary<char, int> playerRowTranslationMap;
         private static Dictionary<char, int> playerColTranslationMap;
