@@ -12,9 +12,7 @@ namespace GameCore
         public static char PLAYER_2 = '2';
         public static int TOTAL_ROWS = 17;
         public static int TOTAL_COLS = 17;
-
-        private static GameBoard instance;
-
+        
         private PlayerCoordinate playerOneLocation;
         private PlayerCoordinate playerTwoLocation;
         private char[,] board;
@@ -28,40 +26,36 @@ namespace GameCore
             ONE, TWO
         }
 
+        public int GetWhoseTurn()
+        {
+            int currentPlayer = 0;
+            if(whoseTurn == PlayerEnum.ONE)
+            {
+                currentPlayer = 1;
+            }
+            else
+            {
+                currentPlayer = 2;
+            }
+            return currentPlayer;
+        }
+
         public void SetPlayerTurnRandom()
         {
             Random randomNumber = new Random();
-            int oneOrTwo = randomNumber.Next(1, 2);
+            int oneOrTwo = randomNumber.Next(1, 3);
             if (oneOrTwo == 1)
                 whoseTurn = PlayerEnum.ONE;
             else if (oneOrTwo == 2)
                 whoseTurn = PlayerEnum.TWO;
         }
 
-        public static GameBoard GetInstance()
-        {
-            if (instance == null)
-            {
-                instance = new GameBoard(PlayerEnum.ONE, "e1","e9");
-            }
-            return instance;
-        }
-
-        public static GameBoard GetInstance(PlayerEnum startingPlayer, string playerOneStart, string playerTwoStart)
-        {
-            if (instance == null)
-            {
-                instance = new GameBoard(startingPlayer, playerOneStart, playerTwoStart);
-            }
-            return instance;
-        }
-
-        private GameBoard(PlayerEnum startingPlayer, string playerOneStart, string playerTwoStart)
+        private void InitializeBoard(string playerOneStart, string playerTwoStart)
         {
             gameOver = false;
             playerOneWin = false;
             playerTwoWin = false;
-            whoseTurn = startingPlayer;
+
             playerOneLocation = new PlayerCoordinate(playerOneStart);
             playerTwoLocation = new PlayerCoordinate(playerTwoStart);
 
@@ -81,6 +75,19 @@ namespace GameCore
                     }
                 }
             }
+        }
+
+        public GameBoard(string playerOneStart, string playerTwoStart)
+        {
+            SetPlayerTurnRandom();
+            InitializeBoard(playerOneStart, playerTwoStart);
+        }
+
+
+        public GameBoard(PlayerEnum startingPlayer, string playerOneStart, string playerTwoStart)
+        {
+            whoseTurn = startingPlayer;
+            InitializeBoard(playerOneStart, playerTwoStart);
         }
 
         public void PrintBoard()
@@ -167,8 +174,6 @@ namespace GameCore
             }
             gameOver = playerOneWin || playerTwoWin;
 
-            // Mark that this player has taken their turn 
-            // changeTurn();
             return retValue;
         }
 
@@ -247,7 +252,7 @@ namespace GameCore
             }
 
             bool onPlayerSpace = IsMoveOnOpenSpace(player, destination);
-            bool notBlocked = !IsMoveBlocked(start, destination);
+            bool blocked = IsMoveBlocked(start, destination);
             bool canReach = IsDestinationAdjacent(start, destination);
             if (!canReach)
             {
@@ -255,7 +260,7 @@ namespace GameCore
             }
             
             return onPlayerSpace
-                && notBlocked
+                && !blocked
                 && canReach;
         }
 
@@ -287,9 +292,9 @@ namespace GameCore
 
         private bool IsDestinationAdjacent(PlayerCoordinate start, PlayerCoordinate destination)
         {
-            bool diffRow = Math.Abs(destination.Row - start.Row) == 2;
-            bool diffCol = Math.Abs(destination.Col - start.Col) == 2;
-            return diffRow || diffCol; // Only north south east and west are considered adjacent 
+            bool verticalMove = (Math.Abs(destination.Row - start.Row) == 2) && (Math.Abs(destination.Col - start.Col) == 0);
+            bool horizontalMove = (Math.Abs(destination.Col - start.Col) == 2) && (Math.Abs(destination.Row - start.Row) == 0);
+            return verticalMove ^ horizontalMove; // Only north south east west are considered adjacent 
         }
 
         private bool IsMoveBlocked(PlayerCoordinate start, PlayerCoordinate destination)
@@ -343,32 +348,50 @@ namespace GameCore
 
             // Diagonal jump? 
             bool diagonalJump = false;
-            char opponentChar = (player == PlayerEnum.ONE) ? PLAYER_1 : PLAYER_2;   
+            PlayerCoordinate opponent;
+            if (player == PlayerEnum.ONE)
+            {
+                opponent = new PlayerCoordinate(playerTwoLocation.Row, playerTwoLocation.Col);
+            }
+            else
+            {
+                opponent = new PlayerCoordinate(playerOneLocation.Row, playerTwoLocation.Col);
+            }
+
             if (start.Row != destination.Row && start.Col != destination.Col)
             {
+                int targetOppRow, targetOppoCol;
                 if (destination.Row == start.Row - 2 && destination.Col == start.Col + 2) // NE
                 {
-                    diagonalJump =
-                        (board[destination.Row - 2, destination.Col] == opponentChar || board[destination.Row, destination.Col + 2] == opponentChar)
+                    targetOppRow = start.Row - 2;
+                    targetOppoCol = start.Col + 2;
+                    diagonalJump = 
+                        ((opponent.Row == targetOppRow && opponent.Col == start.Col) || (opponent.Row == start.Row && opponent.Col == targetOppoCol))
                         && (board[start.Row - 3, start.Col] == WALL || board[start.Row, start.Col + 3] == WALL);
                 }
                 else if (destination.Row == start.Row - 2 && destination.Col == start.Col - 2) // NW
                 {
-                    diagonalJump =
-                        (board[destination.Row - 2, destination.Col] == opponentChar || board[destination.Row, destination.Col - 2] == opponentChar)
+                    targetOppRow = start.Row - 2;
+                    targetOppoCol = start.Col - 2;
+                    diagonalJump = 
+                        ((opponent.Row == targetOppRow && opponent.Col == start.Col) || (opponent.Row == start.Row && opponent.Col == targetOppoCol))
                         && (board[start.Row - 3, start.Col] == WALL || board[start.Row, start.Col - 3] == WALL);
                 }
                 else if (destination.Row == start.Row + 2 && destination.Col == start.Col - 2) // SW
                 {
-                    diagonalJump =
-                        (board[destination.Row + 2, destination.Col] == opponentChar || board[destination.Row, destination.Col - 2] == opponentChar)
-                        && (board[start.Row,start.Col-3] == WALL || board[start.Row+3,start.Col] == WALL);
+                    targetOppRow = start.Row + 2;
+                    targetOppoCol = start.Col - 2;
+                    diagonalJump = 
+                        ((opponent.Row == targetOppRow && opponent.Col == start.Col) || (opponent.Row == start.Row && opponent.Col == targetOppoCol))
+                        && (board[start.Row + 3, start.Col] == WALL || board[start.Row, start.Col - 3] == WALL);
                 }
                 else if (destination.Row == start.Row + 2 && destination.Col == start.Col + 2) // SE 
                 {
+                    targetOppRow = start.Row + 2;
+                    targetOppoCol = start.Col + 2;
                     diagonalJump =
-                        (board[destination.Row + 2, destination.Col] == opponentChar || board[destination.Row, destination.Col + 2] == opponentChar)
-                        && (board[start.Row,start.Col+3] == WALL || board[start.Row+3,start.Col] == WALL);
+                        ((opponent.Row == targetOppRow && opponent.Col == start.Col) || (opponent.Row == start.Row && opponent.Col == targetOppoCol))
+                        && (board[start.Row + 3, start.Col] == WALL || board[start.Row, start.Col + 3] == WALL);
                 }
             }
 
