@@ -21,6 +21,8 @@ namespace GameCore
         private bool playerTwoWin;
         private PlayerEnum whoseTurn;
 
+        public bool GameOver { get => gameOver; }
+
         public enum PlayerEnum
         {
             ONE, TWO
