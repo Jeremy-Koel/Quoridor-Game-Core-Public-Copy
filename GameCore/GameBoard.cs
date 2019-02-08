@@ -15,13 +15,15 @@ namespace GameCore
         
         private PlayerCoordinate playerOneLocation;
         private PlayerCoordinate playerTwoLocation;
+        private int player1walls = 10;
+        private int player2walls = 10;
         private char[,] board;
         private bool gameOver;
         private bool playerOneWin;
         private bool playerTwoWin;
         private PlayerEnum whoseTurn;
 
-        public bool GameOver { get => gameOver; }
+        public bool GameOver { get { return gameOver; } }
 
         public enum PlayerEnum
         {
@@ -160,7 +162,7 @@ namespace GameCore
             }
         }
 
-        private void changeTurn()
+        private void ChangeTurn()
         {
             if (whoseTurn == PlayerEnum.ONE)
             {
@@ -230,12 +232,27 @@ namespace GameCore
             {
                 return false;
             }
-            
+            if (player == PlayerEnum.ONE && player1walls <= 0)
+            {
+                return false;
+            }
+            else if (player == PlayerEnum.TWO && player2walls <= 0)
+            {
+                return false;
+            }
             if (IsValidWallPlacement(wallCoordinate) && CanPlayersReachGoal(wallCoordinate))
             {
                 board[wallCoordinate.StartRow, wallCoordinate.StartCol] = board[wallCoordinate.EndRow, wallCoordinate.EndCol] = WALL;
+                if (player == PlayerEnum.ONE)
+                {
+                    player1walls--;
+                }
+                else if (player == PlayerEnum.TWO)
+                {
+                    player2walls--;
+                }
                 // Mark that this player has taken their turn 
-                changeTurn();
+                ChangeTurn();
                 return true;
             }
             
