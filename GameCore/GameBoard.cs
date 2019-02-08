@@ -23,13 +23,17 @@ namespace GameCore
         private bool playerTwoWin;
         private PlayerEnum whoseTurn;
 
-        public bool GameOver { get { return gameOver; } }
 
         public enum PlayerEnum
         {
             ONE, TWO
         }
         
+        public bool IsGameOver()
+        {
+            return gameOver;
+        }
+
         public PlayerCoordinate GetPlayerCoordinate(int player)
         {
             if (player == 1)
