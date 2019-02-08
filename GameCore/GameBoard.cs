@@ -27,6 +27,18 @@ namespace GameCore
         {
             ONE, TWO
         }
+        
+        public PlayerCoordinate GetPlayerCoordinate(int player)
+        {
+            if (player == 1)
+            {
+                return playerOneLocation;
+            }
+            else
+            {
+                return playerTwoLocation;
+            }
+        }
 
         public int GetWhoseTurn()
         {
@@ -90,6 +102,39 @@ namespace GameCore
         {
             whoseTurn = startingPlayer;
             InitializeBoard(playerOneStart, playerTwoStart);
+        }
+
+        public GameBoard(GameBoard boardState)
+        {
+            gameOver = false;
+            playerOneWin = false;
+            playerTwoWin = false;
+
+            playerOneLocation = new PlayerCoordinate(boardState.playerOneLocation.Row, boardState.playerOneLocation.Col);
+            playerTwoLocation = new PlayerCoordinate(boardState.playerTwoLocation.Row, boardState.playerTwoLocation.Col);
+
+            board = new char[TOTAL_ROWS, TOTAL_COLS];
+            for (int r = 0; r < TOTAL_ROWS; ++r)
+            {
+                for (int c = 0; c < TOTAL_COLS; ++c)
+                {
+                    if ((r % 2 == 0) && (c % 2 == 0))
+                    {
+                        board[r, c] = PLAYER_SPACE;
+                    }
+                    else
+                    {
+                        if (boardState.board[r, c].Equals(WALL))
+                        {
+                            board[r, c] = WALL;
+                        }
+                        else
+                        {
+                            board[r, c] = WALL_SPACE;
+                        }
+                    }
+                }
+            }
         }
 
         public void PrintBoard()
@@ -208,7 +253,7 @@ namespace GameCore
             return canPlayerOneReachGoal && canPlayerTwoReachGoal;
         }
 
-        private bool IsValidWallPlacement(WallCoordinate wall)
+        public bool IsValidWallPlacement(WallCoordinate wall)
         {
             bool onBoard = IsMoveInBounds(wall.StartRow, wall.StartCol) 
                         && IsMoveInBounds(wall.EndRow, wall.EndCol);
@@ -245,7 +290,7 @@ namespace GameCore
             return board[row, col] == WALL_SPACE;
         }
 
-        private bool IsValidPlayerMove(PlayerEnum player, PlayerCoordinate start, PlayerCoordinate destination)
+        public bool IsValidPlayerMove(PlayerEnum player, PlayerCoordinate start, PlayerCoordinate destination)
         {
             if (gameOver 
                 || !IsMoveInBounds(destination.Row, destination.Col))
