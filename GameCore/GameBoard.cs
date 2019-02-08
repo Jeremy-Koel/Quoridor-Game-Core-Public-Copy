@@ -221,7 +221,7 @@ namespace GameCore
             {
                 playerOneWin = true;
             }
-            if (playerTwoLocation.Row == TOTAL_ROWS)
+            if (playerTwoLocation.Row == (TOTAL_ROWS - 1))
             {
                 playerTwoWin = true;
             }
