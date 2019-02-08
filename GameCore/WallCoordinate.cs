@@ -49,9 +49,41 @@ namespace GameCore
                 EndRow = StartRow;
                 EndCol = StartCol + 2;
             }
-
         }
-        
 
+        public WallCoordinate(int x, int y, char c)
+        {
+            char orientation = char.ToLower(c);
+            if (x < 0 || x >= GameBoard.TOTAL_ROWS || y < 0 || y >= GameBoard.TOTAL_COLS || !(orientation == 'h' || orientation == 'v'))
+            {
+                throw new Exception("Invalid input format");
+            }
+
+            if (orientation == 'h')
+            {
+                Orientation = WallOrientation.Horizontal;
+            }
+            else if (orientation == 'v')
+            {
+                Orientation = WallOrientation.Vertical;
+            }
+
+            PlayerCoordinate referenceCoordinate = new PlayerCoordinate(x, y);
+
+            if (Orientation == WallOrientation.Vertical)
+            {
+                StartRow = referenceCoordinate.Row;
+                StartCol = referenceCoordinate.Col + 1;
+                EndRow = StartRow - 2;
+                EndCol = StartCol;
+            }
+            else
+            {
+                StartRow = referenceCoordinate.Row - 1;
+                StartCol = referenceCoordinate.Col;
+                EndRow = StartRow;
+                EndCol = StartCol + 2;
+            }
+        }
     }
 }
