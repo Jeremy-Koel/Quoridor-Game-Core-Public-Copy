@@ -8,6 +8,7 @@ namespace GameCore
     {
         private static Dictionary<char, int> playerRowTranslationMap;
         private static Dictionary<char, int> playerColTranslationMap;
+        private static Random random;
 
         static BoardUtil()
         {
@@ -32,6 +33,8 @@ namespace GameCore
             playerColTranslationMap.Add('g', 12);
             playerColTranslationMap.Add('h', 14);
             playerColTranslationMap.Add('i', 16);
+
+            random = new Random();
         }
 
         public static int GetInteralPlayerRow(char c)
@@ -104,6 +107,38 @@ namespace GameCore
                 }
             }
             return false;
+        }
+
+        public static string GetRandomPlayerPieceMove()
+        {
+            StringBuilder sb = new StringBuilder();
+            int col = random.Next(97, 106);
+            int row = random.Next(1, 10);
+            sb.Append(Convert.ToChar(col));
+            sb.Append(row);
+            return sb.ToString();
+        }
+
+        public static string GetRandomWallPlacementMove()
+        {
+            StringBuilder sb = new StringBuilder();
+            Random rand = new Random();
+            int col = random.Next(97, 105);
+            int row = random.Next(1, 9);
+            char orientation;
+            if (random.Next() % 2 == 0)
+            {
+                orientation = 'h';
+            }
+            else
+            {
+                orientation = 'v';
+            }
+            sb.Append(Convert.ToChar(col));
+            sb.Append(row);
+            sb.Append(orientation);
+            return sb.ToString();
+
         }
 
     }
