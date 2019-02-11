@@ -28,10 +28,51 @@ namespace GameCore
         {
             ONE, TWO
         }
-        
-        public bool IsGameOver()
+
+        public GameBoard(string playerOneStart, string playerTwoStart)
         {
-            return gameOver;
+            SetPlayerTurnRandom();
+            InitializeBoard(playerOneStart, playerTwoStart);
+        }
+
+
+        public GameBoard(PlayerEnum startingPlayer, string playerOneStart, string playerTwoStart)
+        {
+            whoseTurn = startingPlayer;
+            InitializeBoard(playerOneStart, playerTwoStart);
+        }
+
+        public GameBoard(GameBoard boardState)
+        {
+            gameOver = false;
+            playerOneWin = false;
+            playerTwoWin = false;
+
+            playerOneLocation = new PlayerCoordinate(boardState.playerOneLocation.Row, boardState.playerOneLocation.Col);
+            playerTwoLocation = new PlayerCoordinate(boardState.playerTwoLocation.Row, boardState.playerTwoLocation.Col);
+
+            board = new char[TOTAL_ROWS, TOTAL_COLS];
+            for (int r = 0; r < TOTAL_ROWS; ++r)
+            {
+                for (int c = 0; c < TOTAL_COLS; ++c)
+                {
+                    if ((r % 2 == 0) && (c % 2 == 0))
+                    {
+                        board[r, c] = PLAYER_SPACE;
+                    }
+                    else
+                    {
+                        if (boardState.board[r, c].Equals(WALL))
+                        {
+                            board[r, c] = WALL;
+                        }
+                        else
+                        {
+                            board[r, c] = WALL_SPACE;
+                        }
+                    }
+                }
+            }
         }
 
         public PlayerCoordinate GetPlayerCoordinate(int player)
@@ -97,50 +138,19 @@ namespace GameCore
             }
         }
 
-        public GameBoard(string playerOneStart, string playerTwoStart)
+        public bool PlayerOneWin()
         {
-            SetPlayerTurnRandom();
-            InitializeBoard(playerOneStart, playerTwoStart);
+            return playerOneWin;
         }
 
-
-        public GameBoard(PlayerEnum startingPlayer, string playerOneStart, string playerTwoStart)
+        public bool PlayerTwoWin()
         {
-            whoseTurn = startingPlayer;
-            InitializeBoard(playerOneStart, playerTwoStart);
+            return playerTwoWin;
         }
 
-        public GameBoard(GameBoard boardState)
+        public bool IsGameOver()
         {
-            gameOver = false;
-            playerOneWin = false;
-            playerTwoWin = false;
-
-            playerOneLocation = new PlayerCoordinate(boardState.playerOneLocation.Row, boardState.playerOneLocation.Col);
-            playerTwoLocation = new PlayerCoordinate(boardState.playerTwoLocation.Row, boardState.playerTwoLocation.Col);
-
-            board = new char[TOTAL_ROWS, TOTAL_COLS];
-            for (int r = 0; r < TOTAL_ROWS; ++r)
-            {
-                for (int c = 0; c < TOTAL_COLS; ++c)
-                {
-                    if ((r % 2 == 0) && (c % 2 == 0))
-                    {
-                        board[r, c] = PLAYER_SPACE;
-                    }
-                    else
-                    {
-                        if (boardState.board[r, c].Equals(WALL))
-                        {
-                            board[r, c] = WALL;
-                        }
-                        else
-                        {
-                            board[r, c] = WALL_SPACE;
-                        }
-                    }
-                }
-            }
+            return gameOver;
         }
 
         public void PrintBoard()
