@@ -78,6 +78,7 @@ namespace GameCore
         public int GetPlayerWallCount(PlayerEnum player)
         {
             int wallCount = 10;
+
             switch (player)
             {
                 case PlayerEnum.ONE:
@@ -87,19 +88,25 @@ namespace GameCore
                     wallCount = player2walls;
                     break;
             }
+
             return wallCount;
         }
 
-        public PlayerCoordinate GetPlayerCoordinate(int player)
+        public PlayerCoordinate GetPlayerCoordinate(PlayerEnum player)
         {
-            if (player == 1)
+            PlayerCoordinate playerCoordinate = null;
+
+            switch (player)
             {
-                return playerOneLocation;
+                case PlayerEnum.ONE:
+                    playerCoordinate = playerOneLocation;
+                    break;
+                case PlayerEnum.TWO:
+                    playerCoordinate = playerTwoLocation;
+                    break;             
             }
-            else
-            {
-                return playerTwoLocation;
-            }
+
+            return playerCoordinate;
         }
 
         public int GetWhoseTurn()
