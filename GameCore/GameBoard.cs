@@ -75,6 +75,21 @@ namespace GameCore
             }
         }
 
+        public int GetPlayerWallCount(PlayerEnum player)
+        {
+            int wallCount = 10;
+            switch (player)
+            {
+                case PlayerEnum.ONE:
+                    wallCount = player1walls;
+                    break;
+                case PlayerEnum.TWO:
+                    wallCount = player2walls;
+                    break;
+            }
+            return wallCount;
+        }
+
         public PlayerCoordinate GetPlayerCoordinate(int player)
         {
             if (player == 1)
