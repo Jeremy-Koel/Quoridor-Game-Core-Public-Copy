@@ -77,7 +77,7 @@ namespace GameCore
             parent = null;
         }
 
-        public MonteCarloNode(MonteCarloNode childParent, string move, List<PlayerCoordinate> players, List<int> wallCounts, List<WallCoordinate> wallCoordinates, WallCoordinate newWallCoordinate, GameBoard.PlayerEnum currentTurn)
+        public MonteCarloNode(string move, List<PlayerCoordinate> players, List<int> wallCounts, List<WallCoordinate> wallCoordinates, WallCoordinate newWallCoordinate, GameBoard.PlayerEnum currentTurn, MonteCarloNode childParent)
         {
             playerLocations = new List<PlayerCoordinate>(players);
 
@@ -499,13 +499,13 @@ namespace GameCore
                 {
                     if (PlaceWall(turn == 0 ? GameBoard.PlayerEnum.ONE : GameBoard.PlayerEnum.TWO, new WallCoordinate(move)))
                     {
-                        children.Add(new MonteCarloNode(this, move, playerLocations, wallsRemaining, walls, turn));
+                        children.Add(new MonteCarloNode(move, playerLocations, wallsRemaining, walls, new WallCoordinate(move), turn, this));
                         successfulInsert = true;
                     }
                 }
                 else
                 {
-                    children.Add(new MonteCarloNode(this, boardState, move));
+                    children.Add(new MonteCarloNode(this, move));
                 }
             }
 
@@ -524,12 +524,11 @@ class MonteCarlo
         }
         public MonteCarlo()
         {
-            MonteCarloNode TreeSearch = new MonteCarloNode(new GameBoard(GameBoard.PlayerEnum.ONE, "e1", "e9"));
         }
 
         public MonteCarlo(GameBoard boardState)
         {
-            MonteCarloNode TreeSearch = new MonteCarloNode(boardState);
+       //     MonteCarloNode TreeSearch = new MonteCarloNode(boardState);
             TreeSearch.ExpandOptions();
         }
 
