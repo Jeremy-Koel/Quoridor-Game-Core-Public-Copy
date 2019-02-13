@@ -20,6 +20,7 @@ namespace GameCore
         public List<MonteCarloNode> children;
         private List<WallCoordinate> walls;
         private static List<BitArray> board;
+        private List<string> childrensMoves;
         private static Random randomPercentileChance;
         private static string MonteCarloPlayer;
         private MonteCarloNode parent;
@@ -73,29 +74,35 @@ namespace GameCore
             wallsRemaining = new List<int>();
             wallsRemaining.Add(playerOneTotalWalls);
             wallsRemaining.Add(playerTwoTotalWalls);
+            
+            walls = new List<WallCoordinate>(wallCoordinates);
 
             children = new List<MonteCarloNode>();
-            walls = new List<WallCoordinate>(wallCoordinates);
+            childrensMoves = new List<string>();
+
             randomPercentileChance = new Random();
+
             turn = currentTurn;
             gameOver = false;
-//            invalidMoves = new List<string>();
             parent = null;
         }
 
         public MonteCarloNode(string move, List<PlayerCoordinate> players, List<int> wallCounts, List<WallCoordinate> wallCoordinates, WallCoordinate newWallCoordinate, GameBoard.PlayerEnum currentTurn, MonteCarloNode childParent)
         {
-            playerLocations = new List<PlayerCoordinate>(players);
-
-
-            wallsRemaining = new List<int>(wallCounts);
-
-            children = new List<MonteCarloNode>();
-            walls = new List<WallCoordinate>(wallCoordinates);
             turn = currentTurn;
             parent = childParent;
             board = childParent.GetBoard();
             thisMove = move;
+
+            playerLocations = new List<PlayerCoordinate>(players);
+
+            wallsRemaining = new List<int>(wallCounts);
+
+            walls = new List<WallCoordinate>(wallCoordinates);
+
+            children = new List<MonteCarloNode>();
+            childrensMoves = new List<string>();
+
 
             walls.Add(newWallCoordinate);
             if (currentTurn == GameBoard.PlayerEnum.ONE)
@@ -115,13 +122,20 @@ namespace GameCore
             parent = childParent;
             board = childParent.GetBoard();
             thisMove = move;
-            PlayerCoordinate destinationCoordinate = new PlayerCoordinate(move);
-            children = new List<MonteCarloNode>();
+
             playerLocations = new List<PlayerCoordinate>();
             playerLocations.Add(new PlayerCoordinate(parent.playerLocations[0].Row, parent.playerLocations[0].Col));
             playerLocations.Add(new PlayerCoordinate(parent.playerLocations[1].Row, parent.playerLocations[1].Col));
-            walls = new List<WallCoordinate>(childParent.walls);
+
             wallsRemaining = new List<int>(childParent.wallsRemaining);
+
+            walls = new List<WallCoordinate>(childParent.walls);
+
+            children = new List<MonteCarloNode>();
+            childrensMoves = new List<string>();
+
+            PlayerCoordinate destinationCoordinate = new PlayerCoordinate(move);
+
 
             switch (childParent.turn)
             {
@@ -457,7 +471,9 @@ namespace GameCore
 
         private string RandomMove()
         {
-            return randomPercentileChance.Next(1, 100) >= 76 ? BoardUtil.GetRandomNearbyPlayerPieceMove(turn == 0 ? playerLocations[0] : playerLocations[1]) : wallsRemaining[0] + wallsRemaining[1] == 20 ? BoardUtil.GetRandomNearbyPlayerPieceMove(turn == 0 ? playerLocations[0] : playerLocations[1]) : BoardUtil.GetRandomWallPlacementMove();
+            return randomPercentileChance.Next(1, 100) >= 71 ? BoardUtil.GetRandomNearbyPlayerPieceMove(turn == 0 ? playerLocations[0] : playerLocations[1]) 
+                                                             : wallsRemaining[0] + wallsRemaining[1] > 0 ? BoardUtil.GetRandomWallPlacementMove()
+                                                                                                          : BoardUtil.GetRandomNearbyPlayerPieceMove(turn == 0 ? playerLocations[0] : playerLocations[1]);
         }
 
 
@@ -484,13 +500,17 @@ namespace GameCore
         /// SelectNode selects a node at random given a nodes children. If there are no nodes available the function returns -1 otherwise it returns the index of the selcted node.
         /// </summary>
         /// <returns></returns>
-        private int SelectNode(bool expandedNodeAlready = false)
+        private int SelectNode(int expandedNodeIndex = -1)
         {
             int isAValidNodeAvailable = -1;
 
-            if (children.Count != 0 && (randomPercentileChance.Next(1, 100) < 71 || expandedNodeAlready))
+            if (children.Count != 0 && (randomPercentileChance.Next(1, 100) < 71))
             {
                 isAValidNodeAvailable = randomPercentileChance.Next(0, children.Count - 1);
+            }
+            else if (expandedNodeIndex >= 0)
+            {
+                isAValidNodeAvailable = expandedNodeIndex;
             }
 
             return isAValidNodeAvailable;
@@ -502,7 +522,7 @@ namespace GameCore
         /// The <c>ExpandOptions</c> method calls the <c>RandomMove</c> method to generate a move to expand the current options from the current <c>MonteCarloNode</c>
         /// and returns true after it has expanded the child options.
         /// </summary>
-        private bool ExpandOptions()
+        private int ExpandOptions()
         {
             string move;
             move = RandomMove();
@@ -510,7 +530,8 @@ namespace GameCore
             {
                 move = RandomMove();
             }
-            return true;
+            
+            return childrensMoves.FindIndex(x => x.Equals(move));
         }
 
         /// <summary>
@@ -522,28 +543,35 @@ namespace GameCore
         {
             bool successfulInsert = false;
 
-            if (move.Length != 2)
+            if (childrensMoves.FindIndex(x => x.Equals(move)) >= 0)
             {
-                if (ValidWallMove(move))
+                if (move.Length != 2)
                 {
-                    if (PlaceWall(turn == 0 ? GameBoard.PlayerEnum.ONE : GameBoard.PlayerEnum.TWO, new WallCoordinate(move)))
+                    if (ValidWallMove(move))
                     {
-                        children.Add(new MonteCarloNode(move, playerLocations, wallsRemaining, walls, new WallCoordinate(move), turn, this));
-                        successfulInsert = true;
+                        if (PlaceWall(turn == 0 ? GameBoard.PlayerEnum.ONE : GameBoard.PlayerEnum.TWO, new WallCoordinate(move)))
+                        {
+                            children.Add(new MonteCarloNode(move, playerLocations, wallsRemaining, walls, new WallCoordinate(move), turn, this));
+                            childrensMoves.Add(move);
+
+                            successfulInsert = true;
+                        }
                     }
                 }
-            }
-            else
-            {
-                PlayerCoordinate moveToInsert = new PlayerCoordinate(move);
-                if ( !(moveToInsert.Row == (turn == 0 ? playerLocations[0] : playerLocations[1]).Row && moveToInsert.Col == (turn == 0 ? playerLocations[0] : playerLocations[1]).Col) )
+                else
                 {
-                    if (ValidPlayerMove(turn == 0 ? playerLocations[0] : playerLocations[1], moveToInsert))
+                    PlayerCoordinate moveToInsert = new PlayerCoordinate(move);
+                    if (!(moveToInsert.Row == (turn == 0 ? playerLocations[0] : playerLocations[1]).Row && moveToInsert.Col == (turn == 0 ? playerLocations[0] : playerLocations[1]).Col))
                     {
-                        if (MovePiece(turn == 0 ? GameBoard.PlayerEnum.ONE : GameBoard.PlayerEnum.TWO, moveToInsert))
+                        if (ValidPlayerMove(turn == 0 ? playerLocations[0] : playerLocations[1], moveToInsert))
                         {
-                            children.Add(new MonteCarloNode(this, move));
-                            successfulInsert = true;
+                            if (MovePiece(turn == 0 ? GameBoard.PlayerEnum.ONE : GameBoard.PlayerEnum.TWO, moveToInsert))
+                            {
+                                children.Add(new MonteCarloNode(this, move));
+                                childrensMoves.Add(move);
+
+                                successfulInsert = true;
+                            }
                         }
                     }
                 }
