@@ -285,6 +285,7 @@ namespace GameCore
             }
             if (IsValidWallPlacement(wallCoordinate) && CanPlayersReachGoal(wallCoordinate))
             {
+                walls.Add(wallCoordinate);
                 board[wallCoordinate.StartRow, wallCoordinate.StartCol] = board[wallCoordinate.EndRow, wallCoordinate.EndCol] = WALL;
                 if (player == PlayerEnum.ONE)
                 {
