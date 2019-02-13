@@ -445,7 +445,8 @@ namespace GameCore
 
         private string RandomMove()
         {
-            return randomPercentileChance.Next(1, 100) >= 51 ? BoardUtil.GetRandomWallPlacementMove() : BoardUtil.GetRandomPlayerPieceMove();
+            //        return randomPercentileChance.Next(1, 100) >= 51 ? BoardUtil.GetRandomWallPlacementMove() : BoardUtil.GetRandomPlayerPieceMove();
+            return BoardUtil.GetRandomPlayerPieceMove();
         }
 
 
@@ -490,23 +491,28 @@ namespace GameCore
         {
             bool successfulInsert = false;
 
-            if (ValidPlayerMove( turn == 0 ? playerLocations[0] : playerLocations[1], new PlayerCoordinate(move)) || ValidWallMove(move) )
+            if (move.Length != 2)
             {
-
-                if (move.Contains("v") || move.Contains("h"))
+                if (ValidWallMove(move))
                 {
-                    if (PlaceWall(turn == 0 ? GameBoard.PlayerEnum.ONE : GameBoard.PlayerEnum.TWO, new WallCoordinate(move)))
+                    if (move.Contains("v") || move.Contains("h"))
                     {
-                        children.Add(new MonteCarloNode(move, playerLocations, wallsRemaining, walls, new WallCoordinate(move), turn, this));
-                        successfulInsert = true;
+                        if (PlaceWall(turn == 0 ? GameBoard.PlayerEnum.ONE : GameBoard.PlayerEnum.TWO, new WallCoordinate(move)))
+                        {
+                            children.Add(new MonteCarloNode(move, playerLocations, wallsRemaining, walls, new WallCoordinate(move), turn, this));
+                            successfulInsert = true;
+                        }
                     }
                 }
                 else
                 {
-                    if (MovePiece(turn == 0 ? GameBoard.PlayerEnum.ONE : GameBoard.PlayerEnum.TWO, new PlayerCoordinate(move)))
+                    if (ValidPlayerMove(turn == 0 ? playerLocations[0] : playerLocations[1], new PlayerCoordinate(move)))
                     {
-                        children.Add(new MonteCarloNode(this, move));
-                        successfulInsert = true;
+                        if (MovePiece(turn == 0 ? GameBoard.PlayerEnum.ONE : GameBoard.PlayerEnum.TWO, new PlayerCoordinate(move)))
+                        {
+                            children.Add(new MonteCarloNode(this, move));
+                            successfulInsert = true;
+                        }
                     }
                 }
             }
@@ -515,7 +521,7 @@ namespace GameCore
         }
 
     }
-class MonteCarlo
+    public class MonteCarlo
     {
         // new GameBoard(GameBoard.PlayerEnum.ONE, "e1", "e9")
         MonteCarloNode TreeSearch;
@@ -533,6 +539,7 @@ class MonteCarlo
             MonteCarloNode TreeSearch = new MonteCarloNode(boardState.GetPlayerCoordinate(GameBoard.PlayerEnum.ONE), boardState.GetPlayerCoordinate(GameBoard.PlayerEnum.TWO),
                                                             boardState.GetPlayerWallCount(GameBoard.PlayerEnum.ONE), boardState.GetPlayerWallCount(GameBoard.PlayerEnum.TWO),
                                                             boardState.GetWalls(), boardState.GetWhoseTurn() == 1 ? GameBoard.PlayerEnum.ONE : GameBoard.PlayerEnum.TWO );
+            TreeSearch.ExpandOptions();
         }
 
 
