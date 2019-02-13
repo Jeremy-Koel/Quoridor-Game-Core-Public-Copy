@@ -1,4 +1,4 @@
-﻿//#define DEBUG 
+﻿#define DEBUG 
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -114,7 +114,8 @@ namespace GameCore
             playerLocations = new List<PlayerCoordinate>();
             playerLocations.Add(new PlayerCoordinate(parent.playerLocations[0].Row, parent.playerLocations[0].Col));
             playerLocations.Add(new PlayerCoordinate(parent.playerLocations[1].Row, parent.playerLocations[1].Col));
-            walls = new List<WallCoordinate>(childParent.walls());
+            walls = new List<WallCoordinate>(childParent.walls);
+            wallsRemaining = new List<int>(childParent.wallsRemaining);
 
             switch (childParent.turn)
             {
@@ -490,10 +491,10 @@ namespace GameCore
         }
 
 //Expansion Phase Code
+
         /// <summary>
         /// The <c>ExpandOptions</c> method calls the <c>RandomMove</c> method to generate a move to expand the current options from the current <c>MonteCarloNode</c>
         /// </summary>
-
         private void ExpandOptions()
         {
             string move;
@@ -503,12 +504,12 @@ namespace GameCore
                 move = RandomMove();
             }
         }
+
         /// <summary>
         /// The <c>InsertChild</c> method inserts a new <c>MonteCarloNode</c> child into the current <c>children</c> List. If the move is valid it will return true signifying success. 
         /// If the move was an invalid move the method will return false
         /// </summary>
         /// <param name="move">specified move - either place a wall or move a pawn</param>
-
         private bool InsertChild(string move)
         {
             bool successfulInsert = false;
@@ -517,24 +518,24 @@ namespace GameCore
             {
                 if (ValidWallMove(move))
                 {
-                    if (move.Contains("v") || move.Contains("h"))
+                    if (PlaceWall(turn == 0 ? GameBoard.PlayerEnum.ONE : GameBoard.PlayerEnum.TWO, new WallCoordinate(move)))
                     {
-                        if (PlaceWall(turn == 0 ? GameBoard.PlayerEnum.ONE : GameBoard.PlayerEnum.TWO, new WallCoordinate(move)))
-                        {
-                            children.Add(new MonteCarloNode(move, playerLocations, wallsRemaining, walls, new WallCoordinate(move), turn, this));
-                            successfulInsert = true;
-                        }
+                        children.Add(new MonteCarloNode(move, playerLocations, wallsRemaining, walls, new WallCoordinate(move), turn, this));
+                        successfulInsert = true;
                     }
                 }
             }
             else
             {
-                if (ValidPlayerMove(turn == 0 ? playerLocations[0] : playerLocations[1], new PlayerCoordinate(move)))
+                if (new PlayerCoordinate(move) == (turn == 0 ? playerLocations[0] : playerLocations[1]))
                 {
-                    if (MovePiece(turn == 0 ? GameBoard.PlayerEnum.ONE : GameBoard.PlayerEnum.TWO, new PlayerCoordinate(move)))
+                    if (ValidPlayerMove(turn == 0 ? playerLocations[0] : playerLocations[1], new PlayerCoordinate(move)))
                     {
-                        children.Add(new MonteCarloNode(this, move));
-                        successfulInsert = true;
+                        if (MovePiece(turn == 0 ? GameBoard.PlayerEnum.ONE : GameBoard.PlayerEnum.TWO, new PlayerCoordinate(move)))
+                        {
+                            children.Add(new MonteCarloNode(this, move));
+                            successfulInsert = true;
+                        }
                     }
                 }
             }
@@ -559,6 +560,26 @@ namespace GameCore
                 {
                     ExpandOptions();
                     nextNodeIndex = SelectNode();
+#if DEBUG
+                    Populate();
+                    for (int i = 0; i < TOTAL_ROWS; i++)
+                    {
+                        for (int j = 0; j < TOTAL_COLS; j++)
+                        {
+                            if ( !((i == playerLocations[0].Row && j == playerLocations[0].Col) || (i == playerLocations[1].Row && j == playerLocations[1].Col)) )
+                            {
+                                Console.Write(board[i].Get(j) == false ? '0' : '1');
+                            }
+                            else
+                            {
+                                Console.Write('*');
+                            }
+                        }
+                        Console.Write('\n');
+                    }
+                    Unpopulate();
+                    Console.Write('\n');
+#endif
                 }
                 if (children[nextNodeIndex].SimulatedGame())
                 {
