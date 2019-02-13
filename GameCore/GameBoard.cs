@@ -15,6 +15,7 @@ namespace GameCore
         
         private PlayerCoordinate playerOneLocation;
         private PlayerCoordinate playerTwoLocation;
+        private List<WallCoordinate> walls;
         private int player1walls = 10;
         private int player2walls = 10;
         private char[,] board;
