@@ -12,7 +12,7 @@ namespace GameCore
         public static char PLAYER_2 = '2';
         public static int TOTAL_ROWS = 17;
         public static int TOTAL_COLS = 17;
-        
+
         private PlayerCoordinate playerOneLocation;
         private PlayerCoordinate playerTwoLocation;
         private List<WallCoordinate> walls;
@@ -74,6 +74,11 @@ namespace GameCore
                     }
                 }
             }
+        }
+
+        public List<WallCoordinate> GetWalls()
+        {
+            return walls;
         }
 
         public int GetPlayerWallCount(PlayerEnum player)
