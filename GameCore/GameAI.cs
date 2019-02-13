@@ -451,7 +451,7 @@ namespace GameCore
 
         private string RandomMove()
         {
-            return randomPercentileChance.Next(1, 100) >= 76 ? BoardUtil.GetRandomWallPlacementMove() : BoardUtil.GetRandomNearbyPlayerPieceMove(turn == 0 ? playerLocations[0] : playerLocations[1]);
+            return randomPercentileChance.Next(1, 100) >= 76 ? BoardUtil.GetRandomNearbyPlayerPieceMove(turn == 0 ? playerLocations[0] : playerLocations[1]) : wallsRemaining[0] + wallsRemaining[1] == 20 ? BoardUtil.GetRandomNearbyPlayerPieceMove(turn == 0 ? playerLocations[0] : playerLocations[1]) : BoardUtil.GetRandomWallPlacementMove();
         }
 
 
@@ -527,11 +527,12 @@ namespace GameCore
             }
             else
             {
-                if (new PlayerCoordinate(move) == (turn == 0 ? playerLocations[0] : playerLocations[1]))
+                PlayerCoordinate moveToInsert = new PlayerCoordinate(move);
+                if ( !(moveToInsert.Row == (turn == 0 ? playerLocations[0] : playerLocations[1]).Row && moveToInsert.Col == (turn == 0 ? playerLocations[0] : playerLocations[1]).Col) )
                 {
-                    if (ValidPlayerMove(turn == 0 ? playerLocations[0] : playerLocations[1], new PlayerCoordinate(move)))
+                    if (ValidPlayerMove(turn == 0 ? playerLocations[0] : playerLocations[1], moveToInsert))
                     {
-                        if (MovePiece(turn == 0 ? GameBoard.PlayerEnum.ONE : GameBoard.PlayerEnum.TWO, new PlayerCoordinate(move)))
+                        if (MovePiece(turn == 0 ? GameBoard.PlayerEnum.ONE : GameBoard.PlayerEnum.TWO, moveToInsert))
                         {
                             children.Add(new MonteCarloNode(this, move));
                             successfulInsert = true;
@@ -589,7 +590,7 @@ namespace GameCore
             }
             else
             {
-                if (turn.ToString() == MonteCarloPlayer)
+                if (parent.turn.ToString() == MonteCarloPlayer)
                 {
                     mctsVictory = true;
                     ++wins;
