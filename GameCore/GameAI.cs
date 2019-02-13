@@ -626,7 +626,7 @@ namespace GameCore
         {
             Stopwatch timer = new Stopwatch();
             timer.Start();
-            while (timer.Elapsed.TotalSeconds < 4)
+            for (int i = 0; i < 1000000000 && timer.Elapsed.TotalSeconds < 4; ++i)
             {
                 TreeSearch.SimulatedGame();
             }
