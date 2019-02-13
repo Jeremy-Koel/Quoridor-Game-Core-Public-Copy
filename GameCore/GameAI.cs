@@ -413,7 +413,7 @@ namespace GameCore
                     targetOppoCol = start.Col + 2;
                     diagonalJump =
                         ((opponent.Row == targetOppRow && opponent.Col == start.Col) || (opponent.Row == start.Row && opponent.Col == targetOppoCol))
-                        && (board[start.Row - 3].Get(start.Col) == true || board[start.Row].Get(start.Col + 3) == true);
+                        && (board[start.Row - 3 < 0 ? 0 : start.Row - 3].Get(start.Col) == true || board[start.Row].Get(start.Col + 3 > 16 ? 16 : start.Col + 3) == true);
                 }
                 else if (destination.Row == start.Row - 2 && destination.Col == start.Col - 2) // NW
                 {
@@ -421,7 +421,7 @@ namespace GameCore
                     targetOppoCol = start.Col - 2;
                     diagonalJump =
                         ((opponent.Row == targetOppRow && opponent.Col == start.Col) || (opponent.Row == start.Row && opponent.Col == targetOppoCol))
-                        && (board[start.Row - 3].Get(start.Col) == true || board[start.Row].Get(start.Col - 3) == true);
+                        && (board[start.Row - 3 < 0 ? 0 : start.Row - 3].Get(start.Col) == true || board[start.Row].Get(start.Col - 3 < 0 ? 0 : start.Col - 3) == true);
                 }
                 else if (destination.Row == start.Row + 2 && destination.Col == start.Col - 2) // SW
                 {
@@ -429,7 +429,7 @@ namespace GameCore
                     targetOppoCol = start.Col - 2;
                     diagonalJump =
                         ((opponent.Row == targetOppRow && opponent.Col == start.Col) || (opponent.Row == start.Row && opponent.Col == targetOppoCol))
-                        && (board[start.Row + 3].Get(start.Col) == true || board[start.Row].Get(start.Col - 3) == true);
+                        && (board[start.Row + 3 > 16 ? 16 : start.Row + 3].Get(start.Col) == true || board[start.Row].Get(start.Col - 3 < 0 ? 0 : start.Col - 3) == true);
                 }
                 else if (destination.Row == start.Row + 2 && destination.Col == start.Col + 2) // SE 
                 {
@@ -437,7 +437,7 @@ namespace GameCore
                     targetOppoCol = start.Col + 2;
                     diagonalJump =
                         ((opponent.Row == targetOppRow && opponent.Col == start.Col) || (opponent.Row == start.Row && opponent.Col == targetOppoCol))
-                        && (board[start.Row + 3].Get(start.Col) == true || board[start.Row].Get(start.Col + 3) == true);
+                        && (board[start.Row + 3 > 16 ? 16 : start.Row + 3].Get(start.Col) == true || board[start.Row].Get(start.Col + 3 > 16 ? 16 : start.Col + 3) == true);
                 }
             }
 
@@ -604,15 +604,6 @@ namespace GameCore
     public class MonteCarlo
     {
         MonteCarloNode TreeSearch;
-
-        //public static void Main()
-        //{
-        //    MonteCarlo WeakAI = new MonteCarlo();
-        //}
-        public MonteCarlo()
-        {
-        }
-
         /// <summary>
         /// The MonteCarlo class is initialized with a GameBoard instance and can calculate a move given a GameBoard
         /// </summary>
