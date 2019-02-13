@@ -518,10 +518,10 @@ class MonteCarlo
         // new GameBoard(GameBoard.PlayerEnum.ONE, "e1", "e9")
         MonteCarloNode TreeSearch;
 
-        public static void Main()
-        {
-            MonteCarlo WeakAI = new MonteCarlo();
-        }
+        //public static void Main()
+        //{
+        //    MonteCarlo WeakAI = new MonteCarlo();
+        //}
         public MonteCarlo()
         {
         }
