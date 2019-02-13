@@ -561,26 +561,26 @@ namespace GameCore
                 {
                     ExpandOptions();
                     nextNodeIndex = SelectNode();
-#if DEBUG
-                    Populate();
-                    for (int i = 0; i < TOTAL_ROWS; i++)
-                    {
-                        for (int j = 0; j < TOTAL_COLS; j++)
-                        {
-                            if ( !((i == playerLocations[0].Row && j == playerLocations[0].Col) || (i == playerLocations[1].Row && j == playerLocations[1].Col)) )
-                            {
-                                Console.Write(board[i].Get(j) == false ? '0' : '1');
-                            }
-                            else
-                            {
-                                Console.Write('*');
-                            }
-                        }
-                        Console.Write('\n');
-                    }
-                    Unpopulate();
-                    Console.Write('\n');
-#endif
+//#if DEBUG
+//                    Populate();
+//                    for (int i = 0; i < TOTAL_ROWS; i++)
+//                    {
+//                        for (int j = 0; j < TOTAL_COLS; j++)
+//                        {
+//                            if ( !((i == playerLocations[0].Row && j == playerLocations[0].Col) || (i == playerLocations[1].Row && j == playerLocations[1].Col)) )
+//                            {
+//                                Console.Write(board[i].Get(j) == false ? '0' : '1');
+//                            }
+//                            else
+//                            {
+//                                Console.Write('*');
+//                            }
+//                        }
+//                        Console.Write('\n');
+//                    }
+//                    Unpopulate();
+//                    Console.Write('\n');
+//#endif
                 }
                 if (children[nextNodeIndex].SimulatedGame())
                 {
@@ -614,7 +614,14 @@ namespace GameCore
             MonteCarloNode TreeSearch = new MonteCarloNode(boardState.GetPlayerCoordinate(GameBoard.PlayerEnum.ONE), boardState.GetPlayerCoordinate(GameBoard.PlayerEnum.TWO),
                                                             boardState.GetPlayerWallCount(GameBoard.PlayerEnum.ONE), boardState.GetPlayerWallCount(GameBoard.PlayerEnum.TWO),
                                                             boardState.GetWalls(), boardState.GetWhoseTurn() == 1 ? GameBoard.PlayerEnum.ONE : GameBoard.PlayerEnum.TWO );
-            TreeSearch.SimulatedGame();
+            if(TreeSearch.SimulatedGame())
+            {
+                Console.WriteLine("Victory!");
+            }
+            else
+            {
+                Console.WriteLine("FAILURE...");
+            }
         }
 
 
