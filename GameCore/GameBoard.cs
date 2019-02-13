@@ -147,6 +147,7 @@ namespace GameCore
 
             playerOneLocation = new PlayerCoordinate(playerOneStart);
             playerTwoLocation = new PlayerCoordinate(playerTwoStart);
+            walls = new List<WallCoordinate>();
 
             // Init gameboard 
             board = new char[TOTAL_ROWS, TOTAL_COLS];
