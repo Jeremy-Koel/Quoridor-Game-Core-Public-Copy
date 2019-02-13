@@ -12,9 +12,10 @@ namespace GameCore
         public static char PLAYER_2 = '2';
         public static int TOTAL_ROWS = 17;
         public static int TOTAL_COLS = 17;
-        
+
         private PlayerCoordinate playerOneLocation;
         private PlayerCoordinate playerTwoLocation;
+        private List<WallCoordinate> walls;
         private int player1walls = 10;
         private int player2walls = 10;
         private char[,] board;
@@ -75,9 +76,15 @@ namespace GameCore
             }
         }
 
+        public List<WallCoordinate> GetWalls()
+        {
+            return walls;
+        }
+
         public int GetPlayerWallCount(PlayerEnum player)
         {
             int wallCount = 10;
+
             switch (player)
             {
                 case PlayerEnum.ONE:
@@ -87,6 +94,7 @@ namespace GameCore
                     wallCount = player2walls;
                     break;
             }
+
             return wallCount;
         }
 
@@ -100,6 +108,23 @@ namespace GameCore
             {
                 return playerTwoLocation;
             }
+        }
+
+            public PlayerCoordinate GetPlayerCoordinate(PlayerEnum player)
+        {
+            PlayerCoordinate playerCoordinate = null;
+
+            switch (player)
+            {
+                case PlayerEnum.ONE:
+                    playerCoordinate = playerOneLocation;
+                    break;
+                case PlayerEnum.TWO:
+                    playerCoordinate = playerTwoLocation;
+                    break;             
+            }
+
+            return playerCoordinate;
         }
 
         public int GetWhoseTurn()
@@ -134,6 +159,7 @@ namespace GameCore
 
             playerOneLocation = new PlayerCoordinate(playerOneStart);
             playerTwoLocation = new PlayerCoordinate(playerTwoStart);
+            walls = new List<WallCoordinate>();
 
             // Init gameboard 
             board = new char[TOTAL_ROWS, TOTAL_COLS];
@@ -271,6 +297,7 @@ namespace GameCore
             }
             if (IsValidWallPlacement(wallCoordinate) && CanPlayersReachGoal(wallCoordinate))
             {
+                walls.Add(wallCoordinate);
                 board[wallCoordinate.StartRow, wallCoordinate.StartCol] = board[wallCoordinate.EndRow, wallCoordinate.EndCol] = WALL;
                 if (player == PlayerEnum.ONE)
                 {

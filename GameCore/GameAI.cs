@@ -16,7 +16,7 @@ namespace GameCore
     /// </summary>
     class MonteCarloNode
     {
-        private List<MonteCarloNode> children;
+        public List<MonteCarloNode> children;
         private List<WallCoordinate> walls;
         private static List<BitArray> board;
         private static Random randomPercentileChance;
@@ -109,9 +109,13 @@ namespace GameCore
             parent = childParent;
             board = childParent.GetBoard();
             thisMove = move;
-            PlayerCoordinate destinationCoordinate;
-            //            invalidMoves = new List<string>();
-            destinationCoordinate = new PlayerCoordinate(move);
+            PlayerCoordinate destinationCoordinate = new PlayerCoordinate(move);
+            children = new List<MonteCarloNode>();
+            playerLocations = new List<PlayerCoordinate>();
+            playerLocations.Add(new PlayerCoordinate(parent.playerLocations[0].Row, parent.playerLocations[0].Col));
+            playerLocations.Add(new PlayerCoordinate(parent.playerLocations[1].Row, parent.playerLocations[1].Col));
+            walls = new List<WallCoordinate>(childParent.walls);
+            wallsRemaining = new List<int>(childParent.wallsRemaining);
 
             switch (childParent.turn)
             {
@@ -447,7 +451,7 @@ namespace GameCore
 
         private string RandomMove()
         {
-            return randomPercentileChance.Next(1, 100) >= 51 ? BoardUtil.GetRandomWallPlacementMove() : BoardUtil.GetRandomPlayerPieceMove();
+            return randomPercentileChance.Next(1, 100) >= 76 ? BoardUtil.GetRandomNearbyPlayerPieceMove(turn == 0 ? playerLocations[0] : playerLocations[1]) : wallsRemaining[0] + wallsRemaining[1] == 20 ? BoardUtil.GetRandomNearbyPlayerPieceMove(turn == 0 ? playerLocations[0] : playerLocations[1]) : BoardUtil.GetRandomWallPlacementMove();
         }
 
 
@@ -469,11 +473,29 @@ namespace GameCore
             }
         }
 
+//Selection Phase Code
+        /// <summary>
+        /// SelectNode selects a node at random given a nodes children. If there are no nodes available the function returns -1 otherwise it returns the index of the selcted node.
+        /// </summary>
+        /// <returns></returns>
+        private int SelectNode()
+        {
+            int isAValidNodeAvailable = -1;
+
+            if (children.Count != 0)
+            {
+                isAValidNodeAvailable = randomPercentileChance.Next(0, children.Count - 1);
+            }
+
+            return isAValidNodeAvailable;
+        }
+
+//Expansion Phase Code
+
         /// <summary>
         /// The <c>ExpandOptions</c> method calls the <c>RandomMove</c> method to generate a move to expand the current options from the current <c>MonteCarloNode</c>
         /// </summary>
-
-        public void ExpandOptions()
+        private void ExpandOptions()
         {
             string move;
             move = RandomMove();
@@ -482,20 +504,19 @@ namespace GameCore
                 move = RandomMove();
             }
         }
+
         /// <summary>
         /// The <c>InsertChild</c> method inserts a new <c>MonteCarloNode</c> child into the current <c>children</c> List. If the move is valid it will return true signifying success. 
         /// If the move was an invalid move the method will return false
         /// </summary>
         /// <param name="move">specified move - either place a wall or move a pawn</param>
-
         private bool InsertChild(string move)
         {
             bool successfulInsert = false;
 
-            if (ValidPlayerMove( turn == 0 ? playerLocations[0] : playerLocations[1], new PlayerCoordinate(move)) || ValidWallMove(move) )
+            if (move.Length != 2)
             {
-
-                if (move.Contains("v") || move.Contains("h"))
+                if (ValidWallMove(move))
                 {
                     if (PlaceWall(turn == 0 ? GameBoard.PlayerEnum.ONE : GameBoard.PlayerEnum.TWO, new WallCoordinate(move)))
                     {
@@ -503,19 +524,85 @@ namespace GameCore
                         successfulInsert = true;
                     }
                 }
-                else
+            }
+            else
+            {
+                PlayerCoordinate moveToInsert = new PlayerCoordinate(move);
+                if ( !(moveToInsert.Row == (turn == 0 ? playerLocations[0] : playerLocations[1]).Row && moveToInsert.Col == (turn == 0 ? playerLocations[0] : playerLocations[1]).Col) )
                 {
-                    children.Add(new MonteCarloNode(this, move));
+                    if (ValidPlayerMove(turn == 0 ? playerLocations[0] : playerLocations[1], moveToInsert))
+                    {
+                        if (MovePiece(turn == 0 ? GameBoard.PlayerEnum.ONE : GameBoard.PlayerEnum.TWO, moveToInsert))
+                        {
+                            children.Add(new MonteCarloNode(this, move));
+                            successfulInsert = true;
+                        }
+                    }
                 }
             }
 
             return successfulInsert;
         }
 
+//Simulation & Backpropagation Phase Code
+        /// <summary>
+        /// SimulatedGame takes a given GameBoard node and plays a series of moves until it reaches an endstate when it recursively backpropagates and updates the previous nodes. 
+        /// On a losing endstate the function returns false and true on a victory.
+        /// </summary>
+        /// <returns>Whether or not the function reached a victorious endstate</returns>
+        public bool SimulatedGame()
+        {
+            bool mctsVictory = false;
+
+            if (!gameOver)
+            {
+                int nextNodeIndex = SelectNode();
+                if (nextNodeIndex < 0)
+                {
+                    ExpandOptions();
+                    nextNodeIndex = SelectNode();
+//#if DEBUG
+//                    Populate();
+//                    for (int i = 0; i < TOTAL_ROWS; i++)
+//                    {
+//                        for (int j = 0; j < TOTAL_COLS; j++)
+//                        {
+//                            if ( !((i == playerLocations[0].Row && j == playerLocations[0].Col) || (i == playerLocations[1].Row && j == playerLocations[1].Col)) )
+//                            {
+//                                Console.Write(board[i].Get(j) == false ? '0' : '1');
+//                            }
+//                            else
+//                            {
+//                                Console.Write('*');
+//                            }
+//                        }
+//                        Console.Write('\n');
+//                    }
+//                    Unpopulate();
+//                    Console.Write('\n');
+//#endif
+                }
+                if (children[nextNodeIndex].SimulatedGame())
+                {
+                    mctsVictory = true;
+                    ++wins;
+                }
+            }
+            else
+            {
+                if (parent.turn.ToString() == MonteCarloPlayer)
+                {
+                    mctsVictory = true;
+                    ++wins;
+                }        
+            }
+            ++timesVisited;
+            return mctsVictory;
+        }
+
     }
-class MonteCarlo
+    public class MonteCarlo
     {
-        // new GameBoard(GameBoard.PlayerEnum.ONE, "e1", "e9")
         MonteCarloNode TreeSearch;
 
         //public static void Main()
@@ -526,10 +613,23 @@ class MonteCarlo
         {
         }
 
+        /// <summary>
+        /// The MonteCarlo class is initialized with a GameBoard instance and can calculate a move given a GameBoard
+        /// </summary>
+        /// <param name="boardState">The current GameBoard to calculate a move from</param>
         public MonteCarlo(GameBoard boardState)
         {
-       //     MonteCarloNode TreeSearch = new MonteCarloNode(boardState);
-            TreeSearch.ExpandOptions();
+            MonteCarloNode TreeSearch = new MonteCarloNode(boardState.GetPlayerCoordinate(GameBoard.PlayerEnum.ONE), boardState.GetPlayerCoordinate(GameBoard.PlayerEnum.TWO),
+                                                            boardState.GetPlayerWallCount(GameBoard.PlayerEnum.ONE), boardState.GetPlayerWallCount(GameBoard.PlayerEnum.TWO),
+                                                            boardState.GetWalls(), boardState.GetWhoseTurn() == 1 ? GameBoard.PlayerEnum.ONE : GameBoard.PlayerEnum.TWO );
+            if(TreeSearch.SimulatedGame())
+            {
+                Console.WriteLine("Victory!");
+            }
+            else
+            {
+                Console.WriteLine("FAILURE...");
+            }
         }
 
 
