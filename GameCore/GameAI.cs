@@ -109,9 +109,7 @@ namespace GameCore
             parent = childParent;
             board = childParent.GetBoard();
             thisMove = move;
-            PlayerCoordinate destinationCoordinate;
-            //            invalidMoves = new List<string>();
-            destinationCoordinate = new PlayerCoordinate(move);
+            PlayerCoordinate destinationCoordinate = new PlayerCoordinate(move);
 
             switch (childParent.turn)
             {
@@ -505,7 +503,11 @@ namespace GameCore
                 }
                 else
                 {
-                    children.Add(new MonteCarloNode(this, move));
+                    if (MovePiece(turn == 0 ? GameBoard.PlayerEnum.ONE : GameBoard.PlayerEnum.TWO, new PlayerCoordinate(move)))
+                    {
+                        children.Add(new MonteCarloNode(this, move));
+                        successfulInsert = true;
+                    }
                 }
             }
 
@@ -518,19 +520,19 @@ class MonteCarlo
         // new GameBoard(GameBoard.PlayerEnum.ONE, "e1", "e9")
         MonteCarloNode TreeSearch;
 
-        public static void Main()
-        {
-            MonteCarlo WeakAI = new MonteCarlo();
-        }
+        //public static void Main()
+        //{
+        //    MonteCarlo WeakAI = new MonteCarlo();
+        //}
         public MonteCarlo()
         {
         }
 
         public MonteCarlo(GameBoard boardState)
         {
-            MonteCarloNode TreeSearch = new MonteCarloNode(boardState.GetPlayerCoordinate(GameBoard.PlayerEnum.ONE), boardState.GetPlayerCoordinate(GameBoard.PlayerEnum.TWO), 
+            MonteCarloNode TreeSearch = new MonteCarloNode(boardState.GetPlayerCoordinate(GameBoard.PlayerEnum.ONE), boardState.GetPlayerCoordinate(GameBoard.PlayerEnum.TWO),
                                                             boardState.GetPlayerWallCount(GameBoard.PlayerEnum.ONE), boardState.GetPlayerWallCount(GameBoard.PlayerEnum.TWO),
-                                                            );
+                                                            boardState.GetWalls(), boardState.GetWhoseTurn() == 1 ? GameBoard.PlayerEnum.ONE : GameBoard.PlayerEnum.TWO );
         }
 
 
