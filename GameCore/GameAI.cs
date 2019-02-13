@@ -528,8 +528,9 @@ class MonteCarlo
 
         public MonteCarlo(GameBoard boardState)
         {
-       //     MonteCarloNode TreeSearch = new MonteCarloNode(boardState);
-            TreeSearch.ExpandOptions();
+            MonteCarloNode TreeSearch = new MonteCarloNode(boardState.GetPlayerCoordinate(GameBoard.PlayerEnum.ONE), boardState.GetPlayerCoordinate(GameBoard.PlayerEnum.TWO), 
+                                                            boardState.GetPlayerWallCount(GameBoard.PlayerEnum.ONE), boardState.GetPlayerWallCount(GameBoard.PlayerEnum.TWO),
+                                                            );
         }
 
 
