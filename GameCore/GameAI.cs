@@ -16,7 +16,7 @@ namespace GameCore
     /// </summary>
     class MonteCarloNode
     {
-        private List<MonteCarloNode> children;
+        public List<MonteCarloNode> children;
         private List<WallCoordinate> walls;
         private static List<BitArray> board;
         private static Random randomPercentileChance;
@@ -110,6 +110,9 @@ namespace GameCore
             board = childParent.GetBoard();
             thisMove = move;
             PlayerCoordinate destinationCoordinate = new PlayerCoordinate(move);
+            playerLocations = new List<PlayerCoordinate>();
+            playerLocations.Add(new PlayerCoordinate(parent.playerLocations[0].Row, parent.playerLocations[0].Col));
+            playerLocations.Add(new PlayerCoordinate(parent.playerLocations[1].Row, parent.playerLocations[1].Col));
 
             switch (childParent.turn)
             {
@@ -445,8 +448,7 @@ namespace GameCore
 
         private string RandomMove()
         {
-            //        return randomPercentileChance.Next(1, 100) >= 51 ? BoardUtil.GetRandomWallPlacementMove() : BoardUtil.GetRandomPlayerPieceMove();
-            return BoardUtil.GetRandomPlayerPieceMove();
+            return randomPercentileChance.Next(1, 100) >= 76 ? BoardUtil.GetRandomWallPlacementMove() : BoardUtil.GetRandomNearbyPlayerPieceMove(turn == 0 ? playerLocations[0] : playerLocations[1]);
         }
 
 
@@ -468,6 +470,24 @@ namespace GameCore
             }
         }
 
+//Selection Phase Code
+        /// <summary>
+        /// SelectNode selects a node at random given a nodes children. If there are no nodes available the function returns -1 otherwise it returns the index of the selcted node.
+        /// </summary>
+        /// <returns></returns>
+        public int SelectNode()
+        {
+            int isAValidNodeAvailable = -1;
+
+            if (children.Count != 0)
+            {
+                isAValidNodeAvailable = randomPercentileChance.Next(0, children.Count - 1);
+            }
+
+            return isAValidNodeAvailable;
+        }
+
+//Expansion Phase Code
         /// <summary>
         /// The <c>ExpandOptions</c> method calls the <c>RandomMove</c> method to generate a move to expand the current options from the current <c>MonteCarloNode</c>
         /// </summary>
@@ -504,15 +524,15 @@ namespace GameCore
                         }
                     }
                 }
-                else
+            }
+            else
+            {
+                if (ValidPlayerMove(turn == 0 ? playerLocations[0] : playerLocations[1], new PlayerCoordinate(move)))
                 {
-                    if (ValidPlayerMove(turn == 0 ? playerLocations[0] : playerLocations[1], new PlayerCoordinate(move)))
+                    if (MovePiece(turn == 0 ? GameBoard.PlayerEnum.ONE : GameBoard.PlayerEnum.TWO, new PlayerCoordinate(move)))
                     {
-                        if (MovePiece(turn == 0 ? GameBoard.PlayerEnum.ONE : GameBoard.PlayerEnum.TWO, new PlayerCoordinate(move)))
-                        {
-                            children.Add(new MonteCarloNode(this, move));
-                            successfulInsert = true;
-                        }
+                        children.Add(new MonteCarloNode(this, move));
+                        successfulInsert = true;
                     }
                 }
             }
@@ -520,26 +540,25 @@ namespace GameCore
             return successfulInsert;
         }
 
+//Simulation Phase Code
+
+
+
     }
     public class MonteCarlo
     {
-        // new GameBoard(GameBoard.PlayerEnum.ONE, "e1", "e9")
         MonteCarloNode TreeSearch;
-
-        //public static void Main()
-        //{
-        //    MonteCarlo WeakAI = new MonteCarlo();
-        //}
-        public MonteCarlo()
-        {
-        }
-
+        /// <summary>
+        /// The MonteCarlo class is initialized with a GameBoard instance and can calculate a move given a GameBoard
+        /// </summary>
+        /// <param name="boardState">The current GameBoard to calculate a move from</param>
         public MonteCarlo(GameBoard boardState)
         {
             MonteCarloNode TreeSearch = new MonteCarloNode(boardState.GetPlayerCoordinate(GameBoard.PlayerEnum.ONE), boardState.GetPlayerCoordinate(GameBoard.PlayerEnum.TWO),
                                                             boardState.GetPlayerWallCount(GameBoard.PlayerEnum.ONE), boardState.GetPlayerWallCount(GameBoard.PlayerEnum.TWO),
                                                             boardState.GetWalls(), boardState.GetWhoseTurn() == 1 ? GameBoard.PlayerEnum.ONE : GameBoard.PlayerEnum.TWO );
             TreeSearch.ExpandOptions();
+            TreeSearch.children[TreeSearch.SelectNode()].ExpandOptions();
         }
 
 
