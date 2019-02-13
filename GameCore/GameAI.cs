@@ -3,6 +3,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Collections.Specialized;
+using System.Diagnostics;
 using System.Text;
 
 
@@ -44,6 +45,11 @@ namespace GameCore
         public string GetMove()
         {
             return thisMove;
+        }
+
+        public int GetVisits()
+        {
+            return timesVisited;
         }
 
         public MonteCarloNode(PlayerCoordinate playerOne, PlayerCoordinate playerTwo, int playerOneTotalWalls, int playerTwoTotalWalls, List<WallCoordinate> wallCoordinates, GameBoard.PlayerEnum currentTurn)
@@ -478,11 +484,11 @@ namespace GameCore
         /// SelectNode selects a node at random given a nodes children. If there are no nodes available the function returns -1 otherwise it returns the index of the selcted node.
         /// </summary>
         /// <returns></returns>
-        private int SelectNode()
+        private int SelectNode(bool expandedNodeAlready = false)
         {
             int isAValidNodeAvailable = -1;
 
-            if (children.Count != 0)
+            if (children.Count != 0 && (randomPercentileChance.Next(1, 100) < 71 || expandedNodeAlready))
             {
                 isAValidNodeAvailable = randomPercentileChance.Next(0, children.Count - 1);
             }
@@ -494,8 +500,9 @@ namespace GameCore
 
         /// <summary>
         /// The <c>ExpandOptions</c> method calls the <c>RandomMove</c> method to generate a move to expand the current options from the current <c>MonteCarloNode</c>
+        /// and returns true after it has expanded the child options.
         /// </summary>
-        private void ExpandOptions()
+        private bool ExpandOptions()
         {
             string move;
             move = RandomMove();
@@ -503,6 +510,7 @@ namespace GameCore
             {
                 move = RandomMove();
             }
+            return true;
         }
 
         /// <summary>
@@ -559,8 +567,7 @@ namespace GameCore
                 int nextNodeIndex = SelectNode();
                 if (nextNodeIndex < 0)
                 {
-                    ExpandOptions();
-                    nextNodeIndex = SelectNode();
+                    nextNodeIndex = SelectNode(ExpandOptions());
 //#if DEBUG
 //                    Populate();
 //                    for (int i = 0; i < TOTAL_ROWS; i++)
@@ -610,17 +617,34 @@ namespace GameCore
         /// <param name="boardState">The current GameBoard to calculate a move from</param>
         public MonteCarlo(GameBoard boardState)
         {
-            MonteCarloNode TreeSearch = new MonteCarloNode(boardState.GetPlayerCoordinate(GameBoard.PlayerEnum.ONE), boardState.GetPlayerCoordinate(GameBoard.PlayerEnum.TWO),
+            TreeSearch = new MonteCarloNode(boardState.GetPlayerCoordinate(GameBoard.PlayerEnum.ONE), boardState.GetPlayerCoordinate(GameBoard.PlayerEnum.TWO),
                                                             boardState.GetPlayerWallCount(GameBoard.PlayerEnum.ONE), boardState.GetPlayerWallCount(GameBoard.PlayerEnum.TWO),
                                                             boardState.GetWalls(), boardState.GetWhoseTurn() == 1 ? GameBoard.PlayerEnum.ONE : GameBoard.PlayerEnum.TWO );
-            if(TreeSearch.SimulatedGame())
+        }
+
+        public string MonteCarloTreeSearch()
+        {
+            Stopwatch timer = new Stopwatch();
+            timer.Start();
+            while (timer.Elapsed.TotalSeconds < 4)
             {
-                Console.WriteLine("Victory!");
+                TreeSearch.SimulatedGame();
             }
-            else
+            timer.Stop();
+
+            int indexOfMostVisitedNode = -1;
+            int currentGreatestVisits = -1;
+
+            for (int i = 0; i < TreeSearch.children.Count; i++)
             {
-                Console.WriteLine("FAILURE...");
+                if (TreeSearch.children[i].GetVisits() > currentGreatestVisits)
+                {
+                    currentGreatestVisits = TreeSearch.children[i].GetVisits();
+                    indexOfMostVisitedNode = i;
+                }
             }
+
+            return TreeSearch.children[indexOfMostVisitedNode].GetMove();
         }
 
 
