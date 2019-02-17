@@ -41,9 +41,9 @@ namespace GameCore
         public static string MirrorMove(string opponentsMove)
         {
             string moveOnMyScreen;
-            char firstLetter = 202 - opponentsMove[0];
-            char secondLetter = 10 - (opponentsMove[1] - 48);
-            moveOnMyScreen = firstLetter + secondLetter;
+            char firstLetter = (char)(202 - opponentsMove[0]);
+            char secondLetter = (char)((58 - opponentsMove[1]) + 48);
+            moveOnMyScreen = "" + (char)firstLetter + (char)secondLetter;
             return moveOnMyScreen;
         }
 
