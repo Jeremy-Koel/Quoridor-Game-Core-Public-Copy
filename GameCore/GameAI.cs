@@ -503,7 +503,7 @@ namespace GameCore
 
         private string RandomMove()
         {
-            return randomPercentileChance.Next(1, 100) >= 71 ? BoardUtil.GetRandomNearbyPlayerPieceMove(turn == 0 ? playerLocations[0] : playerLocations[1]) 
+            return randomPercentileChance.Next(1, 100) >= 31 ? BoardUtil.GetRandomNearbyPlayerPieceMove(turn == 0 ? playerLocations[0] : playerLocations[1])
                                                              : wallsRemaining[0] + wallsRemaining[1] > 0 ? BoardUtil.GetRandomWallPlacementMove()
                                                                                                           : BoardUtil.GetRandomNearbyPlayerPieceMove(turn == 0 ? playerLocations[0] : playerLocations[1]);
         }
@@ -695,12 +695,12 @@ namespace GameCore
             Stopwatch timer = new Stopwatch();
             timer.Start();
 #if DEBUG
-            for (int i = 0; i < 10; ++i)
+            for (int i = 0; i < 100; ++i)
             {
                 TreeSearch.SimulatedGame();
                 Console.WriteLine(i);
             }
-#else      
+#else
             for (int i = 0; i < 1000000000 && timer.Elapsed.TotalSeconds < 4; ++i)
             {
                 TreeSearch.SimulatedGame();
