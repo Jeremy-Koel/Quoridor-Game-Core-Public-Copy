@@ -1,4 +1,4 @@
-﻿//#define DEBUG 
+﻿#define DEBUG 
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -58,7 +58,7 @@ namespace GameCore
             board = new List<BitArray>();
             for (int i = 0; i < TOTAL_ROWS; i++)
             {
-                board.Add(new BitArray(131072));
+                board.Add(new BitArray(17));
             }
 
             if (MonteCarloPlayer == null)
@@ -237,8 +237,7 @@ namespace GameCore
 
             bool onWallSpace = IsOddSpace(wall.StartRow, wall.StartCol, wall.Orientation)
                             && IsOddSpace(wall.EndRow, wall.EndCol, wall.Orientation);
-            bool isEmpty = IsEmptyWallSpace(wall.StartRow, wall.StartCol)
-                       && IsEmptyWallSpace(wall.EndRow, wall.EndCol);
+            bool isEmpty = IsEmptyWallSpace(wall);
             return onWallSpace
                 && isEmpty;
         }
@@ -301,8 +300,13 @@ namespace GameCore
 
                     bool onWallSpace = IsOddSpace(givenMove.StartRow, givenMove.StartCol, givenMove.Orientation)
                                     && IsOddSpace(givenMove.EndRow, givenMove.EndCol, givenMove.Orientation);
-                    bool isEmpty = IsEmptyWallSpace(givenMove.StartRow, givenMove.StartCol)
-                               && IsEmptyWallSpace(givenMove.EndRow, givenMove.EndCol);
+
+                    Populate();
+
+                    bool isEmpty = IsEmptyWallSpace(givenMove) && IsOppositeOrientationWallSpaceEmpty(givenMove);
+
+                    Unpopulate();
+
                     return onWallSpace
                         && isEmpty;
                 }
@@ -311,9 +315,14 @@ namespace GameCore
             return validityOfWallPlacement;
         }
 
-        private bool IsEmptyWallSpace(int row, int col)
+        private bool IsEmptyWallSpace(WallCoordinate givenMove)
         {
-            return board[row].Get(col) == false;
+            return !(board[givenMove.StartRow].Get(givenMove.StartCol) || board[givenMove.EndRow].Get(givenMove.EndCol)) == true;
+        }
+
+        private bool IsOppositeOrientationWallSpaceEmpty(WallCoordinate givenMove)
+        {
+            return !(board[givenMove.StartRow - 1].Get(givenMove.StartCol + 1) && board[givenMove.EndRow + 1].Get(givenMove.EndCol - 1)) == true;
         }
 
         private bool IsOddSpace(int row, int col, WallCoordinate.WallOrientation orientation)
@@ -339,8 +348,11 @@ namespace GameCore
         }
 
         private bool IsMoveBlocked(PlayerCoordinate start, PlayerCoordinate destination)
-        {
+        {            
             bool blocked = false;
+
+            Populate();
+
             if (start.Row == destination.Row)
             {
                 if (start.Col < destination.Col)
@@ -363,6 +375,9 @@ namespace GameCore
                     blocked = (board[start.Row - 1].Get(start.Col) == true) || (board[destination.Row + 1].Get(destination.Col) == true);
                 }
             }
+
+            Unpopulate();
+
             return blocked;
         }
 
@@ -394,6 +409,7 @@ namespace GameCore
 
         private bool IsValidJump(GameBoard.PlayerEnum turn, PlayerCoordinate start, PlayerCoordinate destination)
         { // Jumping over? 
+            Populate();
             Tuple<int, int> midpoint = FindMidpoint(start, destination);
             int midRow = midpoint.Item1;
             int midCol = midpoint.Item2;
@@ -460,6 +476,7 @@ namespace GameCore
                         && (board[start.Row + 3 > 16 ? 16 : start.Row + 3].Get(start.Col) == true || board[start.Row].Get(start.Col + 3 > 16 ? 16 : start.Col + 3) == true);
                 }
             }
+            Unpopulate();
 
             return overJump || diagonalJump;
         }
@@ -504,7 +521,7 @@ namespace GameCore
         {
             int isAValidNodeAvailable = -1;
 
-            if (children.Count != 0 && (randomPercentileChance.Next(1, 100) < 71))
+            if (children.Count != 0 && (randomPercentileChance.Next(1, 100) < 61))
             {
                 isAValidNodeAvailable = randomPercentileChance.Next(0, children.Count - 1);
             }
@@ -542,7 +559,6 @@ namespace GameCore
         private bool InsertChild(string move)
         {
             bool successfulInsert = false;
-
             if (childrensMoves.FindIndex(x => x.Equals(move)) == -1)
             {
                 if (move.Length != 2)
@@ -551,6 +567,7 @@ namespace GameCore
                     {
                         if (PlaceWall(turn == 0 ? GameBoard.PlayerEnum.ONE : GameBoard.PlayerEnum.TWO, new WallCoordinate(move)))
                         {
+
                             children.Add(new MonteCarloNode(move, playerLocations, wallsRemaining, walls, new WallCoordinate(move), turn, this));
                             childrensMoves.Add(move);
 
@@ -602,7 +619,7 @@ namespace GameCore
 //                    {
 //                        for (int j = 0; j < TOTAL_COLS; j++)
 //                        {
-//                            if ( !((i == playerLocations[0].Row && j == playerLocations[0].Col) || (i == playerLocations[1].Row && j == playerLocations[1].Col)) )
+//                            if (!((i == playerLocations[0].Row && j == playerLocations[0].Col) || (i == playerLocations[1].Row && j == playerLocations[1].Col)))
 //                            {
 //                                Console.Write(board[i].Get(j) == false ? '0' : '1');
 //                            }
@@ -654,10 +671,17 @@ namespace GameCore
         {
             Stopwatch timer = new Stopwatch();
             timer.Start();
-            for (int i = 0; i < 1000000000 /*&& timer.Elapsed.TotalSeconds < 4*/; ++i)
+#if DEBUG
+            for (int i = 0; i < 100; ++i)
             {
                 TreeSearch.SimulatedGame();
             }
+#else      
+            for (int i = 0; i < 1000000000 && timer.Elapsed.TotalSeconds < 4; ++i)
+            {
+                TreeSearch.SimulatedGame();
+            }
+#endif
             timer.Stop();
 
             int indexOfMostVisitedNode = -1;
