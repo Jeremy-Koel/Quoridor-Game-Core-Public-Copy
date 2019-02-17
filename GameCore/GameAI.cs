@@ -503,7 +503,8 @@ namespace GameCore
 
         private string RandomMove()
         {
-            return randomPercentileChance.Next(1, 100) >= 31 ? BoardUtil.GetRandomNearbyPlayerPieceMove(turn == 0 ? playerLocations[0] : playerLocations[1])
+            return randomPercentileChance.Next(1, 100) >= 31 ? ((playerLocations[0].Row == playerLocations[1].Row && (playerLocations[0].Col == playerLocations[1].Col + 1 || playerLocations[0].Col == playerLocations[1].Col - 1)) || (playerLocations[0].Col == playerLocations[1].Col && (playerLocations[0].Row == playerLocations[1].Row + 1 || playerLocations[0].Row == playerLocations[1].Row - 1))
+                                                                            ? BoardUtil.GetRandomNearbyPlayerPieceMove(turn == 0 ? playerLocations[0] : playerLocations[1]) : BoardUtil.GetRandomAdjacentPlayerPieceMove(turn == 0 ? playerLocations[0] : playerLocations[1]))
                                                              : wallsRemaining[0] + wallsRemaining[1] > 0 ? BoardUtil.GetRandomWallPlacementMove()
                                                                                                           : BoardUtil.GetRandomNearbyPlayerPieceMove(turn == 0 ? playerLocations[0] : playerLocations[1]);
         }
