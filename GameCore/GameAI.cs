@@ -543,7 +543,7 @@ namespace GameCore
         {
             bool successfulInsert = false;
 
-            if (childrensMoves.FindIndex(x => x.Equals(move)) >= 0)
+            if (childrensMoves.FindIndex(x => x.Equals(move)) == -1)
             {
                 if (move.Length != 2)
                 {
@@ -654,7 +654,7 @@ namespace GameCore
         {
             Stopwatch timer = new Stopwatch();
             timer.Start();
-            for (int i = 0; i < 1000000000 && timer.Elapsed.TotalSeconds < 4; ++i)
+            for (int i = 0; i < 1000000000 /*&& timer.Elapsed.TotalSeconds < 4*/; ++i)
             {
                 TreeSearch.SimulatedGame();
             }
