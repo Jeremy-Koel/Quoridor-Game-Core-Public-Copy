@@ -87,7 +87,7 @@ namespace GameCore
             parent = null;
         }
 
-        public MonteCarloNode(string move, List<PlayerCoordinate> players, List<int> wallCounts, List<WallCoordinate> wallCoordinates, WallCoordinate newWallCoordinate, GameBoard.PlayerEnum currentTurn, MonteCarloNode childParent)
+        private MonteCarloNode(string move, List<PlayerCoordinate> players, List<int> wallCounts, List<WallCoordinate> wallCoordinates, WallCoordinate newWallCoordinate, GameBoard.PlayerEnum currentTurn, MonteCarloNode childParent)
         {
             turn = currentTurn;
             parent = childParent;
@@ -117,7 +117,7 @@ namespace GameCore
             turn = currentTurn == 0 ? GameBoard.PlayerEnum.TWO : GameBoard.PlayerEnum.ONE;
         }
 
-        public MonteCarloNode(MonteCarloNode childParent, string move)
+        private MonteCarloNode(MonteCarloNode childParent, string move)
         {
             parent = childParent;
             board = childParent.GetBoard();
@@ -159,6 +159,21 @@ namespace GameCore
             {
                 gameOver = true;
             }
+        }
+
+        private int FindMove(string move)
+        {
+            int indexOfMove = randomPercentileChance.Next(0, childrensMoves.Count);
+
+            for (int i = 0; i < childrensMoves.Count; i++)
+            {
+                if (childrensMoves[i].Equals(move))
+                {
+                    indexOfMove = i;
+                }
+            }
+
+            return indexOfMove;
         }
 
         private bool MovePiece(GameBoard.PlayerEnum player, PlayerCoordinate destinationCoordinate)
@@ -548,7 +563,7 @@ namespace GameCore
                 move = RandomMove();
             }
             
-            return childrensMoves.FindIndex(x => x.Equals(move));
+            return FindMove(move);
         }
 
         /// <summary>
@@ -559,36 +574,38 @@ namespace GameCore
         private bool InsertChild(string move)
         {
             bool successfulInsert = false;
-            if (childrensMoves.FindIndex(x => x.Equals(move)) == -1)
+
+            if (move.Length != 2)
             {
-                if (move.Length != 2)
+                if (ValidWallMove(move))
                 {
-                    if (ValidWallMove(move))
+                    if (PlaceWall(turn == 0 ? GameBoard.PlayerEnum.ONE : GameBoard.PlayerEnum.TWO, new WallCoordinate(move)))
                     {
-                        if (PlaceWall(turn == 0 ? GameBoard.PlayerEnum.ONE : GameBoard.PlayerEnum.TWO, new WallCoordinate(move)))
-                        {
 
-                            children.Add(new MonteCarloNode(move, playerLocations, wallsRemaining, walls, new WallCoordinate(move), turn, this));
-                            childrensMoves.Add(move);
-
-                            successfulInsert = true;
-                        }
+                        children.Add(new MonteCarloNode(move, playerLocations, wallsRemaining, walls, new WallCoordinate(move), turn, this));
+                        childrensMoves.Add(move);
+#if DEBUG
+                        Console.WriteLine(move + ' ' + (turn == 0 ? GameBoard.PlayerEnum.ONE : GameBoard.PlayerEnum.TWO).ToString());
+#endif
+                        successfulInsert = true;
                     }
                 }
-                else
+            }
+            else
+            {
+                PlayerCoordinate moveToInsert = new PlayerCoordinate(move);
+                if (!(moveToInsert.Row == (turn == 0 ? playerLocations[0] : playerLocations[1]).Row && moveToInsert.Col == (turn == 0 ? playerLocations[0] : playerLocations[1]).Col))
                 {
-                    PlayerCoordinate moveToInsert = new PlayerCoordinate(move);
-                    if (!(moveToInsert.Row == (turn == 0 ? playerLocations[0] : playerLocations[1]).Row && moveToInsert.Col == (turn == 0 ? playerLocations[0] : playerLocations[1]).Col))
+                    if (ValidPlayerMove(turn == 0 ? playerLocations[0] : playerLocations[1], moveToInsert))
                     {
-                        if (ValidPlayerMove(turn == 0 ? playerLocations[0] : playerLocations[1], moveToInsert))
+                        if (MovePiece(turn == 0 ? GameBoard.PlayerEnum.ONE : GameBoard.PlayerEnum.TWO, moveToInsert))
                         {
-                            if (MovePiece(turn == 0 ? GameBoard.PlayerEnum.ONE : GameBoard.PlayerEnum.TWO, moveToInsert))
-                            {
-                                children.Add(new MonteCarloNode(this, move));
-                                childrensMoves.Add(move);
-
-                                successfulInsert = true;
-                            }
+                            children.Add(new MonteCarloNode(this, move));
+                            childrensMoves.Add(move);
+#if DEBUG
+                            Console.WriteLine(move + ' ' + (turn == 0 ? GameBoard.PlayerEnum.ONE : GameBoard.PlayerEnum.TWO).ToString());
+#endif
+                            successfulInsert = true;
                         }
                     }
                 }
@@ -610,6 +627,12 @@ namespace GameCore
             if (!gameOver)
             {
                 int nextNodeIndex = SelectNode();
+#if DEBUG
+                if (nextNodeIndex < 0)
+                {
+                    nextNodeIndex = nextNodeIndex;
+                }
+#endif
                 if (nextNodeIndex < 0)
                 {
                     nextNodeIndex = SelectNode(ExpandOptions());
@@ -672,9 +695,10 @@ namespace GameCore
             Stopwatch timer = new Stopwatch();
             timer.Start();
 #if DEBUG
-            for (int i = 0; i < 100; ++i)
+            for (int i = 0; i < 10; ++i)
             {
                 TreeSearch.SimulatedGame();
+                Console.WriteLine(i);
             }
 #else      
             for (int i = 0; i < 1000000000 && timer.Elapsed.TotalSeconds < 4; ++i)
