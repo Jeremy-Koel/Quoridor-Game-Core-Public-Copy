@@ -193,6 +193,16 @@ namespace GameCore
             return sb.ToString();
         }
 
+        public static string GetRandomAdjacentPlayerPieceMove(PlayerCoordinate player)
+        {
+            StringBuilder sb = new StringBuilder();
+            int col = random.Next((player.Col == 0 ? 97 : ((97 + (player.Col / 2) - 1)) < 97 ? 97 : 97 + (player.Col / 2) - 1), (player.Col == 16 ? 105 : 97 + (player.Col / 2) + 1) > 105 ? 105 : 97 + (player.Col / 2) + 1);
+            sb.Append(Convert.ToChar(col));
+            int row = random.Next(player.Row == 16 ? 1 : (9 - (player.Row / 2) - 1 < 1 ? 1 : 9 - (player.Row / 2) - 1), player.Row == 0 ? 9 : (9 - (player.Row / 2) + 1 > 9 ? 9 : 9 - (player.Row / 2) + 1));
+            sb.Append(row);
+            return sb.ToString();
+        }
+
         public static string GetRandomWallPlacementMove()
         {
             StringBuilder sb = new StringBuilder();
