@@ -33,6 +33,7 @@ namespace GameCore
         private bool gameOver;
         private GameBoard.PlayerEnum turn;
 
+        private static int depthCheck = 0;
         public static int TOTAL_ROWS = 17;
         public static int TOTAL_COLS = 17;
         // public GameBoard boardState;
@@ -476,7 +477,7 @@ namespace GameCore
                     targetOppoCol = start.Col + 2;
                     diagonalJump =
                         ((opponent.Row == targetOppRow && opponent.Col == start.Col) || (opponent.Row == start.Row && opponent.Col == targetOppoCol))
-                        && (board[start.Row - 3 < 0 ? 0 : start.Row - 3].Get(start.Col) == true || board[start.Row].Get(start.Col + 3 > 16 ? 16 : start.Col + 3) == true);
+                        && ((board[start.Row - 3 < 0 ? 0 : start.Row - 3].Get(start.Col) == true || board[start.Row].Get(start.Col + 3 > 16 ? 16 : start.Col + 3) == true) || (start.Row - 3 == -1 || start.Col + 3 == 17));
                 }
                 else if (destination.Row == start.Row - 2 && destination.Col == start.Col - 2) // NW
                 {
@@ -484,7 +485,7 @@ namespace GameCore
                     targetOppoCol = start.Col - 2;
                     diagonalJump =
                         ((opponent.Row == targetOppRow && opponent.Col == start.Col) || (opponent.Row == start.Row && opponent.Col == targetOppoCol))
-                        && (board[start.Row - 3 < 0 ? 0 : start.Row - 3].Get(start.Col) == true || board[start.Row].Get(start.Col - 3 < 0 ? 0 : start.Col - 3) == true);
+                        && ((board[start.Row - 3 < 0 ? 0 : start.Row - 3].Get(start.Col) == true || board[start.Row].Get(start.Col - 3 < 0 ? 0 : start.Col - 3) == true) || (start.Row - 3 == -1 || start.Col - 3 == -1));
                 }
                 else if (destination.Row == start.Row + 2 && destination.Col == start.Col - 2) // SW
                 {
@@ -492,7 +493,7 @@ namespace GameCore
                     targetOppoCol = start.Col - 2;
                     diagonalJump =
                         ((opponent.Row == targetOppRow && opponent.Col == start.Col) || (opponent.Row == start.Row && opponent.Col == targetOppoCol))
-                        && (board[start.Row + 3 > 16 ? 16 : start.Row + 3].Get(start.Col) == true || board[start.Row].Get(start.Col - 3 < 0 ? 0 : start.Col - 3) == true);
+                        && ((board[start.Row + 3 > 16 ? 16 : start.Row + 3].Get(start.Col) == true || board[start.Row].Get(start.Col - 3 < 0 ? 0 : start.Col - 3) == true) || (start.Row + 3 == 17 || start.Col - 3 == -1));
                 }
                 else if (destination.Row == start.Row + 2 && destination.Col == start.Col + 2) // SE 
                 {
@@ -500,7 +501,7 @@ namespace GameCore
                     targetOppoCol = start.Col + 2;
                     diagonalJump =
                         ((opponent.Row == targetOppRow && opponent.Col == start.Col) || (opponent.Row == start.Row && opponent.Col == targetOppoCol))
-                        && (board[start.Row + 3 > 16 ? 16 : start.Row + 3].Get(start.Col) == true || board[start.Row].Get(start.Col + 3 > 16 ? 16 : start.Col + 3) == true);
+                        && ((board[start.Row + 3 > 16 ? 16 : start.Row + 3].Get(start.Col) == true || board[start.Row].Get(start.Col + 3 > 16 ? 16 : start.Col + 3) == true) || (start.Row + 3 == 17 || start.Col + 3 == 17));
                 }
             }
             Unpopulate();
@@ -740,8 +741,8 @@ namespace GameCore
         /// <param name="move">specified move - either place a wall or move a pawn</param>
         private bool InsertChild(string move)
         {
-            bool successfulInsert  = SuccessfullyMadeMove(move);
-           
+            bool successfulInsert = SuccessfullyMadeMove(move);
+                
             return successfulInsert;
         }
         /// <summary>
@@ -767,9 +768,9 @@ namespace GameCore
 
                         children.Add(new MonteCarloNode(move, playerLocations, wallsRemaining, walls, new WallCoordinate(move), turn, this));
                         childrensMoves.Add(move);
-#if DEBUG
-                        Console.WriteLine(move + ' ' + (turn == 0 ? GameBoard.PlayerEnum.ONE : GameBoard.PlayerEnum.TWO).ToString());
-#endif
+//#if DEBUG
+//                        Console.WriteLine(move + ' ' + (turn == 0 ? GameBoard.PlayerEnum.ONE : GameBoard.PlayerEnum.TWO).ToString());
+//#endif
                         successfulInsert = true;
                     }
                 }
@@ -785,9 +786,9 @@ namespace GameCore
                         {
                             children.Add(new MonteCarloNode(this, move));
                             childrensMoves.Add(move);
-#if DEBUG
-                            Console.WriteLine(move + ' ' + (turn == 0 ? GameBoard.PlayerEnum.ONE : GameBoard.PlayerEnum.TWO).ToString());
-#endif
+//#if DEBUG
+//                            Console.WriteLine(move + ' ' + (turn == 0 ? GameBoard.PlayerEnum.ONE : GameBoard.PlayerEnum.TWO).ToString());
+//#endif
                             successfulInsert = true;
                         }
                     }
@@ -804,7 +805,13 @@ namespace GameCore
         /// <returns>Whether or not the function reached a victorious endstate</returns>
         public bool SimulatedGame()
         {
+            ++depthCheck;
             bool mctsVictory = false;
+
+            if (depthCheck > 5000)
+            {
+                gameOver = true;
+            }
 
             if (!gameOver)
             {
@@ -848,6 +855,7 @@ namespace GameCore
                     ++wins;
                 }        
             }
+            --depthCheck;
             ++timesVisited;
             return mctsVictory;
         }
