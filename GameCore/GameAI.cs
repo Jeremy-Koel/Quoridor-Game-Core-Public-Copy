@@ -573,14 +573,14 @@ namespace GameCore
                 else if (ValidPlayerMove(players[turn == 0 ? 1 : 0], new PlayerCoordinate(players[turn == 0 ? 1 : 0].Row - 2, players[turn == 0 ? 1 : 0].Col)))
                 {
                     sb.Append(Convert.ToChar(97 + (players[turn == 0 ? 1 : 0].Col / 2)));
-                    sb.Append(9 - (players[turn == 0 ? 1 : 0].Row / 2) - 1);
+                    sb.Append(9 - (players[turn == 0 ? 1 : 0].Row / 2) + 1);
                     return new Tuple<bool, string>(true, sb.ToString());
                 }
                 // Southeast Jump
                 else if (ValidPlayerMove(players[turn == 0 ? 1 : 0], new PlayerCoordinate(players[turn == 0 ? 1 : 0].Row + 2, players[turn == 0 ? 1 : 0].Col)))
                 {
                     sb.Append(Convert.ToChar(97 + (players[turn == 0 ? 1 : 0].Col / 2)));
-                    sb.Append(9 - (players[turn == 0 ? 1 : 0].Row / 2) + 1);
+                    sb.Append(9 - (players[turn == 0 ? 1 : 0].Row / 2) - 1);
                     return new Tuple<bool, string>(true, sb.ToString());
                 }
             }
@@ -597,14 +597,14 @@ namespace GameCore
                 else if (ValidPlayerMove(players[turn == 0 ? 1 : 0], new PlayerCoordinate(players[turn == 0 ? 1 : 0].Row - 2, players[turn == 0 ? 1 : 0].Col)))
                 {
                     sb.Append(Convert.ToChar(97 + (players[turn == 0 ? 1 : 0].Col / 2)));
-                    sb.Append(9 - (players[turn == 0 ? 1 : 0].Row / 2) - 1);
+                    sb.Append(9 - (players[turn == 0 ? 1 : 0].Row / 2) + 1);
                     return new Tuple<bool, string>(true, sb.ToString());
                 }
                 // Southwest Jump
                 else if (ValidPlayerMove(players[turn == 0 ? 1 : 0], new PlayerCoordinate(players[turn == 0 ? 1 : 0].Row + 2, players[turn == 0 ? 1 : 0].Col)))
                 {
                     sb.Append(Convert.ToChar(97 + (players[turn == 0 ? 1 : 0].Col / 2)));
-                    sb.Append(9 - (players[turn == 0 ? 1 : 0].Row / 2) + 1);
+                    sb.Append(9 - (players[turn == 0 ? 1 : 0].Row / 2) - 1);
                     return new Tuple<bool, string>(true, sb.ToString());
                 }
             }
