@@ -186,19 +186,9 @@ namespace GameCore
         public static string GetRandomNearbyPlayerPieceMove(PlayerCoordinate player)
         {
             StringBuilder sb = new StringBuilder();
-            int col = random.Next( (player.Col == 0 ? 97 : ((97 + (player.Col / 2) - 2)) < 97 ? 97 : 97 + (player.Col / 2) - 2), (player.Col == 16 ? 105 : 97 + (player.Col / 2) + 2) > 105 ? 105 : 97 + (player.Col / 2) + 2);
+            int col = random.Next( (player.Col == 0 ? 97 : ((97 + (player.Col / 2) - 2)) < 97 ? 97 : 97 + (player.Col / 2) - 2), (player.Col == 16 ? 106 : 97 + (player.Col / 2) + 2) > 105 ? 106 : 97 + (player.Col / 2) + 3);
             sb.Append(Convert.ToChar(col));
-            int row = random.Next(player.Row == 16 ? 1 : (9 - (player.Row / 2) - 2 < 1 ? 1 : 9 - (player.Row / 2) - 2), player.Row == 0 ? 9 : (9 - (player.Row / 2) + 2 > 9 ? 9 : 9 - (player.Row / 2) + 2));
-            sb.Append(row);
-            return sb.ToString();
-        }
-
-        public static string GetRandomAdjacentPlayerPieceMove(PlayerCoordinate player)
-        {
-            StringBuilder sb = new StringBuilder();
-            int col = random.Next((player.Col == 0 ? 97 : ((97 + (player.Col / 2) - 1)) < 97 ? 97 : 97 + (player.Col / 2) - 1), (player.Col == 16 ? 105 : 97 + (player.Col / 2) + 1) > 105 ? 105 : 97 + (player.Col / 2) + 1);
-            sb.Append(Convert.ToChar(col));
-            int row = random.Next(player.Row == 16 ? 1 : (9 - (player.Row / 2) - 1 < 1 ? 1 : 9 - (player.Row / 2) - 1), player.Row == 0 ? 9 : (9 - (player.Row / 2) + 1 > 9 ? 9 : 9 - (player.Row / 2) + 1));
+            int row = random.Next(player.Row == 16 ? 1 : (9 - (player.Row / 2) - 2 < 1 ? 1 : 9 - (player.Row / 2) - 2), player.Row == 0 ? 10 : (9 - (player.Row / 2) + 2 > 9 ? 9 : 9 - (player.Row / 2) + 3));
             sb.Append(row);
             return sb.ToString();
         }
