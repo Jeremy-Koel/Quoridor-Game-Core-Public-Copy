@@ -21,6 +21,7 @@ namespace GameCore
         private List<WallCoordinate> walls;
         private static List<BitArray> board;
         private List<string> childrensMoves;
+        private List<string> invalidMoves;
         private static Random randomPercentileChance;
         private static string MonteCarloPlayer;
         private MonteCarloNode parent;
@@ -34,7 +35,6 @@ namespace GameCore
 
         public static int TOTAL_ROWS = 17;
         public static int TOTAL_COLS = 17;
-        // private List<string> invalidMoves;
         // public GameBoard boardState;
         private string thisMove;
 
@@ -79,6 +79,7 @@ namespace GameCore
 
             children = new List<MonteCarloNode>();
             childrensMoves = new List<string>();
+            invalidMoves = new List<string>();
 
             randomPercentileChance = new Random();
 
@@ -102,6 +103,7 @@ namespace GameCore
 
             children = new List<MonteCarloNode>();
             childrensMoves = new List<string>();
+            invalidMoves = new List<string>();
 
 
             walls.Add(newWallCoordinate);
@@ -133,6 +135,7 @@ namespace GameCore
 
             children = new List<MonteCarloNode>();
             childrensMoves = new List<string>();
+            invalidMoves = new List<string>();
 
             PlayerCoordinate destinationCoordinate = new PlayerCoordinate(move);
 
@@ -288,7 +291,11 @@ namespace GameCore
             bool canReach = IsDestinationAdjacent(start, destination);
             if (!canReach)
             {
+#if DEBUG
+                return false;
+#else
                 canReach = IsValidJump(turn, start, destination);
+#endif
             }
 
             return onPlayerSpace
@@ -503,9 +510,8 @@ namespace GameCore
 
         private string RandomMove()
         {
-            return randomPercentileChance.Next(1, 100) >= 31 ? ((playerLocations[0].Row == playerLocations[1].Row && (playerLocations[0].Col == playerLocations[1].Col + 1 || playerLocations[0].Col == playerLocations[1].Col - 1)) || (playerLocations[0].Col == playerLocations[1].Col && (playerLocations[0].Row == playerLocations[1].Row + 1 || playerLocations[0].Row == playerLocations[1].Row - 1))
-                                                                            ? BoardUtil.GetRandomNearbyPlayerPieceMove(turn == 0 ? playerLocations[0] : playerLocations[1]) : BoardUtil.GetRandomAdjacentPlayerPieceMove(turn == 0 ? playerLocations[0] : playerLocations[1]))
-                                                             : wallsRemaining[0] + wallsRemaining[1] > 0 ? BoardUtil.GetRandomWallPlacementMove()
+            return randomPercentileChance.Next(1, 100) >= 31 ? BoardUtil.GetRandomNearbyPlayerPieceMove(turn == 0 ? playerLocations[0] : playerLocations[1])
+                                                             : (turn == 0 ? wallsRemaining[0] : wallsRemaining[1]) > 0 ? BoardUtil.GetRandomWallPlacementMove()
                                                                                                           : BoardUtil.GetRandomNearbyPlayerPieceMove(turn == 0 ? playerLocations[0] : playerLocations[1]);
         }
 
@@ -561,7 +567,14 @@ namespace GameCore
             move = RandomMove();
             while (!InsertChild(move))
             {
+                invalidMoves.Add(move);
+
                 move = RandomMove();
+
+                while (invalidMoves.Contains(move))
+                {
+                    move = RandomMove();
+                }
             }
             
             return FindMove(move);
@@ -586,7 +599,7 @@ namespace GameCore
                         children.Add(new MonteCarloNode(move, playerLocations, wallsRemaining, walls, new WallCoordinate(move), turn, this));
                         childrensMoves.Add(move);
 #if DEBUG
-                        Console.WriteLine(move + ' ' + (turn == 0 ? GameBoard.PlayerEnum.ONE : GameBoard.PlayerEnum.TWO).ToString());
+                   //     Console.WriteLine(move + ' ' + (turn == 0 ? GameBoard.PlayerEnum.ONE : GameBoard.PlayerEnum.TWO).ToString());
 #endif
                         successfulInsert = true;
                     }
@@ -604,7 +617,7 @@ namespace GameCore
                             children.Add(new MonteCarloNode(this, move));
                             childrensMoves.Add(move);
 #if DEBUG
-                            Console.WriteLine(move + ' ' + (turn == 0 ? GameBoard.PlayerEnum.ONE : GameBoard.PlayerEnum.TWO).ToString());
+                      //      Console.WriteLine(move + ' ' + (turn == 0 ? GameBoard.PlayerEnum.ONE : GameBoard.PlayerEnum.TWO).ToString());
 #endif
                             successfulInsert = true;
                         }
