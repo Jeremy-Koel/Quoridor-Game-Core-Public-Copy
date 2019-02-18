@@ -559,6 +559,7 @@ namespace GameCore
         private Tuple<bool, string> GetValidJumpMove(List<PlayerCoordinate> players)
         {
             StringBuilder sb = new StringBuilder();
+
             if (players[turn == 0 ? 0 : 1].Row == players[turn == 0 ? 1 : 0].Row && players[turn == 0 ? 0 : 1].Col + 2 == players[turn == 0 ? 1 : 0].Col)
             {
                 // East Jump
@@ -655,6 +656,7 @@ namespace GameCore
                     return new Tuple<bool, string>(true, sb.ToString());
                 }
             }
+
             return new Tuple<bool, string>(false, null); ;
 
         }
