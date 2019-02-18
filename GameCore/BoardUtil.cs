@@ -183,12 +183,48 @@ namespace GameCore
             return sb.ToString();
         }
 
-        public static string GetRandomNearbyPlayerPieceMove(PlayerCoordinate player)
+        private static string RandomNearbyRowMove(PlayerCoordinate player)
         {
             StringBuilder sb = new StringBuilder();
-            int col = random.Next( (player.Col == 0 ? 97 : ((97 + (player.Col / 2) - 2)) < 97 ? 97 : 97 + (player.Col / 2) - 2), (player.Col == 16 ? 106 : 97 + (player.Col / 2) + 2) > 105 ? 106 : 97 + (player.Col / 2) + 3);
+            int col = random.Next(minValue: player.Col == 0 ? 97 : (97 + (player.Col / 2) - 1), maxValue: player.Col == 16 ? 106 : 97 + (player.Col / 2) + 2);
             sb.Append(Convert.ToChar(col));
-            int row = random.Next(player.Row == 16 ? 1 : (9 - (player.Row / 2) - 2 < 1 ? 1 : 9 - (player.Row / 2) - 2), player.Row == 0 ? 10 : (9 - (player.Row / 2) + 2 > 9 ? 9 : 9 - (player.Row / 2) + 3));
+            sb.Append(9 - (player.Row / 2));
+            return sb.ToString();
+        }
+
+        private static string RandomNearbyColMove(PlayerCoordinate player)
+        {
+            StringBuilder sb = new StringBuilder();            
+            sb.Append(Convert.ToChar(97 + (player.Col / 2)));
+            int row = random.Next(minValue: player.Row == 16 ? 1 : (9 - (player.Row / 2) - 1), maxValue: player.Row == 0 ? 10 : (9 - (player.Row / 2) + 2) );
+            sb.Append(row);
+            return sb.ToString();
+        }
+
+        public static string GetRandomNearbyPlayerPieceMove(PlayerCoordinate player)
+        {
+            string move;
+
+            if (random.Next(0, 2) == 0)
+            {
+                // Retrieves a move from the same column
+                move = RandomNearbyColMove(player);
+            }
+            else
+            {
+                // Retrieves a move from the same row
+                move = RandomNearbyRowMove(player);
+            }
+
+            return move;
+        }
+
+        public static string GetRandomNearbyPlayerPieceMoveWeighted(PlayerCoordinate player, int weight)
+        {
+            StringBuilder sb = new StringBuilder();
+            int col = random.Next((player.Col == 0 ? 97 : ((97 + (player.Col / 2) - 1)) < 97 ? 97 : 97 + (player.Col / 2) - 1), (player.Col == 16 ? 106 : 97 + (player.Col / 2) + 1) > 105 ? 106 : 97 + (player.Col / 2) + 2);
+            sb.Append(Convert.ToChar(col));
+            int row = random.Next(player.Row == 16 ? 1 : (9 - (player.Row / 2) - 1 < 1 ? 1 : 9 - (player.Row / 2) - 1), player.Row == 0 ? 10 : (9 - (player.Row / 2) + 1 > 9 ? 9 : 9 - (player.Row / 2) + 2));
             sb.Append(row);
             return sb.ToString();
         }
