@@ -487,7 +487,7 @@ namespace GameCore
                     targetOppoCol = start.Col + 2;
                     diagonalJump = 
                         ((opponent.Row == targetOppRow && opponent.Col == start.Col) || (opponent.Row == start.Row && opponent.Col == targetOppoCol))
-                        && (board[start.Row - 3, start.Col] == WALL || board[start.Row, start.Col + 3] == WALL);
+                        && ((board[start.Row - 3, start.Col] == WALL || board[start.Row, start.Col + 3] == WALL) || (start.Row - 3 == -1 || start.Col + 3 == 17));
                 }
                 else if (destination.Row == start.Row - 2 && destination.Col == start.Col - 2) // NW
                 {
@@ -495,7 +495,7 @@ namespace GameCore
                     targetOppoCol = start.Col - 2;
                     diagonalJump = 
                         ((opponent.Row == targetOppRow && opponent.Col == start.Col) || (opponent.Row == start.Row && opponent.Col == targetOppoCol))
-                        && (board[start.Row - 3, start.Col] == WALL || board[start.Row, start.Col - 3] == WALL);
+                        && ((board[start.Row - 3, start.Col] == WALL || board[start.Row, start.Col - 3] == WALL) || (start.Row - 3 == -1 || start.Col - 3 == -1));
                 }
                 else if (destination.Row == start.Row + 2 && destination.Col == start.Col - 2) // SW
                 {
@@ -503,7 +503,7 @@ namespace GameCore
                     targetOppoCol = start.Col - 2;
                     diagonalJump = 
                         ((opponent.Row == targetOppRow && opponent.Col == start.Col) || (opponent.Row == start.Row && opponent.Col == targetOppoCol))
-                        && (board[start.Row + 3, start.Col] == WALL || board[start.Row, start.Col - 3] == WALL);
+                        && ((board[start.Row + 3, start.Col] == WALL || board[start.Row, start.Col - 3] == WALL) || (start.Row + 3 == 17 || start.Col - 3 == -1));
                 }
                 else if (destination.Row == start.Row + 2 && destination.Col == start.Col + 2) // SE 
                 {
@@ -511,7 +511,7 @@ namespace GameCore
                     targetOppoCol = start.Col + 2;
                     diagonalJump =
                         ((opponent.Row == targetOppRow && opponent.Col == start.Col) || (opponent.Row == start.Row && opponent.Col == targetOppoCol))
-                        && (board[start.Row + 3, start.Col] == WALL || board[start.Row, start.Col + 3] == WALL);
+                        && ((board[start.Row + 3, start.Col] == WALL || board[start.Row, start.Col + 3] == WALL) || (start.Row + 3 == 17 || start.Col + 3 == 17));
                 }
             }
 
