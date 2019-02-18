@@ -17,7 +17,7 @@ namespace GameCore
     /// </summary>
     class MonteCarloNode
     {
-        public List<MonteCarloNode> children;
+        private List<MonteCarloNode> children;
         private List<WallCoordinate> walls;
         private static List<BitArray> board;
         private List<string> childrensMoves;
@@ -205,6 +205,11 @@ namespace GameCore
         public List<MonteCarloNode> GetChildrenNodes()
         {
             return children;
+        }
+
+        public List<string> GetChildrenMoves()
+        {
+            return childrensMoves;
         }
 
         public MonteCarloNode GetParentNode()
@@ -589,6 +594,35 @@ namespace GameCore
         {
             bool successfulInsert = false;
 
+            if (parent != null)
+            {
+                if (parent.parent != null)
+                {
+                    if (!parent.parent.GetChildrenMoves().Contains(move))
+                    {
+                        successfulInsert = SuccessfullyMadeMove(move);
+                    }
+                }
+                else
+                {
+                    successfulInsert = SuccessfullyMadeMove(move);
+                }
+            }
+            else
+            {
+                successfulInsert = SuccessfullyMadeMove(move);
+            }
+            return successfulInsert;
+        }
+        /// <summary>
+        /// The SuccessfullyMadeMove method takes a given string and checks to see if that move can be legally made.
+        /// </summary>
+        /// <param name="move">specified move - either place a wall or move a pawn</param>
+        /// <returns></returns>
+        private bool SuccessfullyMadeMove(string move)
+        {
+            bool successfulInsert = false;
+
             if (move.Length != 2)
             {
                 if (ValidWallMove(move))
@@ -599,7 +633,7 @@ namespace GameCore
                         children.Add(new MonteCarloNode(move, playerLocations, wallsRemaining, walls, new WallCoordinate(move), turn, this));
                         childrensMoves.Add(move);
 #if DEBUG
-                   //     Console.WriteLine(move + ' ' + (turn == 0 ? GameBoard.PlayerEnum.ONE : GameBoard.PlayerEnum.TWO).ToString());
+                        Console.WriteLine(move + ' ' + (turn == 0 ? GameBoard.PlayerEnum.ONE : GameBoard.PlayerEnum.TWO).ToString());
 #endif
                         successfulInsert = true;
                     }
@@ -617,14 +651,13 @@ namespace GameCore
                             children.Add(new MonteCarloNode(this, move));
                             childrensMoves.Add(move);
 #if DEBUG
-                      //      Console.WriteLine(move + ' ' + (turn == 0 ? GameBoard.PlayerEnum.ONE : GameBoard.PlayerEnum.TWO).ToString());
+                            Console.WriteLine(move + ' ' + (turn == 0 ? GameBoard.PlayerEnum.ONE : GameBoard.PlayerEnum.TWO).ToString());
 #endif
                             successfulInsert = true;
                         }
                     }
                 }
             }
-
             return successfulInsert;
         }
 
@@ -725,16 +758,16 @@ namespace GameCore
             int indexOfMostVisitedNode = -1;
             int currentGreatestVisits = -1;
 
-            for (int i = 0; i < TreeSearch.children.Count; i++)
+            for (int i = 0; i < TreeSearch.GetChildrenNodes().Count; i++)
             {
-                if (TreeSearch.children[i].GetVisits() > currentGreatestVisits)
+                if (TreeSearch.GetChildrenNodes()[i].GetVisits() > currentGreatestVisits)
                 {
-                    currentGreatestVisits = TreeSearch.children[i].GetVisits();
+                    currentGreatestVisits = TreeSearch.GetChildrenNodes()[i].GetVisits();
                     indexOfMostVisitedNode = i;
                 }
             }
 
-            return TreeSearch.children[indexOfMostVisitedNode].GetMove();
+            return TreeSearch.GetChildrenNodes()[indexOfMostVisitedNode].GetMove();
         }
 
 
