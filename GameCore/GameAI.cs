@@ -33,7 +33,6 @@ namespace GameCore
         private bool gameOver;
         private GameBoard.PlayerEnum turn;
 
-        private static int depthCheck = 0;
         public static int TOTAL_ROWS = 17;
         public static int TOTAL_COLS = 17;
         // public GameBoard boardState;
@@ -656,7 +655,7 @@ namespace GameCore
                     targetOppoCol = start.Col + 2;
                     diagonalJump =
                         ((opponent.Row == targetOppRow && opponent.Col == start.Col) || (opponent.Row == start.Row && opponent.Col == targetOppoCol))
-                        && ((board[start.Row - 3 < 0 ? 0 : start.Row - 3].Get(start.Col) == true || board[start.Row].Get(start.Col + 3 > 16 ? 16 : start.Col + 3) == true) || (start.Row - 3 == -1 || start.Col + 3 == 17));
+                        && (board[start.Row - 3 < 0 ? 0 : start.Row - 3].Get(start.Col) == true || board[start.Row].Get(start.Col + 3 > 16 ? 16 : start.Col + 3) == true);
                 }
                 else if (destination.Row == start.Row - 2 && destination.Col == start.Col - 2) // NW
                 {
@@ -664,7 +663,7 @@ namespace GameCore
                     targetOppoCol = start.Col - 2;
                     diagonalJump =
                         ((opponent.Row == targetOppRow && opponent.Col == start.Col) || (opponent.Row == start.Row && opponent.Col == targetOppoCol))
-                        && ((board[start.Row - 3 < 0 ? 0 : start.Row - 3].Get(start.Col) == true || board[start.Row].Get(start.Col - 3 < 0 ? 0 : start.Col - 3) == true) || (start.Row - 3 == -1 || start.Col - 3 == -1));
+                        && (board[start.Row - 3 < 0 ? 0 : start.Row - 3].Get(start.Col) == true || board[start.Row].Get(start.Col - 3 < 0 ? 0 : start.Col - 3) == true);
                 }
                 else if (destination.Row == start.Row + 2 && destination.Col == start.Col - 2) // SW
                 {
@@ -672,7 +671,7 @@ namespace GameCore
                     targetOppoCol = start.Col - 2;
                     diagonalJump =
                         ((opponent.Row == targetOppRow && opponent.Col == start.Col) || (opponent.Row == start.Row && opponent.Col == targetOppoCol))
-                        && ((board[start.Row + 3 > 16 ? 16 : start.Row + 3].Get(start.Col) == true || board[start.Row].Get(start.Col - 3 < 0 ? 0 : start.Col - 3) == true) || (start.Row + 3 == 17 || start.Col - 3 == -1));
+                        && (board[start.Row + 3 > 16 ? 16 : start.Row + 3].Get(start.Col) == true || board[start.Row].Get(start.Col - 3 < 0 ? 0 : start.Col - 3) == true);
                 }
                 else if (destination.Row == start.Row + 2 && destination.Col == start.Col + 2) // SE 
                 {
@@ -680,7 +679,7 @@ namespace GameCore
                     targetOppoCol = start.Col + 2;
                     diagonalJump =
                         ((opponent.Row == targetOppRow && opponent.Col == start.Col) || (opponent.Row == start.Row && opponent.Col == targetOppoCol))
-                        && ((board[start.Row + 3 > 16 ? 16 : start.Row + 3].Get(start.Col) == true || board[start.Row].Get(start.Col + 3 > 16 ? 16 : start.Col + 3) == true) || (start.Row + 3 == 17 || start.Col + 3 == 17));
+                        && (board[start.Row + 3 > 16 ? 16 : start.Row + 3].Get(start.Col) == true || board[start.Row].Get(start.Col + 3 > 16 ? 16 : start.Col + 3) == true);
                 }
             }
             Unpopulate();
@@ -927,6 +926,7 @@ namespace GameCore
         /// <param name="move">specified move - either place a wall or move a pawn</param>
         private bool InsertChild(string move)
         {
+<<<<<<< HEAD
             bool successfulInsert = false;
 
             if (!childrensMoves.Contains(move))
@@ -972,6 +972,10 @@ namespace GameCore
                 successfulInsert = true;
             }
 
+=======
+            bool successfulInsert  = SuccessfullyMadeMove(move);
+           
+>>>>>>> parent of 77717df... Update GameAI.cs
             return successfulInsert;
         }
         /// <summary>
@@ -997,6 +1001,7 @@ namespace GameCore
                         if (PlaceWall(turn == 0 ? GameBoard.PlayerEnum.ONE : GameBoard.PlayerEnum.TWO, new WallCoordinate(move)))
                         {
 
+<<<<<<< HEAD
                             children.Add(new MonteCarloNode(move, playerLocations, wallsRemaining, walls, new WallCoordinate(move), turn, this));
                             childrensMoves.Add(move);
                             //#if DEBUG
@@ -1004,6 +1009,14 @@ namespace GameCore
                             //#endif
                             successfulInsert = true;
                         }
+=======
+                        children.Add(new MonteCarloNode(move, playerLocations, wallsRemaining, walls, new WallCoordinate(move), turn, this));
+                        childrensMoves.Add(move);
+#if DEBUG
+                        Console.WriteLine(move + ' ' + (turn == 0 ? GameBoard.PlayerEnum.ONE : GameBoard.PlayerEnum.TWO).ToString());
+#endif
+                        successfulInsert = true;
+>>>>>>> parent of 77717df... Update GameAI.cs
                     }
                 }
                 else
@@ -1013,6 +1026,7 @@ namespace GameCore
                     {
                         if (ValidPlayerMove(turn == 0 ? playerLocations[0] : playerLocations[1], moveToInsert))
                         {
+<<<<<<< HEAD
                             if (MovePiece(turn == 0 ? GameBoard.PlayerEnum.ONE : GameBoard.PlayerEnum.TWO, moveToInsert))
                             {
                                 children.Add(new MonteCarloNode(this, move));
@@ -1022,6 +1036,14 @@ namespace GameCore
                                 //#endif
                                 successfulInsert = true;
                             }
+=======
+                            children.Add(new MonteCarloNode(this, move));
+                            childrensMoves.Add(move);
+#if DEBUG
+                            Console.WriteLine(move + ' ' + (turn == 0 ? GameBoard.PlayerEnum.ONE : GameBoard.PlayerEnum.TWO).ToString());
+#endif
+                            successfulInsert = true;
+>>>>>>> parent of 77717df... Update GameAI.cs
                         }
                     }
                 }
@@ -1041,14 +1063,16 @@ namespace GameCore
         /// <returns>Whether or not the function reached a victorious endstate</returns>
         public bool SimulatedGame()
         {
-            ++depthCheck;
             bool mctsVictory = false;
 
+<<<<<<< HEAD
             if (depthCheck > 182)
             {
                 gameOver = true;
             }
 
+=======
+>>>>>>> parent of 77717df... Update GameAI.cs
             if (!gameOver)
             {
                 int nextNodeIndex = SelectNode();
@@ -1071,7 +1095,6 @@ namespace GameCore
                     ++wins;
                 }        
             }
-            --depthCheck;
             ++timesVisited;
             return mctsVictory;
         }
