@@ -1,4 +1,4 @@
-﻿#define DEBUG 
+﻿//#define DEBUG 
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -1095,22 +1095,22 @@ namespace GameCore
         {
             Stopwatch timer = new Stopwatch();
             timer.Start();
-#if DEBUG
-            for (int i = 0; i < 10000; ++i)
-            {
-                TreeSearch.SimulatedGame();
-            }
+//#if DEBUG
+//            for (int i = 0; i < 10000; ++i)
+//            {
+//                TreeSearch.SimulatedGame();
+//            }
 
-            timer.Stop();
-            Console.WriteLine(timer.Elapsed.TotalSeconds);
-#else
+//            timer.Stop();
+//            Console.WriteLine(timer.Elapsed.TotalSeconds);
+//#else
             for (int i = 0; i < 10000 && timer.Elapsed.TotalSeconds < 4; ++i)
             {
                 TreeSearch.SimulatedGame();
             }
 
             timer.Stop();
-#endif
+//#endif
 
             int indexOfMostVisitedNode = -1;
             int currentGreatestVisits = -1;
