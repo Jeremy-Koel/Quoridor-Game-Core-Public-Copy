@@ -44,6 +44,10 @@ namespace GameCore
             char firstLetter = (char)(202 - opponentsMove[0]);
             char secondLetter = (char)((58 - opponentsMove[1]) + 48);
             moveOnMyScreen = "" + (char)firstLetter + (char)secondLetter;
+            if (opponentsMove.Length > 2)
+            {
+                moveOnMyScreen = moveOnMyScreen + opponentsMove[2];
+            }
             return moveOnMyScreen;
         }
 
