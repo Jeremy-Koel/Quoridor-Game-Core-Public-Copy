@@ -740,8 +740,6 @@ namespace GameCore
         /// <param name="move">specified move - either place a wall or move a pawn</param>
         private bool InsertChild(string move)
         {
-<<<<<<< HEAD
-<<<<<<< HEAD
             bool successfulInsert = false;
 
             if (!childrensMoves.Contains(move))
@@ -782,19 +780,6 @@ namespace GameCore
                     }
                 }
             }
-            else
-            {
-                successfulInsert = true;
-            }
-
-=======
-            bool successfulInsert  = SuccessfullyMadeMove(move);
-           
->>>>>>> parent of 77717df... Update GameAI.cs
-=======
-            bool successfulInsert = SuccessfullyMadeMove(move);
-                
->>>>>>> parent of 796f4cf... Update GameAI.cs
             return successfulInsert;
         }
         /// <summary>
@@ -817,32 +802,12 @@ namespace GameCore
                 {
                     if (PlaceWall(turn == 0 ? GameBoard.PlayerEnum.ONE : GameBoard.PlayerEnum.TWO, new WallCoordinate(move)))
                     {
-
-<<<<<<< HEAD
-<<<<<<< HEAD
-                            children.Add(new MonteCarloNode(move, playerLocations, wallsRemaining, walls, new WallCoordinate(move), turn, this));
-                            childrensMoves.Add(move);
-                            //#if DEBUG
-                            //                        Console.WriteLine(move + ' ' + (turn == 0 ? GameBoard.PlayerEnum.ONE : GameBoard.PlayerEnum.TWO).ToString());
-                            //#endif
-                            successfulInsert = true;
-                        }
-=======
-                        children.Add(new MonteCarloNode(move, playerLocations, wallsRemaining, walls, new WallCoordinate(move), turn, this));
-                        childrensMoves.Add(move);
-#if DEBUG
-                        Console.WriteLine(move + ' ' + (turn == 0 ? GameBoard.PlayerEnum.ONE : GameBoard.PlayerEnum.TWO).ToString());
-#endif
-                        successfulInsert = true;
->>>>>>> parent of 77717df... Update GameAI.cs
-=======
                         children.Add(new MonteCarloNode(move, playerLocations, wallsRemaining, walls, new WallCoordinate(move), turn, this));
                         childrensMoves.Add(move);
 //#if DEBUG
 //                        Console.WriteLine(move + ' ' + (turn == 0 ? GameBoard.PlayerEnum.ONE : GameBoard.PlayerEnum.TWO).ToString());
 //#endif
                         successfulInsert = true;
->>>>>>> parent of 796f4cf... Update GameAI.cs
                     }
                 }
             }
@@ -855,33 +820,12 @@ namespace GameCore
                     {
                         if (MovePiece(turn == 0 ? GameBoard.PlayerEnum.ONE : GameBoard.PlayerEnum.TWO, moveToInsert))
                         {
-<<<<<<< HEAD
-<<<<<<< HEAD
-                            if (MovePiece(turn == 0 ? GameBoard.PlayerEnum.ONE : GameBoard.PlayerEnum.TWO, moveToInsert))
-                            {
-                                children.Add(new MonteCarloNode(this, move));
-                                childrensMoves.Add(move);
-                                //#if DEBUG
-                                //                            Console.WriteLine(move + ' ' + (turn == 0 ? GameBoard.PlayerEnum.ONE : GameBoard.PlayerEnum.TWO).ToString());
-                                //#endif
-                                successfulInsert = true;
-                            }
-=======
-                            children.Add(new MonteCarloNode(this, move));
-                            childrensMoves.Add(move);
-#if DEBUG
-                            Console.WriteLine(move + ' ' + (turn == 0 ? GameBoard.PlayerEnum.ONE : GameBoard.PlayerEnum.TWO).ToString());
-#endif
-                            successfulInsert = true;
->>>>>>> parent of 77717df... Update GameAI.cs
-=======
                             children.Add(new MonteCarloNode(this, move));
                             childrensMoves.Add(move);
 //#if DEBUG
 //                            Console.WriteLine(move + ' ' + (turn == 0 ? GameBoard.PlayerEnum.ONE : GameBoard.PlayerEnum.TWO).ToString());
 //#endif
                             successfulInsert = true;
->>>>>>> parent of 796f4cf... Update GameAI.cs
                         }
                     }
                 }
@@ -899,18 +843,6 @@ namespace GameCore
         {
             bool mctsVictory = false;
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-            if (depthCheck > 182)
-=======
-            if (depthCheck > 5000)
->>>>>>> parent of 796f4cf... Update GameAI.cs
-            {
-                gameOver = true;
-            }
-
-=======
->>>>>>> parent of 77717df... Update GameAI.cs
             if (!gameOver)
             {
                 int nextNodeIndex = SelectNode();
