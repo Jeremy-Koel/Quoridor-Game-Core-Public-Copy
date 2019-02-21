@@ -1,4 +1,4 @@
-﻿//#define DEBUG 
+﻿#define DEBUG 
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -19,8 +19,8 @@ namespace GameCore
     {
 
 
-        private static double explorationFactor = .5;
-        private static double historyInfluence = 2;
+        private static double explorationFactor = .75;
+        private static double historyInfluence = 1;
         private List<MonteCarloNode> children;
         private List<WallCoordinate> walls;
         private static List<BitArray> board;
@@ -32,7 +32,7 @@ namespace GameCore
         private MonteCarloNode parent;
         private List<PlayerCoordinate> playerLocations;
         private List<int> wallsRemaining;
-        
+
         private double score;
 
         private double wins;
@@ -65,7 +65,7 @@ namespace GameCore
         {
             return timesVisited;
         }
-        
+
         public double GetScore()
         {
             return score;
@@ -128,7 +128,7 @@ namespace GameCore
             wallsRemaining = new List<int>();
             wallsRemaining.Add(playerOneTotalWalls);
             wallsRemaining.Add(playerTwoTotalWalls);
-            
+
             walls = new List<WallCoordinate>(wallCoordinates);
 
             children = new List<MonteCarloNode>();
@@ -334,7 +334,7 @@ namespace GameCore
 
             bool canPlayerOneReachGoal = BoardUtil.CanReachGoalBitArray(board, 0, playerLocations[0].Row, playerLocations[0].Col);
             bool canPlayerTwoReachGoal = BoardUtil.CanReachGoalBitArray(board, 16, playerLocations[1].Row, playerLocations[1].Col);
-            
+
             board[wallCoordinate.StartRow].Set(wallCoordinate.StartCol, false);
             board[wallCoordinate.EndRow].Set(wallCoordinate.EndCol, false);
 
@@ -389,10 +389,10 @@ namespace GameCore
             x2 = number * 0.5F;
             y = number;
             i = BitConverter.ToInt32(BitConverter.GetBytes(y), 0);                       // evil floating point bit level hacking
-            i = 0x5f3759df - (i >> 1);             
+            i = 0x5f3759df - (i >> 1);
             y = BitConverter.ToSingle(BitConverter.GetBytes(i), 0);
-            y = y * (threehalfs - (x2 * y * y));   
-                                                  
+            y = y * (threehalfs - (x2 * y * y));
+
 
             return y;
         }
@@ -442,13 +442,13 @@ namespace GameCore
                 {
                     return true;
                 }
-                
+
                 openSetStart.Remove(currentStartPath);
                 closedSetStart.Add(currentStartPath);
 
                 openSetGoal.Remove(currentGoalPath);
                 closedSetGoal.Add(currentGoalPath);
-                
+
                 for (int neighbor = 0; neighbor < 4; neighbor++)
                 {
                     PlayerCoordinate startNeighbor = new PlayerCoordinate(currentStartPath.Row, currentStartPath.Col);
@@ -458,7 +458,7 @@ namespace GameCore
                         case 0:
                             startNeighbor = new PlayerCoordinate(currentStartPath.Row - 2, currentStartPath.Col);
                             break;
-                        case 1:    
+                        case 1:
                             startNeighbor = new PlayerCoordinate(currentStartPath.Row, currentStartPath.Col + 2);
                             break;
                         case 2:
@@ -553,18 +553,18 @@ namespace GameCore
             bool canReach = IsDestinationAdjacent(start, destination);
             if (!canReach)
             {
-//#if DEBUG
-//                return false;
-//#else
+                //#if DEBUG
+                //                return false;
+                //#else
                 canReach = IsValidJump(turn, start, destination);
-//#endif
+                //#endif
             }
 
             return onPlayerSpace
                 && !blocked
                 && canReach;
         }
-        
+
         private bool ValidWallMove(string move)
         {
             bool validityOfWallPlacement = false;
@@ -623,7 +623,7 @@ namespace GameCore
             }
             return retValue;
         }
-         
+
         private bool IsDestinationAdjacent(PlayerCoordinate start, PlayerCoordinate destination)
         {
             bool verticalMove = (Math.Abs(destination.Row - start.Row) == 2) && (Math.Abs(destination.Col - start.Col) == 0);
@@ -632,7 +632,7 @@ namespace GameCore
         }
 
         private bool IsMoveBlocked(PlayerCoordinate start, PlayerCoordinate destination)
-        {            
+        {
             bool blocked = false;
 
             Populate();
@@ -671,7 +671,7 @@ namespace GameCore
                 && row < TOTAL_ROWS
                 && col >= 0
                 && col < TOTAL_COLS;
-        }   
+        }
 
         private bool IsMoveOnOpenSpace(GameBoard.PlayerEnum turn, PlayerCoordinate destination)
         {
@@ -772,7 +772,7 @@ namespace GameCore
 
         private string RandomMove()
         {
-            return randomPercentileChance.Next(1, 100) >= 21 ? FindPlayerMove() : (turn == 0 ? wallsRemaining[0] : wallsRemaining[1]) > 0 ? BoardUtil.GetRandomWallPlacementMove() : BoardUtil.GetRandomNearbyPlayerPieceMove(turn == 0 ? playerLocations[0] : playerLocations[1]);
+            return randomPercentileChance.Next(1, 100) >= 41 ? FindPlayerMove() : (turn == 0 ? wallsRemaining[0] : wallsRemaining[1]) > 0 ? BoardUtil.GetRandomWallPlacementMove() : BoardUtil.GetRandomNearbyPlayerPieceMove(turn == 0 ? playerLocations[0] : playerLocations[1]);
         }
 
         private string FindPlayerMove()
@@ -786,11 +786,17 @@ namespace GameCore
                 move = BoardUtil.GetRandomNearbyPlayerPieceMove(turn == 0 ? playerLocations[1] : playerLocations[0]);
 #else
                 Tuple<bool, string> possibleValidJump = GetValidJumpMove(playerLocations);
-                if(possibleValidJump.Item1 == true)
+
+                if (possibleValidJump.Item2.Contains("j") || possibleValidJump.Item2.Contains("`") || possibleValidJump.Item2.Contains("10") || possibleValidJump.Item2.Contains("0"))
+                {
+                    possibleValidJump = new Tuple<bool, string>(false, null);
+                }
+
+                if (possibleValidJump.Item1 == true)
                 {
                     move = possibleValidJump.Item2;
 #if DEBUG
-                    if (move == null || move[0] == '`' || move[0] == '0')
+                    if (move == null || move[0] == '`' || move[0] == '0' || move[0] == 'j')
                     {
                         Console.WriteLine("ABORT!");
                     }
@@ -800,7 +806,7 @@ namespace GameCore
                 {
                     move = BoardUtil.GetRandomNearbyPlayerPieceMove(turn == 0 ? playerLocations[0] : playerLocations[1]);
 #if DEBUG
-                    if (move == null || move[0] == '`' || move[0] == '0')
+                    if (move == null || move[0] == '`' || move[0] == '0' || move[0] == 'j')
                     {
                         Console.WriteLine("ABORT!");
                     }
@@ -820,105 +826,107 @@ namespace GameCore
         private Tuple<bool, string> GetValidJumpMove(List<PlayerCoordinate> players)
         {
             StringBuilder sb = new StringBuilder();
+            Tuple<bool, string> possibleJump = new Tuple<bool, string>(false, null);
+            int move = randomPercentileChance.Next(0, 3);
 
             if (players[turn == 0 ? 0 : 1].Row == players[turn == 0 ? 1 : 0].Row && players[turn == 0 ? 0 : 1].Col + 2 == players[turn == 0 ? 1 : 0].Col)
             {
-                // East Jump
-                if (ValidPlayerMove(players[turn == 0 ? 1 : 0], new PlayerCoordinate(players[turn == 0 ? 1 : 0].Row, players[turn == 0 ? 1 : 0].Col + 2)))
+                switch (move)
                 {
-                    sb.Append(Convert.ToChar(97 + (players[turn == 0 ? 1 : 0].Col / 2) + 1));
-                    sb.Append(9 - (players[turn == 0 ? 1 : 0].Row / 2));
-                    return new Tuple<bool, string>(true, sb.ToString());
-                }
-                // Northeast Jump
-                else if (ValidPlayerMove(players[turn == 0 ? 1 : 0], new PlayerCoordinate(players[turn == 0 ? 1 : 0].Row - 2, players[turn == 0 ? 1 : 0].Col)))
-                {
-                    sb.Append(Convert.ToChar(97 + (players[turn == 0 ? 1 : 0].Col / 2)));
-                    sb.Append(9 - (players[turn == 0 ? 1 : 0].Row / 2) + 1);
-                    return new Tuple<bool, string>(true, sb.ToString());
-                }
-                // Southeast Jump
-                else if (ValidPlayerMove(players[turn == 0 ? 1 : 0], new PlayerCoordinate(players[turn == 0 ? 1 : 0].Row + 2, players[turn == 0 ? 1 : 0].Col)))
-                {
-                    sb.Append(Convert.ToChar(97 + (players[turn == 0 ? 1 : 0].Col / 2)));
-                    sb.Append(9 - (players[turn == 0 ? 1 : 0].Row / 2) - 1);
-                    return new Tuple<bool, string>(true, sb.ToString());
+                    case 0:
+                        // East Jump
+                        sb.Append(Convert.ToChar(97 + (players[turn == 0 ? 1 : 0].Col / 2) + 1));
+                        sb.Append(9 - (players[turn == 0 ? 1 : 0].Row / 2));
+                        possibleJump = new Tuple<bool, string>(true, sb.ToString());
+                        break;
+                    case 1:
+                        // Northeast Jump
+                        sb.Append(Convert.ToChar(97 + (players[turn == 0 ? 1 : 0].Col / 2)));
+                        sb.Append(9 - (players[turn == 0 ? 1 : 0].Row / 2) + 1);
+                        possibleJump = new Tuple<bool, string>(true, sb.ToString());
+                        break;
+                    case 2:
+                        // Southeast Jump
+                        sb.Append(Convert.ToChar(97 + (players[turn == 0 ? 1 : 0].Col / 2)));
+                        sb.Append(9 - (players[turn == 0 ? 1 : 0].Row / 2) - 1);
+                        possibleJump = new Tuple<bool, string>(true, sb.ToString());
+                        break;
                 }
             }
             else if (players[turn == 0 ? 0 : 1].Row == players[turn == 0 ? 1 : 0].Row && players[turn == 0 ? 0 : 1].Col == players[turn == 0 ? 1 : 0].Col + 2)
             {
-                // West Jump
-                if (ValidPlayerMove(players[turn == 0 ? 1 : 0], new PlayerCoordinate(players[turn == 0 ? 1 : 0].Row, players[turn == 0 ? 1 : 0].Col - 2)))
+                switch (move)
                 {
-                    sb.Append(Convert.ToChar(97 + (players[turn == 0 ? 1 : 0].Col / 2) - 1));
-                    sb.Append(9 - (players[turn == 0 ? 1 : 0].Row / 2));
-                    return new Tuple<bool, string>(true, sb.ToString());
-                }
-                // Northwest Jump
-                else if (ValidPlayerMove(players[turn == 0 ? 1 : 0], new PlayerCoordinate(players[turn == 0 ? 1 : 0].Row - 2, players[turn == 0 ? 1 : 0].Col)))
-                {
-                    sb.Append(Convert.ToChar(97 + (players[turn == 0 ? 1 : 0].Col / 2)));
-                    sb.Append(9 - (players[turn == 0 ? 1 : 0].Row / 2) + 1);
-                    return new Tuple<bool, string>(true, sb.ToString());
-                }
-                // Southwest Jump
-                else if (ValidPlayerMove(players[turn == 0 ? 1 : 0], new PlayerCoordinate(players[turn == 0 ? 1 : 0].Row + 2, players[turn == 0 ? 1 : 0].Col)))
-                {
-                    sb.Append(Convert.ToChar(97 + (players[turn == 0 ? 1 : 0].Col / 2)));
-                    sb.Append(9 - (players[turn == 0 ? 1 : 0].Row / 2) - 1);
-                    return new Tuple<bool, string>(true, sb.ToString());
+                    case 0:
+                        // West Jump
+                        sb.Append(Convert.ToChar(97 + (players[turn == 0 ? 1 : 0].Col / 2) - 1));
+                        sb.Append(9 - (players[turn == 0 ? 1 : 0].Row / 2));
+                        possibleJump = new Tuple<bool, string>(true, sb.ToString());
+                        break;
+                    case 1:
+                        // Northwest Jump
+                        sb.Append(Convert.ToChar(97 + (players[turn == 0 ? 1 : 0].Col / 2)));
+                        sb.Append(9 - (players[turn == 0 ? 1 : 0].Row / 2) + 1);
+                        possibleJump = new Tuple<bool, string>(true, sb.ToString());
+                        break;
+                    case 2:
+                        // Southwest Jump
+                        sb.Append(Convert.ToChar(97 + (players[turn == 0 ? 1 : 0].Col / 2)));
+                        sb.Append(9 - (players[turn == 0 ? 1 : 0].Row / 2) - 1);
+                        possibleJump = new Tuple<bool, string>(true, sb.ToString());
+                        break;
                 }
             }
             else if (players[turn == 0 ? 0 : 1].Row == players[turn == 0 ? 1 : 0].Row + 2 && players[turn == 0 ? 0 : 1].Col == players[turn == 0 ? 1 : 0].Col)
             {
-                // North Jump
-                if (ValidPlayerMove(players[turn == 0 ? 1 : 0], new PlayerCoordinate(players[turn == 0 ? 1 : 0].Row - 2, players[turn == 0 ? 1 : 0].Col)))
+                switch (move)
                 {
-                    sb.Append(Convert.ToChar(97 + (players[turn == 0 ? 1 : 0].Col / 2)));
-                    sb.Append(9 - (players[turn == 0 ? 1 : 0].Row / 2) + 1 > 9 ? 9 : (9 - (players[turn == 0 ? 1 : 0].Row / 2) + 1));
-                    return new Tuple<bool, string>(true, sb.ToString());
-                }
-                // Northeast Jump
-                else if (ValidPlayerMove(players[turn == 0 ? 1 : 0], new PlayerCoordinate(players[turn == 0 ? 1 : 0].Row, players[turn == 0 ? 1 : 0].Col + 2)))
-                {
-                    sb.Append(Convert.ToChar(97 + (players[turn == 0 ? 1 : 0].Col / 2) + 1));
-                    sb.Append(9 - (players[turn == 0 ? 1 : 0].Row / 2));
-                    return new Tuple<bool, string>(true, sb.ToString());
-                }
-                // Northwest Jump
-                else if (ValidPlayerMove(players[turn == 0 ? 1 : 0], new PlayerCoordinate(players[turn == 0 ? 1 : 0].Row , players[turn == 0 ? 1 : 0].Col - 2)))
-                {
-                    sb.Append(Convert.ToChar(97 + (players[turn == 0 ? 1 : 0].Col / 2) - 1));
-                    sb.Append(9 - (players[turn == 0 ? 1 : 0].Row / 2));
-                    return new Tuple<bool, string>(true, sb.ToString());
+                    case 0:
+                        // North Jump
+                        sb.Append(Convert.ToChar(97 + (players[turn == 0 ? 1 : 0].Col / 2)));
+                        sb.Append(9 - (players[turn == 0 ? 1 : 0].Row / 2) + 1 > 9 ? 9 : (9 - (players[turn == 0 ? 1 : 0].Row / 2) + 1));
+                        possibleJump = new Tuple<bool, string>(true, sb.ToString());
+                        break;
+                    case 1:
+                        // Northeast Jump
+                        sb.Append(Convert.ToChar(97 + (players[turn == 0 ? 1 : 0].Col / 2) + 1));
+                        sb.Append(9 - (players[turn == 0 ? 1 : 0].Row / 2));
+                        possibleJump = new Tuple<bool, string>(true, sb.ToString());
+                        break;
+                    case 2:
+                        // Northwest Jump
+                        sb.Append(Convert.ToChar(97 + (players[turn == 0 ? 1 : 0].Col / 2) - 1));
+                        sb.Append(9 - (players[turn == 0 ? 1 : 0].Row / 2));
+                        possibleJump = new Tuple<bool, string>(true, sb.ToString());
+                        break;
                 }
             }
             else if (players[turn == 0 ? 0 : 1].Row == players[turn == 0 ? 1 : 0].Row - 2 && players[turn == 0 ? 0 : 1].Col == players[turn == 0 ? 1 : 0].Col)
             {
-                // South Jump
-                if (ValidPlayerMove(players[turn == 0 ? 1 : 0], new PlayerCoordinate(players[turn == 0 ? 1 : 0].Row + 2, players[turn == 0 ? 1 : 0].Col)))
+                switch (move)
                 {
-                    sb.Append(Convert.ToChar(97 + (players[turn == 0 ? 1 : 0].Col / 2)));
-                    sb.Append(9 - (players[turn == 0 ? 1 : 0].Row / 2) - 1 < 1 ? 1 : (9 - (players[turn == 0 ? 1 : 0].Row / 2) - 1));
-                    return new Tuple<bool, string>(true, sb.ToString());
-                }
-                // Southeast Jump
-                else if (ValidPlayerMove(players[turn == 0 ? 1 : 0], new PlayerCoordinate(players[turn == 0 ? 1 : 0].Row, players[turn == 0 ? 1 : 0].Col + 2)))
-                {
-                    sb.Append(Convert.ToChar(97 + (players[turn == 0 ? 1 : 0].Col / 2) + 1));
-                    sb.Append(9 - (players[turn == 0 ? 1 : 0].Row / 2));
-                    return new Tuple<bool, string>(true, sb.ToString());
-                }
-                // Southwest Jump
-                else if (ValidPlayerMove(players[turn == 0 ? 1 : 0], new PlayerCoordinate(players[turn == 0 ? 1 : 0].Row, players[turn == 0 ? 1 : 0].Col - 2)))
-                {
-                    sb.Append(Convert.ToChar(97 + (players[turn == 0 ? 1 : 0].Col / 2) - 1));
-                    sb.Append(9 - (players[turn == 0 ? 1 : 0].Row / 2));
-                    return new Tuple<bool, string>(true, sb.ToString());
+                    case 0:
+                        // South Jump
+                        sb.Append(Convert.ToChar(97 + (players[turn == 0 ? 1 : 0].Col / 2)));
+                        sb.Append(9 - (players[turn == 0 ? 1 : 0].Row / 2) - 1 < 1 ? 1 : (9 - (players[turn == 0 ? 1 : 0].Row / 2) - 1));
+                        possibleJump = new Tuple<bool, string>(true, sb.ToString());
+                        break;
+                    case 1:
+                        // Southeast Jump
+                        sb.Append(Convert.ToChar(97 + (players[turn == 0 ? 1 : 0].Col / 2) + 1));
+                        sb.Append(9 - (players[turn == 0 ? 1 : 0].Row / 2));
+                        possibleJump = new Tuple<bool, string>(true, sb.ToString());
+                        break;
+                    case 2:
+                        // Southwest Jump
+                        sb.Append(Convert.ToChar(97 + (players[turn == 0 ? 1 : 0].Col / 2) - 1));
+                        sb.Append(9 - (players[turn == 0 ? 1 : 0].Row / 2));
+                        possibleJump = new Tuple<bool, string>(true, sb.ToString());
+                        break;
                 }
             }
 
-            return new Tuple<bool, string>(false, null); ;
+            return possibleJump;
 
         }
 
@@ -948,7 +956,7 @@ namespace GameCore
             }
         }
 
-//Selection Phase Code
+        //Selection Phase Code
         /// <summary>
         /// SelectNode selects a node at random given a nodes children. If there are no nodes available the function returns -1 otherwise it returns the index of the selcted node.
         /// </summary>
@@ -978,7 +986,7 @@ namespace GameCore
             foreach (var child in children)
             {
                 child.SetScore(((child.GetWins() / child.GetVisits()) + explorationFactor) *
-                    BitConverter.Int64BitsToDouble(((long)((int)(-1 * ((int)(BitConverter.DoubleToInt64Bits(MonteCarloNode.Rsqrt(Math.Log(timesVisited) / child.GetVisits())) >> 32) - 1072632447) + 1072632447))) << 32)
+                    BitConverter.Int64BitsToDouble(((long)((-1 * ((int)(BitConverter.DoubleToInt64Bits(Rsqrt(Math.Log(timesVisited) / child.GetVisits())) >> 32) - 1072632447)) + 1072632447)) << 32)
                     + (moveTotals[child.GetMove()].Item1 / moveTotals[child.GetMove()].Item2) * (historyInfluence / (child.GetVisits() - child.GetWins() + 1))
                     );
             }
@@ -991,8 +999,8 @@ namespace GameCore
 
             return children.Count - 1;
         }
-               
-//Expansion Phase Code
+
+        //Expansion Phase Code
         /// <summary>
         /// The <c>ExpandOptions</c> method calls the <c>RandomMove</c> method to generate a move to expand the current options from the current <c>MonteCarloNode</c>
         /// and returns true after it has expanded the child options.
@@ -1003,19 +1011,19 @@ namespace GameCore
             move = RandomMove();
             while (!InsertChild(move))
             {
-                //if (!invalidMoves.Contains(move))
-                //{
-                //    invalidMoves.Add(move);
-                //}
+                if (!invalidMoves.Contains(move))
+                {
+                    invalidMoves.Add(move);
+                }
 
                 move = RandomMove();
 
-                //while (invalidMoves.Contains(move))
-                //{
-                //    move = RandomMove();
-                //}
+                while (invalidMoves.Contains(move))
+                {
+                    move = RandomMove();
+                }
             }
-            
+
             return FindMove(move);
         }
 
@@ -1102,7 +1110,7 @@ namespace GameCore
         {
             bool successfulInsert = false;
 #if DEBUG
-            if (move == null || move[0] == '`' || move[0] == '0')
+            if (move == null || move[0] == '`' || move[0] == '0' || move[0] == 'j')
             {
                 Console.WriteLine("ABORT!");
             }
@@ -1154,7 +1162,7 @@ namespace GameCore
             return successfulInsert;
         }
 
-//Simulation & Backpropagation Phase Code
+        //Simulation & Backpropagation Phase Code
         /// <summary>
         /// SimulatedGame evaluates a game from a node and plays a series of moves until it reaches an endstate when it recursively backpropagates and updates the previous nodes. 
         /// On a losing endstate the function returns false and true on a victory.
@@ -1166,7 +1174,7 @@ namespace GameCore
             ++timesVisited;
             bool mctsVictory = false;
 
-            if (depthCheck > 181)
+            if (depthCheck > 124)
             {
                 gameOver = true;
             }
@@ -1193,7 +1201,7 @@ namespace GameCore
                     mctsVictory = true;
                     moveTotals[thisMove] = new Tuple<double, double>(moveTotals[thisMove].Item1 + 1, moveTotals[thisMove].Item2);
                     ++wins;
-                }        
+                }
             }
             --depthCheck;
             children.Sort();
@@ -1212,29 +1220,29 @@ namespace GameCore
         {
             TreeSearch = new MonteCarloNode(boardState.GetPlayerCoordinate(GameBoard.PlayerEnum.ONE), boardState.GetPlayerCoordinate(GameBoard.PlayerEnum.TWO),
                                                             boardState.GetPlayerWallCount(GameBoard.PlayerEnum.ONE), boardState.GetPlayerWallCount(GameBoard.PlayerEnum.TWO),
-                                                            boardState.GetWalls(), boardState.GetWhoseTurn() == 1 ? GameBoard.PlayerEnum.ONE : GameBoard.PlayerEnum.TWO );
+                                                            boardState.GetWalls(), boardState.GetWhoseTurn() == 1 ? GameBoard.PlayerEnum.ONE : GameBoard.PlayerEnum.TWO);
         }
 
         public string MonteCarloTreeSearch()
         {
             Stopwatch timer = new Stopwatch();
             timer.Start();
-//#if DEBUG
-//            for (int i = 0; i < 10000; ++i)
-//            {
-//                TreeSearch.SimulatedGame();
-//            }
+            //#if DEBUG
+            //            for (int i = 0; i < 10000; ++i)
+            //            {
+            //                TreeSearch.SimulatedGame();
+            //            }
 
-//            timer.Stop();
-//            Console.WriteLine(timer.Elapsed.TotalSeconds);
-//#else
+            //            timer.Stop();
+            //            Console.WriteLine(timer.Elapsed.TotalSeconds);
+            //#else
             for (int i = 0; i < 10000 && timer.Elapsed.TotalSeconds < 5; ++i)
             {
                 TreeSearch.SimulatedGame();
             }
 
             timer.Stop();
-//#endif
+            //#endif
 
             int indexOfMostVisitedNode = -1;
             double currentGreatestVisits = -1;
