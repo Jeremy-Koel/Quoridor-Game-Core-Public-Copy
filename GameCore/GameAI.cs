@@ -1166,7 +1166,7 @@ namespace GameCore
             ++timesVisited;
             bool mctsVictory = false;
 
-            if (depthCheck > 181)
+            if (depthCheck > 134)
             {
                 gameOver = true;
             }
@@ -1235,18 +1235,6 @@ namespace GameCore
 
             timer.Stop();
 //#endif
-
-            int indexOfMostVisitedNode = -1;
-            double currentGreatestVisits = -1;
-
-            //for (int i = 0; i < TreeSearch.GetChildrenNodes().Count; i++)
-            //{
-            //    if (TreeSearch.GetChildrenNodes()[i].GetVisits() > currentGreatestVisits)
-            //    {
-            //        currentGreatestVisits = TreeSearch.GetChildrenNodes()[i].GetVisits();
-            //        indexOfMostVisitedNode = i;
-            //    }
-            //}
 
             List<MonteCarloNode> childrenToChoose = TreeSearch.GetChildrenNodes();
             return childrenToChoose[childrenToChoose.Count - 1].GetMove();
