@@ -17,8 +17,10 @@ namespace GameCore
     /// </summary>
     class MonteCarloNode : IComparable<MonteCarloNode>
     {
-        private static double explorationFactor = 1;
-        private static double historyInfluence = 1;
+
+
+        private static double explorationFactor = .5;
+        private static double historyInfluence = 2;
         private List<MonteCarloNode> children;
         private List<WallCoordinate> walls;
         private static List<BitArray> board;
@@ -967,6 +969,10 @@ namespace GameCore
             return isAValidNodeAvailable;
         }
 
+        /// <summary>
+        /// The SelectionAlgorithm calculates a score for each move based on the knowledge currently in the tree.
+        /// </summary>
+        /// <returns></returns>
         private int SelectionAlgorithm()
         {
             foreach (var child in children)
@@ -976,16 +982,17 @@ namespace GameCore
                     + (moveTotals[child.GetMove()].Item1 / moveTotals[child.GetMove()].Item2) * (historyInfluence / (child.GetVisits() - child.GetWins() + 1))
                     );
             }
+
             children.Sort(delegate (MonteCarloNode lValue, MonteCarloNode rValue)
             {
                 if (lValue.GetScore() == rValue.GetScore()) return 0;
                 else return lValue.GetScore().CompareTo(rValue.GetScore());
             });
+
             return children.Count - 1;
         }
-
-        //Expansion Phase Code
-
+               
+//Expansion Phase Code
         /// <summary>
         /// The <c>ExpandOptions</c> method calls the <c>RandomMove</c> method to generate a move to expand the current options from the current <c>MonteCarloNode</c>
         /// and returns true after it has expanded the child options.
@@ -996,17 +1003,17 @@ namespace GameCore
             move = RandomMove();
             while (!InsertChild(move))
             {
-                if (!invalidMoves.Contains(move))
-                {
-                    invalidMoves.Add(move);
-                }
+                //if (!invalidMoves.Contains(move))
+                //{
+                //    invalidMoves.Add(move);
+                //}
 
                 move = RandomMove();
 
-                while (invalidMoves.Contains(move))
-                {
-                    move = RandomMove();
-                }
+                //while (invalidMoves.Contains(move))
+                //{
+                //    move = RandomMove();
+                //}
             }
             
             return FindMove(move);
@@ -1159,7 +1166,7 @@ namespace GameCore
             ++timesVisited;
             bool mctsVictory = false;
 
-            if (depthCheck > 182)
+            if (depthCheck > 181)
             {
                 gameOver = true;
             }
@@ -1221,7 +1228,7 @@ namespace GameCore
 //            timer.Stop();
 //            Console.WriteLine(timer.Elapsed.TotalSeconds);
 //#else
-            for (int i = 0; i < 10000 && timer.Elapsed.TotalSeconds < 4; ++i)
+            for (int i = 0; i < 10000 && timer.Elapsed.TotalSeconds < 5; ++i)
             {
                 TreeSearch.SimulatedGame();
             }
