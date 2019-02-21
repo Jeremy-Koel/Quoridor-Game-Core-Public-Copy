@@ -15,11 +15,16 @@ namespace GameCore
     /// Description: MonteCarloNode is a node to be used in the building of a Monte Carlo Search Tree. The constructor for a Monte Carlo node
     /// either having it start at e9 or can be given coordinates of where to start along, and may also be passed a List of WallCoordinates.
     /// </summary>
-    class MonteCarloNode
+    class MonteCarloNode : IComparable<MonteCarloNode>
     {
+
+
+        private static double explorationFactor = .5;
+        private static double historyInfluence = 2;
         private List<MonteCarloNode> children;
         private List<WallCoordinate> walls;
         private static List<BitArray> board;
+        private static Dictionary<string, Tuple<double, double>> moveTotals;
         private List<string> childrensMoves;
         private List<string> invalidMoves;
         private static Random randomPercentileChance;
@@ -27,9 +32,11 @@ namespace GameCore
         private MonteCarloNode parent;
         private List<PlayerCoordinate> playerLocations;
         private List<int> wallsRemaining;
+        
+        private double score;
 
-        private int wins;
-        private int timesVisited;
+        private double wins;
+        private double timesVisited;
         private bool gameOver;
         private GameBoard.PlayerEnum turn;
 
@@ -49,14 +56,60 @@ namespace GameCore
             return thisMove;
         }
 
-        public int GetVisits()
+        public double GetWins()
+        {
+            return wins;
+        }
+
+        public double GetVisits()
         {
             return timesVisited;
+        }
+        
+        public double GetScore()
+        {
+            return score;
+        }
+
+        private void SetScore(double v)
+        {
+            score = v;
+        }
+
+        public int CompareTo(MonteCarloNode carloNode)
+        {
+            // A null value means that this object is greater.
+            if (carloNode == null)
+            {
+                return 1;
+            }
+            else if (GetVisits() > carloNode.GetVisits())
+            {
+                return 1;
+            }
+            else if (GetVisits() < carloNode.GetVisits())
+            {
+                return -1;
+            }
+            else if (GetWins() > carloNode.GetWins())
+            {
+                return 1;
+            }
+            else if (GetWins() < carloNode.GetWins())
+            {
+                return -1;
+            }
+            else
+            {
+                return 0;
+            }
+
         }
 
         public MonteCarloNode(PlayerCoordinate playerOne, PlayerCoordinate playerTwo, int playerOneTotalWalls, int playerTwoTotalWalls, List<WallCoordinate> wallCoordinates, GameBoard.PlayerEnum currentTurn)
         {
             board = new List<BitArray>();
+            moveTotals = new Dictionary<string, Tuple<double, double>>();
             for (int i = 0; i < TOTAL_ROWS; i++)
             {
                 board.Add(new BitArray(17));
@@ -84,6 +137,8 @@ namespace GameCore
 
             randomPercentileChance = new Random();
 
+            wins = 0;
+            timesVisited = 0;
             turn = currentTurn;
             gameOver = false;
             parent = null;
@@ -95,6 +150,8 @@ namespace GameCore
             parent = childParent;
             board = childParent.GetBoard();
             thisMove = move;
+            wins = 0;
+            timesVisited = 0;
 
             playerLocations = new List<PlayerCoordinate>(players);
 
@@ -125,6 +182,8 @@ namespace GameCore
             parent = childParent;
             board = childParent.GetBoard();
             thisMove = move;
+            wins = 0;
+            timesVisited = 0;
 
             playerLocations = new List<PlayerCoordinate>();
             playerLocations.Add(new PlayerCoordinate(parent.playerLocations[0].Row, parent.playerLocations[0].Col));
@@ -318,6 +377,24 @@ namespace GameCore
                 distance = double.PositiveInfinity;
             }
             return distance;
+        }
+
+        // Fast Inverse Square Root Function
+        public static double Rsqrt(double number)
+        {
+            long i;
+            double x2, y;
+            const float threehalfs = 1.5F;
+
+            x2 = number * 0.5F;
+            y = number;
+            i = BitConverter.ToInt32(BitConverter.GetBytes(y), 0);                       // evil floating point bit level hacking
+            i = 0x5f3759df - (i >> 1);             
+            y = BitConverter.ToSingle(BitConverter.GetBytes(i), 0);
+            y = y * (threehalfs - (x2 * y * y));   
+                                                  
+
+            return y;
         }
 
         // A-Star Algorithm to find Path between two points on a gameBoard
@@ -882,7 +959,7 @@ namespace GameCore
 
             if (children.Count != 0 && (randomPercentileChance.Next(1, 100) < 71))
             {
-                isAValidNodeAvailable = randomPercentileChance.Next(0, children.Count);
+                isAValidNodeAvailable = SelectionAlgorithm();
             }
             else if (expandedNodeIndex >= 0)
             {
@@ -892,8 +969,30 @@ namespace GameCore
             return isAValidNodeAvailable;
         }
 
-//Expansion Phase Code
+        /// <summary>
+        /// The SelectionAlgorithm calculates a score for each move based on the knowledge currently in the tree.
+        /// </summary>
+        /// <returns></returns>
+        private int SelectionAlgorithm()
+        {
+            foreach (var child in children)
+            {
+                child.SetScore(((child.GetWins() / child.GetVisits()) + explorationFactor) *
+                    BitConverter.Int64BitsToDouble(((long)((int)(-1 * ((int)(BitConverter.DoubleToInt64Bits(MonteCarloNode.Rsqrt(Math.Log(timesVisited) / child.GetVisits())) >> 32) - 1072632447) + 1072632447))) << 32)
+                    + (moveTotals[child.GetMove()].Item1 / moveTotals[child.GetMove()].Item2) * (historyInfluence / (child.GetVisits() - child.GetWins() + 1))
+                    );
+            }
 
+            children.Sort(delegate (MonteCarloNode lValue, MonteCarloNode rValue)
+            {
+                if (lValue.GetScore() == rValue.GetScore()) return 0;
+                else return lValue.GetScore().CompareTo(rValue.GetScore());
+            });
+
+            return children.Count - 1;
+        }
+               
+//Expansion Phase Code
         /// <summary>
         /// The <c>ExpandOptions</c> method calls the <c>RandomMove</c> method to generate a move to expand the current options from the current <c>MonteCarloNode</c>
         /// and returns true after it has expanded the child options.
@@ -904,17 +1003,17 @@ namespace GameCore
             move = RandomMove();
             while (!InsertChild(move))
             {
-                if (!invalidMoves.Contains(move))
-                {
-                    invalidMoves.Add(move);
-                }
+                //if (!invalidMoves.Contains(move))
+                //{
+                //    invalidMoves.Add(move);
+                //}
 
                 move = RandomMove();
 
-                while (invalidMoves.Contains(move))
-                {
-                    move = RandomMove();
-                }
+                //while (invalidMoves.Contains(move))
+                //{
+                //    move = RandomMove();
+                //}
             }
             
             return FindMove(move);
@@ -939,6 +1038,16 @@ namespace GameCore
                         {
 
                             children.Add(new MonteCarloNode(move, playerLocations, wallsRemaining, walls, new WallCoordinate(move), turn, this));
+
+                            if (!moveTotals.ContainsKey(move))
+                            {
+                                moveTotals.Add(move, new Tuple<double, double>(0, 1));
+                            }
+                            else
+                            {
+                                moveTotals[move] = new Tuple<double, double>(moveTotals[move].Item1, moveTotals[move].Item2 + 1);
+                            }
+
                             childrensMoves.Add(move);
                             //#if DEBUG
                             //                        Console.WriteLine(move + ' ' + (turn == 0 ? GameBoard.PlayerEnum.ONE : GameBoard.PlayerEnum.TWO).ToString());
@@ -957,6 +1066,16 @@ namespace GameCore
                             if (MovePiece(turn == 0 ? GameBoard.PlayerEnum.ONE : GameBoard.PlayerEnum.TWO, moveToInsert))
                             {
                                 children.Add(new MonteCarloNode(this, move));
+
+                                if (!moveTotals.ContainsKey(move))
+                                {
+                                    moveTotals.Add(move, new Tuple<double, double>(0, 1));
+                                }
+                                else
+                                {
+                                    moveTotals[move] = new Tuple<double, double>(moveTotals[move].Item1, moveTotals[move].Item2 + 1);
+                                }
+
                                 childrensMoves.Add(move);
                                 //#if DEBUG
                                 //                            Console.WriteLine(move + ' ' + (turn == 0 ? GameBoard.PlayerEnum.ONE : GameBoard.PlayerEnum.TWO).ToString());
@@ -998,6 +1117,7 @@ namespace GameCore
                         {
 
                             children.Add(new MonteCarloNode(move, playerLocations, wallsRemaining, walls, new WallCoordinate(move), turn, this));
+
                             childrensMoves.Add(move);
                             //#if DEBUG
                             //                        Console.WriteLine(move + ' ' + (turn == 0 ? GameBoard.PlayerEnum.ONE : GameBoard.PlayerEnum.TWO).ToString());
@@ -1016,6 +1136,7 @@ namespace GameCore
                             if (MovePiece(turn == 0 ? GameBoard.PlayerEnum.ONE : GameBoard.PlayerEnum.TWO, moveToInsert))
                             {
                                 children.Add(new MonteCarloNode(this, move));
+
                                 childrensMoves.Add(move);
                                 //#if DEBUG
                                 //                            Console.WriteLine(move + ' ' + (turn == 0 ? GameBoard.PlayerEnum.ONE : GameBoard.PlayerEnum.TWO).ToString());
@@ -1035,16 +1156,17 @@ namespace GameCore
 
 //Simulation & Backpropagation Phase Code
         /// <summary>
-        /// SimulatedGame takes a given GameBoard node and plays a series of moves until it reaches an endstate when it recursively backpropagates and updates the previous nodes. 
+        /// SimulatedGame evaluates a game from a node and plays a series of moves until it reaches an endstate when it recursively backpropagates and updates the previous nodes. 
         /// On a losing endstate the function returns false and true on a victory.
         /// </summary>
         /// <returns>Whether or not the function reached a victorious endstate</returns>
         public bool SimulatedGame()
         {
             ++depthCheck;
+            ++timesVisited;
             bool mctsVictory = false;
 
-            if (depthCheck > 182)
+            if (depthCheck > 181)
             {
                 gameOver = true;
             }
@@ -1056,6 +1178,7 @@ namespace GameCore
                 if (nextNodeIndex < 0)
                 {
                     nextNodeIndex = SelectNode(ExpandOptions());
+                    children.Sort();
                 }
                 if (children[nextNodeIndex].SimulatedGame())
                 {
@@ -1068,11 +1191,12 @@ namespace GameCore
                 if (parent.turn.ToString() == MonteCarloPlayer)
                 {
                     mctsVictory = true;
+                    moveTotals[thisMove] = new Tuple<double, double>(moveTotals[thisMove].Item1 + 1, moveTotals[thisMove].Item2);
                     ++wins;
                 }        
             }
             --depthCheck;
-            ++timesVisited;
+            children.Sort();
             return mctsVictory;
         }
 
@@ -1104,7 +1228,7 @@ namespace GameCore
 //            timer.Stop();
 //            Console.WriteLine(timer.Elapsed.TotalSeconds);
 //#else
-            for (int i = 0; i < 10000 && timer.Elapsed.TotalSeconds < 4; ++i)
+            for (int i = 0; i < 10000 && timer.Elapsed.TotalSeconds < 5; ++i)
             {
                 TreeSearch.SimulatedGame();
             }
@@ -1113,18 +1237,19 @@ namespace GameCore
 //#endif
 
             int indexOfMostVisitedNode = -1;
-            int currentGreatestVisits = -1;
+            double currentGreatestVisits = -1;
 
-            for (int i = 0; i < TreeSearch.GetChildrenNodes().Count; i++)
-            {
-                if (TreeSearch.GetChildrenNodes()[i].GetVisits() > currentGreatestVisits)
-                {
-                    currentGreatestVisits = TreeSearch.GetChildrenNodes()[i].GetVisits();
-                    indexOfMostVisitedNode = i;
-                }
-            }
+            //for (int i = 0; i < TreeSearch.GetChildrenNodes().Count; i++)
+            //{
+            //    if (TreeSearch.GetChildrenNodes()[i].GetVisits() > currentGreatestVisits)
+            //    {
+            //        currentGreatestVisits = TreeSearch.GetChildrenNodes()[i].GetVisits();
+            //        indexOfMostVisitedNode = i;
+            //    }
+            //}
 
-            return TreeSearch.GetChildrenNodes()[indexOfMostVisitedNode].GetMove();
+            List<MonteCarloNode> childrenToChoose = TreeSearch.GetChildrenNodes();
+            return childrenToChoose[childrenToChoose.Count - 1].GetMove();
         }
 
 
