@@ -943,6 +943,10 @@ namespace GameCore
             foreach (var wallCoordinate in walls)
             {
                 board[wallCoordinate.StartRow].Set(wallCoordinate.StartCol, true);
+
+                Tuple<int, int> mid = FindMidpoint(new PlayerCoordinate(wallCoordinate.StartRow, wallCoordinate.StartCol), new PlayerCoordinate(wallCoordinate.EndRow, wallCoordinate.EndCol));
+                board[mid.Item1].Set(mid.Item2, true);
+
                 board[wallCoordinate.EndRow].Set(wallCoordinate.EndCol, true);
             }
         }
@@ -952,6 +956,10 @@ namespace GameCore
             foreach (var wallCoordinate in walls)
             {
                 board[wallCoordinate.StartRow].Set(wallCoordinate.StartCol, false);
+
+                Tuple<int, int> mid = FindMidpoint(new PlayerCoordinate(wallCoordinate.StartRow, wallCoordinate.StartCol), new PlayerCoordinate(wallCoordinate.EndRow, wallCoordinate.EndCol));
+                board[mid.Item1].Set(mid.Item2, false);
+
                 board[wallCoordinate.EndRow].Set(wallCoordinate.EndCol, false);
             }
         }
@@ -1011,17 +1019,17 @@ namespace GameCore
             move = RandomMove();
             while (!InsertChild(move))
             {
-                if (!invalidMoves.Contains(move))
-                {
-                    invalidMoves.Add(move);
-                }
+                //if (!invalidMoves.Contains(move))
+                //{
+                //    invalidMoves.Add(move);
+                //}
 
                 move = RandomMove();
 
-                while (invalidMoves.Contains(move))
-                {
-                    move = RandomMove();
-                }
+                //while (invalidMoves.Contains(move))
+                //{
+                //    move = RandomMove();
+                //}
             }
 
             return FindMove(move);
@@ -1057,9 +1065,9 @@ namespace GameCore
                             }
 
                             childrensMoves.Add(move);
-                            //#if DEBUG
-                            //                        Console.WriteLine(move + ' ' + (turn == 0 ? GameBoard.PlayerEnum.ONE : GameBoard.PlayerEnum.TWO).ToString());
-                            //#endif
+//#if DEBUG
+//                            Console.WriteLine(move + ' ' + (turn == 0 ? GameBoard.PlayerEnum.ONE : GameBoard.PlayerEnum.TWO).ToString());
+//#endif
                             successfulInsert = true;
                         }
                     }
@@ -1085,9 +1093,9 @@ namespace GameCore
                                 }
 
                                 childrensMoves.Add(move);
-                                //#if DEBUG
-                                //                            Console.WriteLine(move + ' ' + (turn == 0 ? GameBoard.PlayerEnum.ONE : GameBoard.PlayerEnum.TWO).ToString());
-                                //#endif
+//#if DEBUG
+//                                Console.WriteLine(move + ' ' + (turn == 0 ? GameBoard.PlayerEnum.ONE : GameBoard.PlayerEnum.TWO).ToString());
+//#endif
                                 successfulInsert = true;
                             }
                         }
@@ -1174,7 +1182,7 @@ namespace GameCore
             ++timesVisited;
             bool mctsVictory = false;
 
-            if (depthCheck > 124)
+            if (depthCheck > 184)
             {
                 gameOver = true;
             }
