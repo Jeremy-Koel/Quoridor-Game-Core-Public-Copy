@@ -19,12 +19,13 @@ namespace GameCore
     {
 
 
-        private static double explorationFactor = .75;
+        private static double explorationFactor = .5;
         private static double historyInfluence = 1;
         private List<MonteCarloNode> children;
         private List<WallCoordinate> walls;
         private static List<BitArray> board;
         private static Dictionary<string, Tuple<double, double>> moveTotals;
+        private List<string> possibleMoves;
         private List<string> childrensMoves;
         private List<string> invalidMoves;
         private static Random randomPercentileChance;
@@ -140,10 +141,146 @@ namespace GameCore
             wins = 0;
             timesVisited = 0;
             turn = currentTurn;
+            possibleMoves = PossibleMovesFromPosition();
             gameOver = false;
             parent = null;
         }
 
+        private void PossibleHorizontalJumps(List<string> validMoves, int direction)
+        {
+            if ((playerLocations[turn == 0 ? 0 : 1].Col + (3 * direction) < 17 && playerLocations[turn == 0 ? 0 : 1].Col + (3 * direction) > -1) 
+                && !board[playerLocations[turn == 0 ? 0 : 1].Row].Get(playerLocations[turn == 0 ? 0 : 1].Col + (3 * direction)))
+            {
+                StringBuilder sb = new StringBuilder();
+
+                sb.Append(Convert.ToChar(97 + (playerLocations[turn == 0 ? 1 : 0].Col / 2) + (1 * direction)));
+                sb.Append(9 - (playerLocations[turn == 0 ? 1 : 0].Row / 2));
+
+                validMoves.Add(sb.ToString());
+            }
+            else if (playerLocations[turn == 0 ? 0 : 1].Row + 2 * direction < 17 && playerLocations[turn == 0 ? 0 : 1].Col + (2 * direction) > -1)
+            {
+                if (!board[playerLocations[turn == 0 ? 0 : 1].Row + 1].Get(playerLocations[turn == 0 ? 0 : 1].Col + 2 * direction))
+                {
+                    StringBuilder sb = new StringBuilder();
+
+                    sb.Append(Convert.ToChar(97 + (playerLocations[turn == 0 ? 1 : 0].Col / 2)));
+                    sb.Append(9 - (playerLocations[turn == 0 ? 1 : 0].Row / 2) + 1);
+
+                    validMoves.Add(sb.ToString());
+                }
+                else if (!board[playerLocations[turn == 0 ? 0 : 1].Row - 1].Get(playerLocations[turn == 0 ? 0 : 1].Col + 2 * direction))
+                {
+                    StringBuilder sb = new StringBuilder();
+
+                    sb.Append(Convert.ToChar(97 + (playerLocations[turn == 0 ? 1 : 0].Col / 2)));
+                    sb.Append(9 - (playerLocations[turn == 0 ? 1 : 0].Row / 2) - 1);
+
+                    validMoves.Add(sb.ToString());
+                }
+            }
+        }
+
+        private void PossibleVerticalJumps(List<string> validMoves, int direction)
+        {
+            if ((playerLocations[turn == 0 ? 0 : 1].Col + (3 * direction) < 17 && playerLocations[turn == 0 ? 0 : 1].Col + (3 * direction) > -1) 
+                && !board[playerLocations[turn == 0 ? 0 : 1].Row + (3 * direction)].Get(playerLocations[turn == 0 ? 0 : 1].Col))
+            {
+                StringBuilder sb = new StringBuilder();
+
+                sb.Append(Convert.ToChar(97 + (playerLocations[turn == 0 ? 1 : 0].Col / 2) + (1 * direction)));
+                sb.Append(9 - (playerLocations[turn == 0 ? 1 : 0].Row / 2));
+
+                validMoves.Add(sb.ToString());
+            }
+            else if (playerLocations[turn == 0 ? 0 : 1].Col + 2 * direction < 17 && playerLocations[turn == 0 ? 0 : 1].Col + (2 * direction) > -1)
+            {
+                if (!board[playerLocations[turn == 0 ? 0 : 1].Row + 2 * direction].Get(playerLocations[turn == 0 ? 0 : 1].Col + 1))
+                {
+                    StringBuilder sb = new StringBuilder();
+
+                    sb.Append(Convert.ToChar(97 + (playerLocations[turn == 0 ? 1 : 0].Col / 2)));
+                    sb.Append(9 - (playerLocations[turn == 0 ? 1 : 0].Row / 2) + 1);
+
+                    validMoves.Add(sb.ToString());
+                }
+                else if (!board[playerLocations[turn == 0 ? 0 : 1].Row + 2 * direction].Get(playerLocations[turn == 0 ? 0 : 1].Col - 1))
+                {
+                    StringBuilder sb = new StringBuilder();
+
+                    sb.Append(Convert.ToChar(97 + (playerLocations[turn == 0 ? 1 : 0].Col / 2) - 1));
+                    sb.Append(9 - (playerLocations[turn == 0 ? 1 : 0].Row / 2));
+
+                    validMoves.Add(sb.ToString());
+                }
+            }
+        }
+    
+
+        private List<string> PossibleMovesFromPosition()
+        {
+            List<string> validMoves = new List<string>();
+
+            Populate();
+            if (PlayersAreAdjacent())
+            {
+                if (playerLocations[turn == 0 ? 0 : 1].Row == playerLocations[turn == 0 ? 1 : 0].Row)
+                {
+                    if (playerLocations[turn == 0 ? 0 : 1].Col < playerLocations[turn == 0 ? 1 : 0].Col)
+                    {
+                        PossibleHorizontalJumps(validMoves, 1);
+                    }
+                    else
+                    {
+                        PossibleHorizontalJumps(validMoves, -1);
+                    }
+                }
+                else
+                {
+                    if (playerLocations[turn == 0 ? 0 : 1].Row < playerLocations[turn == 0 ? 1 : 0].Row)
+                    {
+                        PossibleVerticalJumps(validMoves, 1);
+                    }
+                    else
+                    {
+                        PossibleVerticalJumps(validMoves, 1);
+                    }
+                }
+            }
+            if (playerLocations[turn == 0 ? 0 : 1].Row + 1 < 17 && !board[playerLocations[turn == 0 ? 0 : 1].Row + 1].Get(playerLocations[turn == 0 ? 0 : 1].Col))
+            {
+                StringBuilder sb = new StringBuilder();
+                sb.Append(Convert.ToChar(97 + (playerLocations[turn == 0 ? 0 : 1].Col / 2)));
+                sb.Append(9 - (playerLocations[turn == 0 ? 0 : 1].Row / 2) + 1);
+                validMoves.Add(sb.ToString());
+            }
+            if (!board[playerLocations[turn == 0 ? 0 : 1].Row - 1].Get(playerLocations[turn == 0 ? 0 : 1].Col))
+            {
+                StringBuilder sb = new StringBuilder();
+                sb.Append(Convert.ToChar(97 + (playerLocations[turn == 0 ? 0 : 1].Col / 2)));
+                sb.Append(9 - (playerLocations[turn == 0 ? 0 : 1].Row / 2) - 1);
+                validMoves.Add(sb.ToString());
+            }
+            if (!board[playerLocations[turn == 0 ? 0 : 1].Row].Get(playerLocations[turn == 0 ? 0 : 1].Col + 1))
+            {
+                StringBuilder sb = new StringBuilder();
+                sb.Append(Convert.ToChar(97 + (playerLocations[turn == 0 ? 0 : 1].Col / 2)) + 1);
+                sb.Append(9 - (playerLocations[turn == 0 ? 0 : 1].Row / 2));
+                validMoves.Add(sb.ToString());
+            }
+            if (!board[playerLocations[turn == 0 ? 0 : 1].Row].Get(playerLocations[turn == 0 ? 0 : 1].Col - 1))
+            {
+                StringBuilder sb = new StringBuilder();
+                sb.Append(Convert.ToChar(97 + (playerLocations[turn == 0 ? 0 : 1].Col / 2)) - 1);
+                sb.Append(9 - (playerLocations[turn == 0 ? 0 : 1].Row / 2) + 1);
+                validMoves.Add(sb.ToString());
+            }
+
+            Unpopulate();
+
+
+            return validMoves;
+        }
         private MonteCarloNode(string move, List<PlayerCoordinate> players, List<int> wallCounts, List<WallCoordinate> wallCoordinates, WallCoordinate newWallCoordinate, GameBoard.PlayerEnum currentTurn, MonteCarloNode childParent)
         {
             turn = currentTurn;
@@ -932,10 +1069,10 @@ namespace GameCore
 
         private bool PlayersAreAdjacent()
         {
-            return (playerLocations[0].Row == playerLocations[1].Row && playerLocations[0].Col + 2 == playerLocations[1].Col)
-                || (playerLocations[0].Row == playerLocations[1].Row && playerLocations[0].Col - 2 == playerLocations[1].Col)
-                || (playerLocations[0].Row + 2 == playerLocations[1].Row && playerLocations[0].Col == playerLocations[1].Col)
-                || (playerLocations[0].Row - 2 == playerLocations[1].Row && playerLocations[0].Col == playerLocations[1].Col);
+            return (playerLocations[turn == 0 ? 0 : 1].Row == playerLocations[turn == 0 ? 1 : 0].Row && playerLocations[turn == 0 ? 0 : 1].Col + 2 == playerLocations[turn == 0 ? 1 : 0].Col && !board[playerLocations[turn == 0 ? 0 : 1].Row].Get(playerLocations[turn == 0 ? 0 : 1].Col + 1))
+                || (playerLocations[turn == 0 ? 0 : 1].Row == playerLocations[turn == 0 ? 1 : 0].Row && playerLocations[turn == 0 ? 0 : 1].Col - 2 == playerLocations[turn == 0 ? 1 : 0].Col && !board[playerLocations[turn == 0 ? 0 : 1].Row].Get(playerLocations[turn == 0 ? 0 : 1].Col - 1))
+                || (playerLocations[turn == 0 ? 0 : 1].Row + 2 == playerLocations[turn == 0 ? 1 : 0].Row && playerLocations[turn == 0 ? 0 : 1].Col == playerLocations[turn == 0 ? 1 : 0].Col && !board[playerLocations[turn == 0 ? 0 : 1].Row + 1].Get(playerLocations[turn == 0 ? 0 : 1].Col))
+                || (playerLocations[turn == 0 ? 0 : 1].Row - 2 == playerLocations[turn == 0 ? 1 : 0].Row && playerLocations[turn == 0 ? 0 : 1].Col == playerLocations[turn == 0 ? 1 : 0].Col && !board[playerLocations[turn == 0 ? 0 : 1].Row - 1].Get(playerLocations[turn == 0 ? 0 : 1].Col));
         }
 
         private void Populate()
