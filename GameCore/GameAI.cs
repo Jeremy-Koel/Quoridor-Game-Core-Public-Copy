@@ -27,7 +27,6 @@ namespace GameCore
         private static Dictionary<string, Tuple<double, double>> moveTotals;
         private List<string> possibleMoves;
         private List<string> childrensMoves;
-        private List<string> invalidMoves;
         private static Random randomPercentileChance;
         private static string MonteCarloPlayer;
         private MonteCarloNode parent;
@@ -145,7 +144,6 @@ namespace GameCore
 
             children = new List<MonteCarloNode>();
             childrensMoves = new List<string>();
-            invalidMoves = new List<string>();
 
             randomPercentileChance = new Random();
 
@@ -182,7 +180,6 @@ namespace GameCore
 
             children = new List<MonteCarloNode>();
             childrensMoves = new List<string>();
-            invalidMoves = new List<string>();
 
 
             walls.Add(newWallCoordinate);
@@ -224,7 +221,6 @@ namespace GameCore
 
             children = new List<MonteCarloNode>();
             childrensMoves = new List<string>();
-            invalidMoves = new List<string>();
 
             PlayerCoordinate destinationCoordinate = new PlayerCoordinate(move);
 
@@ -458,24 +454,7 @@ namespace GameCore
 
             return indexOfMove;
         }
-
-        private bool MovePiece(GameBoard.PlayerEnum player, PlayerCoordinate destinationCoordinate)
-        {
-            bool retValue = false;
-            PlayerCoordinate startCoordinate = null;
-            switch (player)
-            {
-                case GameBoard.PlayerEnum.ONE:
-                    startCoordinate = playerLocations[0];
-                    break;
-                case GameBoard.PlayerEnum.TWO:
-                    startCoordinate = playerLocations[1];
-                    break;
-            }
-
-            return true;
-        }
-
+        
         public List<MonteCarloNode> GetChildrenNodes()
         {
             return children;
@@ -752,31 +731,6 @@ namespace GameCore
 
             }
             return false;
-        }
-
-        private bool ValidPlayerMove(PlayerCoordinate start, PlayerCoordinate destination)
-        {
-            if (gameOver
-                || !IsMoveInBounds(destination.Row, destination.Col))
-            {
-                return false;
-            }
-
-            bool onPlayerSpace = IsMoveOnOpenSpace(turn, destination);
-            bool blocked = IsMoveBlocked(start, destination);
-            bool canReach = IsDestinationAdjacent(start, destination);
-            if (!canReach)
-            {
-                //#if DEBUG
-                //                return false;
-                //#else
-                canReach = IsValidJump(turn, start, destination);
-                //#endif
-            }
-
-            return onPlayerSpace
-                && !blocked
-                && canReach;
         }
 
         private bool ValidWallMove(string move)
