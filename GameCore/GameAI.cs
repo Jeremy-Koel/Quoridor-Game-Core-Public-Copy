@@ -325,9 +325,9 @@ namespace GameCore
                     StringBuilder sb = new StringBuilder();
 
                     sb.Append(Convert.ToChar(97 + (playerLocations[turn == 0 ? 1 : 0].Col / 2)));
-                    sb.Append(value: 9 - (playerLocations[turn == 0 ? 1 : 0].Row / 2) + (1 * direction) > 9 ? 9
-                                   : 9 - (playerLocations[turn == 0 ? 1 : 0].Row / 2) + (1 * direction) < 1 ? 1
-                                   : 9 - (playerLocations[turn == 0 ? 1 : 0].Row / 2) + (1 * direction));
+                    sb.Append(value: 9 - (playerLocations[turn == 0 ? 1 : 0].Row / 2) - (1 * direction) > 9 ? 9
+                                   : 9 - (playerLocations[turn == 0 ? 1 : 0].Row / 2) - (1 * direction) < 1 ? 1
+                                   : 9 - (playerLocations[turn == 0 ? 1 : 0].Row / 2) - (1 * direction));
 
                     validMoves.Add(sb.ToString());
                 }
@@ -413,7 +413,8 @@ namespace GameCore
                     }
                 }
             }
-            if (playerLocations[turn == 0 ? 0 : 1].Row + 1 < 17 && !board[playerLocations[turn == 0 ? 0 : 1].Row + 1].Get(playerLocations[turn == 0 ? 0 : 1].Col))
+            if (playerLocations[turn == 0 ? 0 : 1].Row + 1 < 17 && !board[playerLocations[turn == 0 ? 0 : 1].Row + 1].Get(playerLocations[turn == 0 ? 0 : 1].Col) 
+                && (playerLocations[turn == 0 ? 0 : 1].Row + 2 != playerLocations[turn == 0 ? 1 : 0].Row || playerLocations[turn == 0 ? 0 : 1].Col != playerLocations[turn == 0 ? 1 : 0].Col))
             {
                 //South
                 StringBuilder sb = new StringBuilder();
@@ -421,7 +422,8 @@ namespace GameCore
                 sb.Append(9 - (playerLocations[turn == 0 ? 0 : 1].Row / 2) - 1 < 1 ? 1 : 9 - (playerLocations[turn == 0 ? 0 : 1].Row / 2) - 1);
                 validMoves.Add(sb.ToString());
             }
-            if (playerLocations[turn == 0 ? 0 : 1].Row - 1 > -1 && !board[playerLocations[turn == 0 ? 0 : 1].Row - 1].Get(playerLocations[turn == 0 ? 0 : 1].Col))
+            if (playerLocations[turn == 0 ? 0 : 1].Row - 1 > -1 && !board[playerLocations[turn == 0 ? 0 : 1].Row - 1].Get(playerLocations[turn == 0 ? 0 : 1].Col)
+                 && (playerLocations[turn == 0 ? 0 : 1].Row + 2 != playerLocations[turn == 0 ? 1 : 0].Row || playerLocations[turn == 0 ? 0 : 1].Col != playerLocations[turn == 0 ? 1 : 0].Col))
             {
                 //North
                 StringBuilder sb = new StringBuilder();
@@ -429,7 +431,8 @@ namespace GameCore
                 sb.Append(9 - (playerLocations[turn == 0 ? 0 : 1].Row / 2) + 1 > 9 ? 9 : 9 - (playerLocations[turn == 0 ? 0 : 1].Row / 2) + 1);
                 validMoves.Add(sb.ToString());
             }
-            if (playerLocations[turn == 0 ? 0 : 1].Col + 1 < 17 && !board[playerLocations[turn == 0 ? 0 : 1].Row].Get(playerLocations[turn == 0 ? 0 : 1].Col + 1))
+            if (playerLocations[turn == 0 ? 0 : 1].Col + 1 < 17 && !board[playerLocations[turn == 0 ? 0 : 1].Row].Get(playerLocations[turn == 0 ? 0 : 1].Col + 1)
+                && (playerLocations[turn == 0 ? 0 : 1].Row != playerLocations[turn == 0 ? 1 : 0].Row || playerLocations[turn == 0 ? 0 : 1].Col + 2 != playerLocations[turn == 0 ? 1 : 0].Col))
             {
                 //East
                 StringBuilder sb = new StringBuilder();
@@ -437,7 +440,8 @@ namespace GameCore
                 sb.Append(9 - (playerLocations[turn == 0 ? 0 : 1].Row / 2));
                 validMoves.Add(sb.ToString());
             }
-            if (playerLocations[turn == 0 ? 0 : 1].Col - 1 > -1 && !board[playerLocations[turn == 0 ? 0 : 1].Row].Get(playerLocations[turn == 0 ? 0 : 1].Col - 1))
+            if (playerLocations[turn == 0 ? 0 : 1].Col - 1 > -1 && !board[playerLocations[turn == 0 ? 0 : 1].Row].Get(playerLocations[turn == 0 ? 0 : 1].Col - 1)
+                && (playerLocations[turn == 0 ? 0 : 1].Row != playerLocations[turn == 0 ? 1 : 0].Row || playerLocations[turn == 0 ? 0 : 1].Col - 2 != playerLocations[turn == 0 ? 1 : 0].Col))
             {
                 //West
                 StringBuilder sb = new StringBuilder();
@@ -1210,17 +1214,9 @@ namespace GameCore
             move = RandomMove();
             while (!InsertChild(move))
             {
-                //if (!invalidMoves.Contains(move))
-                //{
-                //    invalidMoves.Add(move);
-                //}
 
                 move = RandomMove();
 
-                //while (invalidMoves.Contains(move))
-                //{
-                //    move = RandomMove();
-                //}
             }
 
             return FindMove(move);
