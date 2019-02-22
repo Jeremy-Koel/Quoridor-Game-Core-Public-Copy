@@ -1,4 +1,4 @@
-﻿//#define DEBUG 
+﻿#define DEBUG 
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -132,6 +132,17 @@ namespace GameCore
 
             walls = new List<WallCoordinate>(wallCoordinates);
 
+            //walls.Add(new WallCoordinate("e5h"));
+            walls.Add(new WallCoordinate("e4h"));
+            //walls.Add(new WallCoordinate("d4h"));
+            //walls.Add(new WallCoordinate("d4v"));
+            //walls.Add(new WallCoordinate("e4v"));
+            //walls.Add(new WallCoordinate("d5v"));
+            //walls.Add(new WallCoordinate("e6h"));
+            //walls.Add(new WallCoordinate("d3h"));
+            walls.Add(new WallCoordinate("f4v"));
+            //walls.Add(new WallCoordinate("c5v"));
+
             children = new List<MonteCarloNode>();
             childrensMoves = new List<string>();
             invalidMoves = new List<string>();
@@ -250,6 +261,34 @@ namespace GameCore
 #endif
         }
 
+        private void PossibleHorizontalDiagonalJumps (List<string> validMoves, int direction)
+        {
+            if (playerLocations[turn == 0 ? 0 : 1].Row + 1 < 17 && playerLocations[turn == 0 ? 0 : 1].Row - 1 > -1
+                       && playerLocations[turn == 0 ? 0 : 1].Col + 2 * direction < 17 && playerLocations[turn == 0 ? 0 : 1].Col + 2 * direction > -1)
+            {
+                if (!board[playerLocations[turn == 0 ? 0 : 1].Row - 1].Get(playerLocations[turn == 0 ? 0 : 1].Col + 2 * direction))
+                {
+                    StringBuilder sb = new StringBuilder();
+
+                    sb.Append(Convert.ToChar(97 + (playerLocations[turn == 0 ? 1 : 0].Col / 2)));
+                    sb.Append(value: 9 - (playerLocations[turn == 0 ? 1 : 0].Row / 2) + 1 > 9 ? 9
+                                   : 9 - (playerLocations[turn == 0 ? 1 : 0].Row / 2) + 1);
+
+                    validMoves.Add(sb.ToString());
+                }
+                if (!board[playerLocations[turn == 0 ? 0 : 1].Row + 1].Get(playerLocations[turn == 0 ? 0 : 1].Col + 2 * direction))
+                {
+                    StringBuilder sb = new StringBuilder();
+
+                    sb.Append(Convert.ToChar(97 + (playerLocations[turn == 0 ? 1 : 0].Col / 2)));
+                    sb.Append(value: 9 - (playerLocations[turn == 0 ? 1 : 0].Row / 2) - 1 < 1 ? 1
+                                   : 9 - (playerLocations[turn == 0 ? 1 : 0].Row / 2) - 1);
+
+                    validMoves.Add(sb.ToString());
+                }
+            }
+        }
+
         private void PossibleHorizontalJumps(List<string> validMoves, int direction)
         {
             if (playerLocations[turn == 0 ? 0 : 1].Col + (3 * direction) < 17 && playerLocations[turn == 0 ? 0 : 1].Col + (3 * direction) > -1)
@@ -265,51 +304,39 @@ namespace GameCore
 
                     validMoves.Add(sb.ToString());
                 }
-                else if (playerLocations[turn == 0 ? 0 : 1].Row + 1 < 17 && playerLocations[turn == 0 ? 0 : 1].Row - 1 > -1
-                        && playerLocations[turn == 0 ? 0 : 1].Col + 2 * direction < 17 && playerLocations[turn == 0 ? 0 : 1].Col + 2 * direction > -1)
+                else
                 {
-                    if (!board[playerLocations[turn == 0 ? 0 : 1].Row + 1].Get(playerLocations[turn == 0 ? 0 : 1].Col + 2 * direction))
-                    {
-                        StringBuilder sb = new StringBuilder();
-
-                        sb.Append(Convert.ToChar(97 + (playerLocations[turn == 0 ? 1 : 0].Col / 2)));
-                        sb.Append(value: 9 - (playerLocations[turn == 0 ? 1 : 0].Row / 2) + 1 > 9 ? 9
-                                       : 9 - (playerLocations[turn == 0 ? 1 : 0].Row / 2) + 1);
-
-                        validMoves.Add(sb.ToString());
-                    }
-                    else if (!board[playerLocations[turn == 0 ? 0 : 1].Row - 1].Get(playerLocations[turn == 0 ? 0 : 1].Col + 2 * direction))
-                    {
-                        StringBuilder sb = new StringBuilder();
-
-                        sb.Append(Convert.ToChar(97 + (playerLocations[turn == 0 ? 1 : 0].Col / 2)));
-                        sb.Append(value: 9 - (playerLocations[turn == 0 ? 1 : 0].Row / 2) - 1 < 1 ? 1
-                                       : 9 - (playerLocations[turn == 0 ? 1 : 0].Row / 2) - 1);
-
-                        validMoves.Add(sb.ToString());
-                    }
+                    PossibleHorizontalDiagonalJumps(validMoves, direction);
                 }
             }
-            else if (playerLocations[turn == 0 ? 0 : 1].Row + 1 < 17 && playerLocations[turn == 0 ? 0 : 1].Row - 1 > -1
-                    && playerLocations[turn == 0 ? 0 : 1].Col + 2 * direction < 17 && playerLocations[turn == 0 ? 0 : 1].Col + 2 * direction > -1)
+            else
             {
-                if (!board[playerLocations[turn == 0 ? 0 : 1].Row + 1].Get(playerLocations[turn == 0 ? 0 : 1].Col + 2 * direction))
+                PossibleHorizontalDiagonalJumps(validMoves, direction);
+            }
+        }
+
+        private void PossibleVerticalDiagonalJumps(List<string> validMoves, int direction)
+        {
+            if (playerLocations[turn == 0 ? 0 : 1].Col + 1 < 17 && playerLocations[turn == 0 ? 0 : 1].Col - 1 > -1
+                        && playerLocations[turn == 0 ? 0 : 1].Row + 2 * direction < 17 && playerLocations[turn == 0 ? 0 : 1].Row + 2 * direction > -1)
+            {
+                if (!board[playerLocations[turn == 0 ? 0 : 1].Row + 2 * direction].Get(playerLocations[turn == 0 ? 0 : 1].Col + 1))
                 {
                     StringBuilder sb = new StringBuilder();
 
-                    sb.Append(Convert.ToChar(97 + (playerLocations[turn == 0 ? 1 : 0].Col / 2)));
-                    sb.Append(value: 9 - (playerLocations[turn == 0 ? 1 : 0].Row / 2) + 1 > 9 ? 9
-                                   : 9 - (playerLocations[turn == 0 ? 1 : 0].Row / 2) + 1);
+                    sb.Append(Convert.ToChar(value: 97 + (playerLocations[turn == 0 ? 1 : 0].Col / 2) + 1 > 105 ? 105
+                                                  : 97 + (playerLocations[turn == 0 ? 1 : 0].Col / 2) + 1));
+                    sb.Append(9 - (playerLocations[turn == 0 ? 1 : 0].Row / 2));
 
                     validMoves.Add(sb.ToString());
                 }
-                else if (!board[playerLocations[turn == 0 ? 0 : 1].Row - 1].Get(playerLocations[turn == 0 ? 0 : 1].Col + 2 * direction))
+                if (!board[playerLocations[turn == 0 ? 0 : 1].Row + 2 * direction].Get(playerLocations[turn == 0 ? 0 : 1].Col - 1))
                 {
                     StringBuilder sb = new StringBuilder();
 
-                    sb.Append(Convert.ToChar(97 + (playerLocations[turn == 0 ? 1 : 0].Col / 2)));
-                    sb.Append(value: 9 - (playerLocations[turn == 0 ? 1 : 0].Row / 2) - 1 < 1 ? 1
-                                   : 9 - (playerLocations[turn == 0 ? 1 : 0].Row / 2) - 1);
+                    sb.Append(Convert.ToChar(value: 97 + (playerLocations[turn == 0 ? 1 : 0].Col / 2) - 1 < 97 ? 97
+                                                  : 97 + (playerLocations[turn == 0 ? 1 : 0].Col / 2) - 1));
+                    sb.Append(9 - (playerLocations[turn == 0 ? 1 : 0].Row / 2));
 
                     validMoves.Add(sb.ToString());
                 }
@@ -331,54 +358,14 @@ namespace GameCore
 
                     validMoves.Add(sb.ToString());
                 }
-                else if (playerLocations[turn == 0 ? 0 : 1].Col + 1 < 17 && playerLocations[turn == 0 ? 0 : 1].Col - 1 > -1
-                        && playerLocations[turn == 0 ? 0 : 1].Row + 2 * direction < 17 && playerLocations[turn == 0 ? 0 : 1].Row + 2 * direction > -1)
+                else
                 {
-                    if (!board[playerLocations[turn == 0 ? 0 : 1].Row + 2 * direction].Get(playerLocations[turn == 0 ? 0 : 1].Col + 1))
-                    {
-                        StringBuilder sb = new StringBuilder();
-
-                        sb.Append(Convert.ToChar(value: 97 + (playerLocations[turn == 0 ? 1 : 0].Col / 2) + 1 > 105 ? 105 
-                                                      : 97 + (playerLocations[turn == 0 ? 1 : 0].Col / 2) + 1));
-                        sb.Append(9 - (playerLocations[turn == 0 ? 1 : 0].Row / 2));
-
-                        validMoves.Add(sb.ToString());
-                    }
-                    else if (!board[playerLocations[turn == 0 ? 0 : 1].Row + 2 * direction].Get(playerLocations[turn == 0 ? 0 : 1].Col - 1))
-                    {
-                        StringBuilder sb = new StringBuilder();
-
-                        sb.Append(Convert.ToChar(value: 97 + (playerLocations[turn == 0 ? 1 : 0].Col / 2) - 1 < 97 ? 97 
-                                                      : 97 + (playerLocations[turn == 0 ? 1 : 0].Col / 2) - 1));
-                        sb.Append(9 - (playerLocations[turn == 0 ? 1 : 0].Row / 2));
-
-                        validMoves.Add(sb.ToString());
-                    }
+                    PossibleVerticalDiagonalJumps(validMoves, direction);
                 }
             }
-            else if (playerLocations[turn == 0 ? 0 : 1].Col + 1 < 17 && playerLocations[turn == 0 ? 0 : 1].Col -1 > -1
-                    && playerLocations[turn == 0 ? 0 : 1].Row + 2 * direction < 17 && playerLocations[turn == 0 ? 0 : 1].Row + 2 * direction > -1)
+            else
             {
-                if (!board[playerLocations[turn == 0 ? 0 : 1].Row + 2 * direction].Get(playerLocations[turn == 0 ? 0 : 1].Col + 1))
-                {
-                    StringBuilder sb = new StringBuilder();
-
-                    sb.Append(Convert.ToChar(value: 97 + (playerLocations[turn == 0 ? 1 : 0].Col / 2) + 1 > 105 ? 105
-                                                  : 97 + (playerLocations[turn == 0 ? 1 : 0].Col / 2) + 1));
-                    sb.Append(9 - (playerLocations[turn == 0 ? 1 : 0].Row / 2));
-
-                    validMoves.Add(sb.ToString());
-                }
-                else if (!board[playerLocations[turn == 0 ? 0 : 1].Row + 2 * direction].Get(playerLocations[turn == 0 ? 0 : 1].Col - 1))
-                {
-                    StringBuilder sb = new StringBuilder();
-
-                    sb.Append(Convert.ToChar(value: 97 + (playerLocations[turn == 0 ? 1 : 0].Col / 2) - 1 < 97 ? 97
-                                                  : 97 + (playerLocations[turn == 0 ? 1 : 0].Col / 2) - 1));
-                    sb.Append(9 - (playerLocations[turn == 0 ? 1 : 0].Row / 2));
-
-                    validMoves.Add(sb.ToString());
-                }
+                PossibleVerticalDiagonalJumps(validMoves, direction);
             }
         }
     
@@ -423,7 +410,7 @@ namespace GameCore
                 validMoves.Add(sb.ToString());
             }
             if (playerLocations[turn == 0 ? 0 : 1].Row - 1 > -1 && !board[playerLocations[turn == 0 ? 0 : 1].Row - 1].Get(playerLocations[turn == 0 ? 0 : 1].Col)
-                 && (playerLocations[turn == 0 ? 0 : 1].Row + 2 != playerLocations[turn == 0 ? 1 : 0].Row || playerLocations[turn == 0 ? 0 : 1].Col != playerLocations[turn == 0 ? 1 : 0].Col))
+                 && (playerLocations[turn == 0 ? 0 : 1].Row - 2 != playerLocations[turn == 0 ? 1 : 0].Row || playerLocations[turn == 0 ? 0 : 1].Col != playerLocations[turn == 0 ? 1 : 0].Col))
             {
                 //North
                 StringBuilder sb = new StringBuilder();
@@ -486,13 +473,7 @@ namespace GameCore
                     break;
             }
 
-            if (ValidPlayerMove(startCoordinate, destinationCoordinate))
-            {
-                retValue = true;
-            }
-
-
-            return retValue;
+            return true;
         }
 
         public List<MonteCarloNode> GetChildrenNodes()
@@ -1005,7 +986,7 @@ namespace GameCore
 
         private string RandomMove()
         {
-            return randomPercentileChance.Next(1, 100) >= 41 ? FindPlayerMove() : (turn == 0 ? wallsRemaining[0] : wallsRemaining[1]) > 0 ? BoardUtil.GetRandomWallPlacementMove() : BoardUtil.GetRandomNearbyPlayerPieceMove(turn == 0 ? playerLocations[0] : playerLocations[1]);
+            return randomPercentileChance.Next(1, 100) >= 41 ? FindPlayerMove() : (turn == 0 ? wallsRemaining[0] : wallsRemaining[1]) > 0 ? BoardUtil.GetRandomWallPlacementMove() : FindPlayerMove();
         }
 
         private string FindPlayerMove()
@@ -1264,28 +1245,22 @@ namespace GameCore
                     PlayerCoordinate moveToInsert = new PlayerCoordinate(move);
                     if (!(moveToInsert.Row == (turn == 0 ? playerLocations[0] : playerLocations[1]).Row && moveToInsert.Col == (turn == 0 ? playerLocations[0] : playerLocations[1]).Col))
                     {
-                        if (ValidPlayerMove(turn == 0 ? playerLocations[0] : playerLocations[1], moveToInsert))
+                        children.Add(new MonteCarloNode(this, move));
+
+                        if (!moveTotals.ContainsKey(move))
                         {
-                            if (MovePiece(turn == 0 ? GameBoard.PlayerEnum.ONE : GameBoard.PlayerEnum.TWO, moveToInsert))
-                            {
-                                children.Add(new MonteCarloNode(this, move));
-
-                                if (!moveTotals.ContainsKey(move))
-                                {
-                                    moveTotals.Add(move, new Tuple<double, double>(0, 1));
-                                }
-                                else
-                                {
-                                    moveTotals[move] = new Tuple<double, double>(moveTotals[move].Item1, moveTotals[move].Item2 + 1);
-                                }
-
-                                childrensMoves.Add(move);
-//#if DEBUG
-//                                Console.WriteLine(move + ' ' + (turn == 0 ? GameBoard.PlayerEnum.ONE : GameBoard.PlayerEnum.TWO).ToString());
-//#endif
-                                successfulInsert = true;
-                            }
+                            moveTotals.Add(move, new Tuple<double, double>(0, 1));
                         }
+                        else
+                        {
+                            moveTotals[move] = new Tuple<double, double>(moveTotals[move].Item1, moveTotals[move].Item2 + 1);
+                        }
+
+                        childrensMoves.Add(move);
+                        //#if DEBUG
+                        //                                Console.WriteLine(move + ' ' + (turn == 0 ? GameBoard.PlayerEnum.ONE : GameBoard.PlayerEnum.TWO).ToString());
+                        //#endif
+                        successfulInsert = true;
                     }
                 }
             }
@@ -1431,7 +1406,7 @@ namespace GameCore
 //            timer.Stop();
 //            Console.WriteLine(timer.Elapsed.TotalSeconds);
 //#else
-            for (int i = 0; i < 10000 && timer.Elapsed.TotalSeconds < 5; ++i)
+            for (int i = 0; i < 10000 && timer.Elapsed.TotalSeconds < 6; ++i)
             {
                 TreeSearch.SimulatedGame();
             }
