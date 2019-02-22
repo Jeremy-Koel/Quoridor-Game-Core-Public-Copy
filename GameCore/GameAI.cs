@@ -454,7 +454,8 @@ namespace GameCore
 
             return indexOfMove;
         }
-        
+
+
         public List<MonteCarloNode> GetChildrenNodes()
         {
             return children;
@@ -731,6 +732,31 @@ namespace GameCore
 
             }
             return false;
+        }
+
+        private bool ValidPlayerMove(PlayerCoordinate start, PlayerCoordinate destination)
+        {
+            if (gameOver
+                || !IsMoveInBounds(destination.Row, destination.Col))
+            {
+                return false;
+            }
+
+            bool onPlayerSpace = IsMoveOnOpenSpace(turn, destination);
+            bool blocked = IsMoveBlocked(start, destination);
+            bool canReach = IsDestinationAdjacent(start, destination);
+            if (!canReach)
+            {
+                //#if DEBUG
+                //                return false;
+                //#else
+                canReach = IsValidJump(turn, start, destination);
+                //#endif
+            }
+
+            return onPlayerSpace
+                && !blocked
+                && canReach;
         }
 
         private bool ValidWallMove(string move)
