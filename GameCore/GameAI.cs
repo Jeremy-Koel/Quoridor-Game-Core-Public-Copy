@@ -1287,10 +1287,14 @@ namespace GameCore
             {
                 foreach (var child in children)
                 {
+                    if (!moveTotals.ContainsKey(child.thisMove))
+                    {
+                        moveTotals.Add(child.thisMove, new Tuple<double, double>(0, 1));
+                    }
                     child.SetScore((((child.GetWins() / child.GetVisits()) + explorationFactor) *
-                        BitConverter.Int64BitsToDouble(((long)((-1 * ((int)(BitConverter.DoubleToInt64Bits(Rsqrt(Math.Log(timesVisited) / child.GetVisits())) >> 32) - 1072632447)) + 1072632447)) << 32)
-                        + (moveTotals[child.GetMove()].Item1 / moveTotals[child.GetMove()].Item2) * (historyInfluence / (child.GetVisits() - child.GetWins() + 1))
-                        ) / 1000000000000);
+                      BitConverter.Int64BitsToDouble(((long)((-1 * ((int)(BitConverter.DoubleToInt64Bits(Rsqrt(Math.Log(timesVisited) / child.GetVisits())) >> 32) - 1072632447)) + 1072632447)) << 32)
+                      + (moveTotals[child.GetMove()].Item1 / moveTotals[child.GetMove()].Item2) * (historyInfluence / (child.GetVisits() - child.GetWins() + 1))
+                      ) / 1000000000000);
                 }
 
                 children.Sort(delegate (MonteCarloNode lValue, MonteCarloNode rValue)
@@ -1407,7 +1411,7 @@ namespace GameCore
             ++timesVisited;
             bool mctsVictory = false;
 
-            if (depthCheck > 145)
+            if (depthCheck > 125)
             {
                 gameOver = true;
             }
@@ -1463,7 +1467,7 @@ namespace GameCore
         
         private void ThreadedTreeSearch(Stopwatch timer, MonteCarloNode MonteCarlo)
         {
-            for (int i = 0; i < 5000 && timer.Elapsed.TotalSeconds < 5.5; ++i)
+            for (int i = 0; i < 10000 && timer.Elapsed.TotalSeconds < 5.5; ++i)
             {
                 MonteCarlo.SimulatedGame();
             }
@@ -1512,8 +1516,9 @@ namespace GameCore
             }
 
             timer.Stop();
-//#endif
-
+            //#endif
+            Console.WriteLine("Wins: " + TreeSearch.GetWins());
+            Console.WriteLine("Visits: " + TreeSearch.GetVisits());
             List<MonteCarloNode> childrenToChoose = TreeSearch.GetChildrenNodes();
             return childrenToChoose[childrenToChoose.Count - 1].GetMove();
         }
