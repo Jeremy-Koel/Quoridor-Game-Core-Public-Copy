@@ -575,11 +575,11 @@ namespace GameCore
         {
             Tuple<int, int> mid = FindMidpoint(new PlayerCoordinate(wallToPlace.StartRow, wallToPlace.StartCol), new PlayerCoordinate(wallToPlace.EndRow, wallToPlace.EndCol));
 
-            if (wallToPlace.StartRow - 1 > -1 && wallToPlace.StartCol + 1 < 17 && board[wallToPlace.StartRow - 1].Get(wallToPlace.StartCol + 1))
+            if (wallToPlace.StartRow + 1 < 17 && wallToPlace.StartCol + 1 < 17 && board[wallToPlace.StartRow + 1].Get(wallToPlace.StartCol + 1))
             {
                 return true;
             }
-            if (wallToPlace.StartRow - 1 > -1 && wallToPlace.StartCol - 1 > -1 && board[wallToPlace.StartRow - 1].Get(wallToPlace.StartCol - 1))
+            if (wallToPlace.StartRow + 1 < 17 && wallToPlace.StartCol - 1 > -1 && board[wallToPlace.StartRow + 1].Get(wallToPlace.StartCol - 1))
             {
                 return true;
             }
@@ -591,11 +591,11 @@ namespace GameCore
             {
                 return true;
             }
-            if (wallToPlace.EndRow + 1 < 17 && wallToPlace.EndCol - 1 > -1 && board[wallToPlace.EndRow + 1].Get(wallToPlace.EndCol - 1))
+            if (wallToPlace.EndRow - 1 < -1 && wallToPlace.EndCol - 1 > -1 && board[wallToPlace.EndRow - 1].Get(wallToPlace.EndCol - 1))
             {
                 return true;
             }
-            if (wallToPlace.EndRow + 1 < 17 && wallToPlace.EndCol + 1 < 17 && board[wallToPlace.EndRow + 1].Get(wallToPlace.EndCol + 1))
+            if (wallToPlace.EndRow - 1 < -1 && wallToPlace.EndCol + 1 < 17 && board[wallToPlace.EndRow - 1].Get(wallToPlace.EndCol + 1))
             {
                 return true;
             }
@@ -1407,7 +1407,7 @@ namespace GameCore
             ++timesVisited;
             bool mctsVictory = false;
 
-            if (depthCheck > 144)
+            if (depthCheck > 145)
             {
                 gameOver = true;
             }
