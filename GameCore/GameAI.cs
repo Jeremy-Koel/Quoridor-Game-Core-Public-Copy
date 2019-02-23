@@ -130,18 +130,7 @@ namespace GameCore
             wallsRemaining.Add(playerTwoTotalWalls);
 
             walls = new List<WallCoordinate>(wallCoordinates);
-
-            //walls.Add(new WallCoordinate("e5h"));
-            walls.Add(new WallCoordinate("e4h"));
-            //walls.Add(new WallCoordinate("d4h"));
-            //walls.Add(new WallCoordinate("d4v"));
-            //walls.Add(new WallCoordinate("e4v"));
-            //walls.Add(new WallCoordinate("d5v"));
-            //walls.Add(new WallCoordinate("e6h"));
-            //walls.Add(new WallCoordinate("d3h"));
-            walls.Add(new WallCoordinate("f4v"));
-            //walls.Add(new WallCoordinate("c5v"));
-
+            
             children = new List<MonteCarloNode>();
             childrensMoves = new List<string>();
 
@@ -494,7 +483,6 @@ namespace GameCore
                     break;
             }
 
-
             if (WallIsAdjacentToCurrentlyPlacedWalls(wallCoordinate))
             {
                 if (CanPlayersReachGoal(wallCoordinate))
@@ -510,10 +498,13 @@ namespace GameCore
             {
                 return true;
             }
+
         }
 
         private bool WallIsAdjacentToCurrentlyPlacedWalls(WallCoordinate wallToPlace)
         {
+            Populate();
+
             if (wallToPlace.Orientation == WallCoordinate.WallOrientation.Horizontal)
             {
                 return CheckForAdjacentWallsHorizontal(wallToPlace);
@@ -522,22 +513,72 @@ namespace GameCore
             {
                 return CheckForAdjacentWallsVertical(wallToPlace);
             }
+
+            Unpopulate();
         }
 
         private bool CheckForAdjacentWallsHorizontal(WallCoordinate wallToPlace)
         {
             Tuple<int, int> mid = FindMidpoint(new PlayerCoordinate(wallToPlace.StartRow, wallToPlace.StartCol), new PlayerCoordinate(wallToPlace.EndRow, wallToPlace.EndCol));
-            return board[wallToPlace.StartRow + 1].Get(wallToPlace.StartCol - 1) || board[wallToPlace.StartRow - 1].Get(wallToPlace.StartCol - 1) ||
-                   board[mid.Item1 + 1].Get(mid.Item2) || board[mid.Item1 - 1].Get(mid.Item2) ||
-                   board[wallToPlace.EndRow + 1].Get(wallToPlace.EndCol + 1) || board[wallToPlace.EndRow - 1].Get(wallToPlace.EndCol + 1);
+
+            if (wallToPlace.StartRow + 1 < 17 && wallToPlace.StartCol - 1 > -1 && board[wallToPlace.StartRow + 1].Get(wallToPlace.StartCol - 1))
+            {
+                return true;
+            }
+            if (wallToPlace.StartRow - 1 > -1 && wallToPlace.StartCol - 1 > -1 && board[wallToPlace.StartRow - 1].Get(wallToPlace.StartCol - 1))
+            {
+                return true;
+            }
+            if (mid.Item1 + 1 < 17 && board[mid.Item1 + 1].Get(mid.Item2))
+            {
+                return true;
+            }
+            if (mid.Item1 - 1 - 1 > -1 && board[mid.Item1 - 1].Get(mid.Item2))
+            {
+                return true;
+            }
+            if (wallToPlace.EndRow + 1 < 17 && wallToPlace.EndCol + 1 < 17 && board[wallToPlace.EndRow + 1].Get(wallToPlace.EndCol + 1))
+            {
+                return true;
+            }
+            if (wallToPlace.EndRow - 1 > -1 && wallToPlace.EndCol + 1 < 17 && board[wallToPlace.EndRow - 1].Get(wallToPlace.EndCol + 1))
+            {
+                return true;
+            }
+
+            return false;
         }
 
         private bool CheckForAdjacentWallsVertical(WallCoordinate wallToPlace)
         {
             Tuple<int, int> mid = FindMidpoint(new PlayerCoordinate(wallToPlace.StartRow, wallToPlace.StartCol), new PlayerCoordinate(wallToPlace.EndRow, wallToPlace.EndCol));
-            return board[wallToPlace.StartRow - 1].Get(wallToPlace.StartCol + 1) || board[wallToPlace.StartRow - 1].Get(wallToPlace.StartCol - 1) ||
-                   board[mid.Item1].Get(mid.Item2 + 1) || board[mid.Item1].Get(mid.Item2 - 1) ||
-                   board[wallToPlace.EndRow + 1].Get(wallToPlace.EndCol - 1) || board[wallToPlace.EndRow + 1].Get(wallToPlace.EndCol + 1);
+
+            if (wallToPlace.StartRow - 1 > -1 && wallToPlace.StartCol + 1 < 17 && board[wallToPlace.StartRow - 1].Get(wallToPlace.StartCol + 1))
+            {
+                return true;
+            }
+            if (wallToPlace.StartRow - 1 > -1 && wallToPlace.StartCol - 1 > -1 && board[wallToPlace.StartRow - 1].Get(wallToPlace.StartCol - 1))
+            {
+                return true;
+            }
+            if (mid.Item2 + 1 < 17 && board[mid.Item1].Get(mid.Item2 + 1))
+            {
+                return true;
+            }
+            if (mid.Item2 - 1 > -1 && board[mid.Item1].Get(mid.Item2 - 1))
+            {
+                return true;
+            }
+            if (wallToPlace.EndRow + 1 < 17 && wallToPlace.EndCol - 1 > -1 && board[wallToPlace.EndRow + 1].Get(wallToPlace.EndCol - 1))
+            {
+                return true;
+            }
+            if (wallToPlace.EndRow + 1 < 17 && wallToPlace.EndCol + 1 < 17 && board[wallToPlace.EndRow + 1].Get(wallToPlace.EndCol + 1))
+            {
+                return true;
+            }
+
+            return false;
         }
 
         private bool IsValidWallPlacement(WallCoordinate wall)
@@ -1363,7 +1404,7 @@ namespace GameCore
 //            timer.Stop();
 //            Console.WriteLine(timer.Elapsed.TotalSeconds);
 //#else
-            for (int i = 0; i < 10000 && timer.Elapsed.TotalSeconds < 6; ++i)
+            for (int i = 0; i < 10000 && timer.Elapsed.TotalSeconds < 5.5; ++i)
             {
                 TreeSearch.SimulatedGame();
             }
