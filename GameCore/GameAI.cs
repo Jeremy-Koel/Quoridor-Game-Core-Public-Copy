@@ -1084,12 +1084,7 @@ namespace GameCore
             string move;
 
             move = possibleMoves[0].Item1;
-
-            for (int i = 1; childrensMoves.Contains(move) && i < possibleMoves.Count; ++i)
-            {
-                move = possibleMoves[i].Item1;                
-            }            
-
+            
             return move;
         }
 
