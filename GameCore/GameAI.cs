@@ -25,7 +25,7 @@ namespace GameCore
         private List<WallCoordinate> walls;
         private static List<BitArray> board;
         private static Dictionary<string, Tuple<double, double>> moveTotals;
-        private List<string> possibleMoves;
+        private List<Tuple<string, double>> possibleMoves;
         private List<string> childrensMoves;
         private static Random randomPercentileChance;
         private static string MonteCarloPlayer;
@@ -246,7 +246,7 @@ namespace GameCore
 #endif
         }
 
-        private void PossibleHorizontalDiagonalJumps (List<string> validMoves, int direction)
+        private void PossibleHorizontalDiagonalJumps (List<Tuple<string, double>> validMoves, int direction)
         {
             if (playerLocations[turn == 0 ? 0 : 1].Row + 1 < 17 && playerLocations[turn == 0 ? 0 : 1].Row - 1 > -1
                        && playerLocations[turn == 0 ? 0 : 1].Col + 2 * direction < 17 && playerLocations[turn == 0 ? 0 : 1].Col + 2 * direction > -1)
@@ -259,7 +259,7 @@ namespace GameCore
                     sb.Append(value: 9 - (playerLocations[turn == 0 ? 1 : 0].Row / 2) + 1 > 9 ? 9
                                    : 9 - (playerLocations[turn == 0 ? 1 : 0].Row / 2) + 1);
 
-                    validMoves.Add(sb.ToString());
+                    validMoves.Add(new Tuple<string, double>(sb.ToString(), AverageHeuristicEstimate(sb.ToString())));
                 }
                 if (!board[playerLocations[turn == 0 ? 0 : 1].Row + 1].Get(playerLocations[turn == 0 ? 0 : 1].Col + 2 * direction))
                 {
@@ -269,12 +269,12 @@ namespace GameCore
                     sb.Append(value: 9 - (playerLocations[turn == 0 ? 1 : 0].Row / 2) - 1 < 1 ? 1
                                    : 9 - (playerLocations[turn == 0 ? 1 : 0].Row / 2) - 1);
 
-                    validMoves.Add(sb.ToString());
+                    validMoves.Add(new Tuple<string, double>(sb.ToString(), AverageHeuristicEstimate(sb.ToString())));
                 }
             }
         }
 
-        private void PossibleHorizontalJumps(List<string> validMoves, int direction)
+        private void PossibleHorizontalJumps(List<Tuple<string, double>> validMoves, int direction)
         {
             if (playerLocations[turn == 0 ? 0 : 1].Col + (3 * direction) < 17 && playerLocations[turn == 0 ? 0 : 1].Col + (3 * direction) > -1)
             { 
@@ -287,7 +287,7 @@ namespace GameCore
                                             : 97 + (playerLocations[turn == 0 ? 1 : 0].Col / 2) + (1 * direction)));
                     sb.Append(9 - (playerLocations[turn == 0 ? 1 : 0].Row / 2));
 
-                    validMoves.Add(sb.ToString());
+                    validMoves.Add(new Tuple<string, double>(sb.ToString(), AverageHeuristicEstimate(sb.ToString())));
                 }
                 else
                 {
@@ -300,7 +300,7 @@ namespace GameCore
             }
         }
 
-        private void PossibleVerticalDiagonalJumps(List<string> validMoves, int direction)
+        private void PossibleVerticalDiagonalJumps(List<Tuple<string, double>> validMoves, int direction)
         {
             if (playerLocations[turn == 0 ? 0 : 1].Col + 1 < 17 && playerLocations[turn == 0 ? 0 : 1].Col - 1 > -1
                         && playerLocations[turn == 0 ? 0 : 1].Row + 2 * direction < 17 && playerLocations[turn == 0 ? 0 : 1].Row + 2 * direction > -1)
@@ -313,7 +313,7 @@ namespace GameCore
                                                   : 97 + (playerLocations[turn == 0 ? 1 : 0].Col / 2) + 1));
                     sb.Append(9 - (playerLocations[turn == 0 ? 1 : 0].Row / 2));
 
-                    validMoves.Add(sb.ToString());
+                    validMoves.Add(new Tuple<string, double>(sb.ToString(), AverageHeuristicEstimate(sb.ToString())));
                 }
                 if (!board[playerLocations[turn == 0 ? 0 : 1].Row + 2 * direction].Get(playerLocations[turn == 0 ? 0 : 1].Col - 1))
                 {
@@ -323,12 +323,12 @@ namespace GameCore
                                                   : 97 + (playerLocations[turn == 0 ? 1 : 0].Col / 2) - 1));
                     sb.Append(9 - (playerLocations[turn == 0 ? 1 : 0].Row / 2));
 
-                    validMoves.Add(sb.ToString());
+                    validMoves.Add(new Tuple<string, double>(sb.ToString(), AverageHeuristicEstimate(sb.ToString())));
                 }
             }
         }
 
-        private void PossibleVerticalJumps(List<string> validMoves, int direction)
+        private void PossibleVerticalJumps(List<Tuple<string, double>> validMoves, int direction)
         {
             if (playerLocations[turn == 0 ? 0 : 1].Row + (3 * direction) < 17 && playerLocations[turn == 0 ? 0 : 1].Row + (3 * direction) > -1)
             {
@@ -341,7 +341,7 @@ namespace GameCore
                                    : 9 - (playerLocations[turn == 0 ? 1 : 0].Row / 2) - (1 * direction) < 1 ? 1
                                    : 9 - (playerLocations[turn == 0 ? 1 : 0].Row / 2) - (1 * direction));
 
-                    validMoves.Add(sb.ToString());
+                    validMoves.Add(new Tuple<string, double>(sb.ToString(), AverageHeuristicEstimate(sb.ToString())));
                 }
                 else
                 {
@@ -355,9 +355,9 @@ namespace GameCore
         }
     
 
-        private List<string> PossibleMovesFromPosition()
+        private List<Tuple<string, double>> PossibleMovesFromPosition()
         {
-            List<string> validMoves = new List<string>();
+            List<Tuple<string, double>> validMoves = new List<Tuple<string, double>>();
 
             Populate();
             if (PlayersAreAdjacent())
@@ -392,7 +392,7 @@ namespace GameCore
                 StringBuilder sb = new StringBuilder();
                 sb.Append(Convert.ToChar(97 + (playerLocations[turn == 0 ? 0 : 1].Col / 2)));
                 sb.Append(9 - (playerLocations[turn == 0 ? 0 : 1].Row / 2) - 1 < 1 ? 1 : 9 - (playerLocations[turn == 0 ? 0 : 1].Row / 2) - 1);
-                validMoves.Add(sb.ToString());
+                validMoves.Add(new Tuple<string, double>(sb.ToString(), AverageHeuristicEstimate(sb.ToString())));
             }
             if (playerLocations[turn == 0 ? 0 : 1].Row - 1 > -1 && !board[playerLocations[turn == 0 ? 0 : 1].Row - 1].Get(playerLocations[turn == 0 ? 0 : 1].Col)
                  && (playerLocations[turn == 0 ? 0 : 1].Row - 2 != playerLocations[turn == 0 ? 1 : 0].Row || playerLocations[turn == 0 ? 0 : 1].Col != playerLocations[turn == 0 ? 1 : 0].Col))
@@ -401,7 +401,7 @@ namespace GameCore
                 StringBuilder sb = new StringBuilder();
                 sb.Append(Convert.ToChar(97 + (playerLocations[turn == 0 ? 0 : 1].Col / 2)));
                 sb.Append(9 - (playerLocations[turn == 0 ? 0 : 1].Row / 2) + 1 > 9 ? 9 : 9 - (playerLocations[turn == 0 ? 0 : 1].Row / 2) + 1);
-                validMoves.Add(sb.ToString());
+                validMoves.Add(new Tuple<string, double>(sb.ToString(), AverageHeuristicEstimate(sb.ToString())));
             }
             if (playerLocations[turn == 0 ? 0 : 1].Col + 1 < 17 && !board[playerLocations[turn == 0 ? 0 : 1].Row].Get(playerLocations[turn == 0 ? 0 : 1].Col + 1)
                 && (playerLocations[turn == 0 ? 0 : 1].Row != playerLocations[turn == 0 ? 1 : 0].Row || playerLocations[turn == 0 ? 0 : 1].Col + 2 != playerLocations[turn == 0 ? 1 : 0].Col))
@@ -410,7 +410,7 @@ namespace GameCore
                 StringBuilder sb = new StringBuilder();
                 sb.Append(Convert.ToChar(97 + (playerLocations[turn == 0 ? 0 : 1].Col / 2) + 1));
                 sb.Append(9 - (playerLocations[turn == 0 ? 0 : 1].Row / 2));
-                validMoves.Add(sb.ToString());
+                validMoves.Add(new Tuple<string, double>(sb.ToString(), AverageHeuristicEstimate(sb.ToString())));
             }
             if (playerLocations[turn == 0 ? 0 : 1].Col - 1 > -1 && !board[playerLocations[turn == 0 ? 0 : 1].Row].Get(playerLocations[turn == 0 ? 0 : 1].Col - 1)
                 && (playerLocations[turn == 0 ? 0 : 1].Row != playerLocations[turn == 0 ? 1 : 0].Row || playerLocations[turn == 0 ? 0 : 1].Col - 2 != playerLocations[turn == 0 ? 1 : 0].Col))
@@ -419,12 +419,18 @@ namespace GameCore
                 StringBuilder sb = new StringBuilder();
                 sb.Append(Convert.ToChar(97 + (playerLocations[turn == 0 ? 0 : 1].Col / 2) - 1));
                 sb.Append(9 - (playerLocations[turn == 0 ? 0 : 1].Row / 2));
-                validMoves.Add(sb.ToString());
+                validMoves.Add(new Tuple<string, double>(sb.ToString(), AverageHeuristicEstimate(sb.ToString())));
             }
 
 
             Unpopulate();
 
+
+            validMoves.Sort(delegate (Tuple<string, double> lValue, Tuple<string, double> rValue)
+            {
+                if (lValue.Item2 == rValue.Item2) return 0;
+                else return lValue.Item2.CompareTo(rValue.Item2);
+            });
 
             return validMoves;
         }
@@ -505,16 +511,20 @@ namespace GameCore
         {
             Populate();
 
+            bool adjacency = false;
+
             if (wallToPlace.Orientation == WallCoordinate.WallOrientation.Horizontal)
             {
-                return CheckForAdjacentWallsHorizontal(wallToPlace);
+                adjacency = CheckForAdjacentWallsHorizontal(wallToPlace);
             }
             else
             {
-                return CheckForAdjacentWallsVertical(wallToPlace);
+                adjacency = CheckForAdjacentWallsVertical(wallToPlace);
             }
 
             Unpopulate();
+
+            return adjacency;
         }
 
         private bool CheckForAdjacentWallsHorizontal(WallCoordinate wallToPlace)
@@ -613,6 +623,28 @@ namespace GameCore
             Unpopulate();
 
             return canPlayerOneReachGoal && canPlayerTwoReachGoal;
+        }
+
+        private double AverageHeuristicEstimate(string locationToStart)
+        {
+            int EndRow;
+            double AverageHeuristic = 0;
+
+            if (turn == 0)
+            {
+                EndRow = 9;
+            }
+            else
+            {
+                EndRow = 1;
+            }
+
+            for (int characterIndex = 0; characterIndex < 9; characterIndex++)
+            {
+               AverageHeuristic += HeuristicCostEstimate(new PlayerCoordinate(locationToStart), new PlayerCoordinate(Convert.ToChar(97 + characterIndex).ToString() + EndRow.ToString()));
+            }
+
+            return AverageHeuristic / 9;
         }
 
         private double HeuristicCostEstimate(PlayerCoordinate start, PlayerCoordinate goal)
@@ -1051,8 +1083,7 @@ namespace GameCore
         {
             string move;
 
-            int indexOfMove = randomPercentileChance.Next(0, possibleMoves.Count);
-            move = possibleMoves[indexOfMove];
+            move = possibleMoves[0].Item1;
 
             return move;
         }
