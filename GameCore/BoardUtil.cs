@@ -38,6 +38,19 @@ namespace GameCore
             random = new Random();
         }
 
+        public static string MirrorMove(string opponentsMove)
+        {
+            string moveOnMyScreen;
+            char firstLetter = (char)(202 - opponentsMove[0]);
+            char secondLetter = (char)((58 - opponentsMove[1]) + 48);
+            moveOnMyScreen = "" + (char)firstLetter + (char)secondLetter;
+            if (opponentsMove.Length > 2)
+            {
+                moveOnMyScreen = moveOnMyScreen + opponentsMove[2];
+            }
+            return moveOnMyScreen;
+        }
+
         public static int GetInteralPlayerRow(char c)
         {
             return playerRowTranslationMap[c];

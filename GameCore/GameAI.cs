@@ -1103,7 +1103,7 @@ namespace GameCore
 
         private string RandomMove()
         {
-            return randomPercentileChance.Next(1, 100) >= 41 ? FindPlayerMove() : (turn == 0 ? wallsRemaining[0] : wallsRemaining[1]) > 0 ? BoardUtil.GetRandomWallPlacementMove() : FindPlayerMove();
+            return randomPercentileChance.Next(1, 100) >= 37 ? FindPlayerMove() : (turn == 0 ? wallsRemaining[0] : wallsRemaining[1]) > 0 ? BoardUtil.GetRandomWallPlacementMove() : FindPlayerMove();
         }
 
         private string FindPlayerMove()
@@ -1111,7 +1111,7 @@ namespace GameCore
             string move;
 
             move = possibleMoves[0].Item1;
-
+            
             return move;
         }
 
@@ -1400,7 +1400,7 @@ namespace GameCore
             ++timesVisited;
             bool mctsVictory = false;
 
-            if (depthCheck > 184)
+            if (depthCheck > 134)
             {
                 gameOver = true;
             }
@@ -1462,7 +1462,7 @@ namespace GameCore
 //            timer.Stop();
 //            Console.WriteLine(timer.Elapsed.TotalSeconds);
 //#else
-            for (int i = 0; i < 10000 && timer.Elapsed.TotalSeconds < 5.5; ++i)
+            for (int i = 0; i < 100000 && timer.Elapsed.TotalSeconds < 5.5; ++i)
             {
                 TreeSearch.SimulatedGame();
             }
