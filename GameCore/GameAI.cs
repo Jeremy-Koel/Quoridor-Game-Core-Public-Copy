@@ -1085,6 +1085,11 @@ namespace GameCore
 
             move = possibleMoves[0].Item1;
 
+            for (int i = 1; childrensMoves.Contains(move) && i < possibleMoves.Count; ++i)
+            {
+                move = possibleMoves[i].Item1;                
+            }            
+
             return move;
         }
 
@@ -1435,7 +1440,7 @@ namespace GameCore
 //            timer.Stop();
 //            Console.WriteLine(timer.Elapsed.TotalSeconds);
 //#else
-            for (int i = 0; i < 10000 && timer.Elapsed.TotalSeconds < 5.5; ++i)
+            for (int i = 0; i < 100000 && timer.Elapsed.TotalSeconds < 5.5; ++i)
             {
                 TreeSearch.SimulatedGame();
             }
