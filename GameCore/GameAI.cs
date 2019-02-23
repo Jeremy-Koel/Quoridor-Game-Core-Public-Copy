@@ -495,12 +495,49 @@ namespace GameCore
             }
 
 
-            if (CanPlayersReachGoal(wallCoordinate))
+            if (WallIsAdjacentToCurrentlyPlacedWalls(wallCoordinate))
+            {
+                if (CanPlayersReachGoal(wallCoordinate))
+                {
+                    return true;
+                }
+                else
+                {
+                    return false;
+                }
+            }
+            else
             {
                 return true;
             }
+        }
 
-            return false;
+        private bool WallIsAdjacentToCurrentlyPlacedWalls(WallCoordinate wallToPlace)
+        {
+            if (wallToPlace.Orientation == WallCoordinate.WallOrientation.Horizontal)
+            {
+                return CheckForAdjacentWallsHorizontal(wallToPlace);
+            }
+            else
+            {
+                return CheckForAdjacentWallsVertical(wallToPlace);
+            }
+        }
+
+        private bool CheckForAdjacentWallsHorizontal(WallCoordinate wallToPlace)
+        {
+            Tuple<int, int> mid = FindMidpoint(new PlayerCoordinate(wallToPlace.StartRow, wallToPlace.StartCol), new PlayerCoordinate(wallToPlace.EndRow, wallToPlace.EndCol));
+            return board[wallToPlace.StartRow + 1].Get(wallToPlace.StartCol - 1) || board[wallToPlace.StartRow - 1].Get(wallToPlace.StartCol - 1) ||
+                   board[mid.Item1 + 1].Get(mid.Item2) || board[mid.Item1 - 1].Get(mid.Item2) ||
+                   board[wallToPlace.EndRow + 1].Get(wallToPlace.EndCol + 1) || board[wallToPlace.EndRow - 1].Get(wallToPlace.EndCol + 1);
+        }
+
+        private bool CheckForAdjacentWallsVertical(WallCoordinate wallToPlace)
+        {
+            Tuple<int, int> mid = FindMidpoint(new PlayerCoordinate(wallToPlace.StartRow, wallToPlace.StartCol), new PlayerCoordinate(wallToPlace.EndRow, wallToPlace.EndCol));
+            return board[wallToPlace.StartRow - 1].Get(wallToPlace.StartCol + 1) || board[wallToPlace.StartRow - 1].Get(wallToPlace.StartCol - 1) ||
+                   board[mid.Item1].Get(mid.Item2 + 1) || board[mid.Item1].Get(mid.Item2 - 1) ||
+                   board[wallToPlace.EndRow + 1].Get(wallToPlace.EndCol - 1) || board[wallToPlace.EndRow + 1].Get(wallToPlace.EndCol + 1);
         }
 
         private bool IsValidWallPlacement(WallCoordinate wall)
@@ -1249,66 +1286,6 @@ namespace GameCore
                 successfulInsert = true;
             }
 
-            return successfulInsert;
-        }
-        /// <summary>
-        /// The SuccessfullyMadeMove method takes a given string and checks to see if that move can be legally made.
-        /// </summary>
-        /// <param name="move">specified move - either place a wall or move a pawn</param>
-        /// <returns></returns>
-        private bool SuccessfullyMadeMove(string move)
-        {
-            bool successfulInsert = false;
-#if DEBUG
-            if (move == null || move[0] == '`' || move[0] == '0' || move[0] == 'j')
-            {
-                Console.WriteLine("ABORT!");
-            }
-#endif
-            if (!childrensMoves.Contains(move))
-            {
-                if (move.Length != 2)
-                {
-                    if (ValidWallMove(move))
-                    {
-                        if (PlaceWall(turn == 0 ? GameBoard.PlayerEnum.ONE : GameBoard.PlayerEnum.TWO, new WallCoordinate(move)))
-                        {
-
-                            children.Add(new MonteCarloNode(move, playerLocations, wallsRemaining, walls, new WallCoordinate(move), turn, this));
-
-                            childrensMoves.Add(move);
-                            //#if DEBUG
-                            //                        Console.WriteLine(move + ' ' + (turn == 0 ? GameBoard.PlayerEnum.ONE : GameBoard.PlayerEnum.TWO).ToString());
-                            //#endif
-                            successfulInsert = true;
-                        }
-                    }
-                }
-                else
-                {
-                    PlayerCoordinate moveToInsert = new PlayerCoordinate(move);
-                    if (!(moveToInsert.Row == (turn == 0 ? playerLocations[0] : playerLocations[1]).Row && moveToInsert.Col == (turn == 0 ? playerLocations[0] : playerLocations[1]).Col))
-                    {
-                        if (ValidPlayerMove(turn == 0 ? playerLocations[0] : playerLocations[1], moveToInsert))
-                        {
-                            if (MovePiece(turn == 0 ? GameBoard.PlayerEnum.ONE : GameBoard.PlayerEnum.TWO, moveToInsert))
-                            {
-                                children.Add(new MonteCarloNode(this, move));
-
-                                childrensMoves.Add(move);
-                                //#if DEBUG
-                                //                            Console.WriteLine(move + ' ' + (turn == 0 ? GameBoard.PlayerEnum.ONE : GameBoard.PlayerEnum.TWO).ToString());
-                                //#endif
-                                successfulInsert = true;
-                            }
-                        }
-                    }
-                }
-            }
-            else
-            {
-                successfulInsert = true;
-            }
             return successfulInsert;
         }
 
