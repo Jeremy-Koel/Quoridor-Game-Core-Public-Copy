@@ -18,13 +18,13 @@ namespace GameCore
     class MonteCarloNode : IComparable<MonteCarloNode>
     {
 
-        private static MonteCarloNode root;
+
         private static double explorationFactor = .5;
         private static double historyInfluence = 1;
         private List<MonteCarloNode> children;
         private List<WallCoordinate> walls;
         private static List<BitArray> board;
-        private static Dictionary<string, Tuple<ulong, ulong>> moveTotals;
+        private static Dictionary<string, Tuple<double, double>> moveTotals;
         private List<string> possibleMoves;
         private List<string> childrensMoves;
         private static Random randomPercentileChance;
@@ -35,8 +35,8 @@ namespace GameCore
 
         private double score;
 
-        private ulong wins;
-        private ulong timesVisited;
+        private double wins;
+        private double timesVisited;
         private bool gameOver;
         private GameBoard.PlayerEnum turn;
 
@@ -51,29 +51,19 @@ namespace GameCore
             return board;
         }
 
-         public string GetMove()
+        public string GetMove()
         {
             return thisMove;
         }
 
-        public ulong GetWins()
+        public double GetWins()
         {
             return wins;
         }
 
-        public void SetWins()
-        {
-            wins = 0;
-        }
-
-        public ulong GetVisits()
+        public double GetVisits()
         {
             return timesVisited;
-        }
-
-        public void ResetVisits(ulong v)
-        {
-            timesVisited = 0;
         }
 
         public double GetScore()
@@ -116,73 +106,10 @@ namespace GameCore
 
         }
 
-        public static MonteCarloNode GetMonteCarloNode(GameBoard boardState)
-        {
-            if (root == null)
-            {
-               root = new MonteCarloNode(boardState.GetPlayerCoordinate(GameBoard.PlayerEnum.ONE), boardState.GetPlayerCoordinate(GameBoard.PlayerEnum.TWO),
-                                                            boardState.GetPlayerWallCount(GameBoard.PlayerEnum.ONE), boardState.GetPlayerWallCount(GameBoard.PlayerEnum.TWO),
-                                                            boardState.GetWalls(), boardState.GetWhoseTurn() == 1 ? GameBoard.PlayerEnum.ONE : GameBoard.PlayerEnum.TWO);
-            }
-            else
-            {
-                root = root.ResetTree(boardState.GetPlayerCoordinate(GameBoard.PlayerEnum.ONE), boardState.GetPlayerCoordinate(GameBoard.PlayerEnum.TWO),
-                                                            boardState.GetPlayerWallCount(GameBoard.PlayerEnum.ONE), boardState.GetPlayerWallCount(GameBoard.PlayerEnum.TWO),
-                                                            boardState.GetWalls(), boardState.GetWhoseTurn() == 1 ? GameBoard.PlayerEnum.ONE : GameBoard.PlayerEnum.TWO);
-            }
-            return root;
-        }
-
-        private MonteCarloNode ResetTree(PlayerCoordinate playerOne, PlayerCoordinate playerTwo, int playerOneTotalWalls, int playerTwoTotalWalls, List<WallCoordinate> wallCoordinates, GameBoard.PlayerEnum currentTurn)
-        {
-            if (MonteCarloPlayer == null)
-            {
-                MonteCarloPlayer = currentTurn.ToString();
-            }
-
-            playerLocations = new List<PlayerCoordinate>();
-            playerLocations.Add(new PlayerCoordinate(playerOne.Row, playerOne.Col));
-            playerLocations.Add(new PlayerCoordinate(playerTwo.Row, playerTwo.Col));
-
-
-            wallsRemaining = new List<int>();
-            wallsRemaining.Add(playerOneTotalWalls);
-            wallsRemaining.Add(playerTwoTotalWalls);
-
-            walls = new List<WallCoordinate>(wallCoordinates);
-
-            children.RemoveRange(0, children.Count);
-            children = new List<MonteCarloNode>();
-
-            childrensMoves.RemoveRange(0, childrensMoves.Count);
-            childrensMoves = new List<string>();
-
-            randomPercentileChance = new Random();
-
-            wins = 0;
-            timesVisited = 0;
-            turn = currentTurn;
-
-            possibleMoves.RemoveRange(0, possibleMoves.Count);
-            possibleMoves = PossibleMovesFromPosition();
-
-#if DEBUG
-            if (possibleMoves.Count == 0)
-            {
-                Console.WriteLine("Abort");
-            }
-#endif
-
-            gameOver = false;
-            parent = null;
-
-            return this;
-        }
-
-        private MonteCarloNode(PlayerCoordinate playerOne, PlayerCoordinate playerTwo, int playerOneTotalWalls, int playerTwoTotalWalls, List<WallCoordinate> wallCoordinates, GameBoard.PlayerEnum currentTurn)
+        public MonteCarloNode(PlayerCoordinate playerOne, PlayerCoordinate playerTwo, int playerOneTotalWalls, int playerTwoTotalWalls, List<WallCoordinate> wallCoordinates, GameBoard.PlayerEnum currentTurn)
         {
             board = new List<BitArray>();
-            moveTotals = new Dictionary<string, Tuple<ulong, ulong>>();
+            moveTotals = new Dictionary<string, Tuple<double, double>>();
             for (int i = 0; i < TOTAL_ROWS; i++)
             {
                 board.Add(new BitArray(17));
@@ -203,6 +130,17 @@ namespace GameCore
             wallsRemaining.Add(playerTwoTotalWalls);
 
             walls = new List<WallCoordinate>(wallCoordinates);
+
+            //walls.Add(new WallCoordinate("e5h"));
+            walls.Add(new WallCoordinate("e4h"));
+            //walls.Add(new WallCoordinate("d4h"));
+            //walls.Add(new WallCoordinate("d4v"));
+            //walls.Add(new WallCoordinate("e4v"));
+            //walls.Add(new WallCoordinate("d5v"));
+            //walls.Add(new WallCoordinate("e6h"));
+            //walls.Add(new WallCoordinate("d3h"));
+            walls.Add(new WallCoordinate("f4v"));
+            //walls.Add(new WallCoordinate("c5v"));
 
             children = new List<MonteCarloNode>();
             childrensMoves = new List<string>();
@@ -1267,11 +1205,11 @@ namespace GameCore
 
                             if (!moveTotals.ContainsKey(move))
                             {
-                                moveTotals.Add(move, new Tuple<ulong, ulong>(0, 1));
+                                moveTotals.Add(move, new Tuple<double, double>(0, 1));
                             }
                             else
                             {
-                                moveTotals[move] = new Tuple<ulong, ulong>(moveTotals[move].Item1, moveTotals[move].Item2 + 1);
+                                moveTotals[move] = new Tuple<double, double>(moveTotals[move].Item1, moveTotals[move].Item2 + 1);
                             }
 
                             childrensMoves.Add(move);
@@ -1291,11 +1229,11 @@ namespace GameCore
 
                         if (!moveTotals.ContainsKey(move))
                         {
-                            moveTotals.Add(move, new Tuple<ulong, ulong>(0, 1));
+                            moveTotals.Add(move, new Tuple<double, double>(0, 1));
                         }
                         else
                         {
-                            moveTotals[move] = new Tuple<ulong, ulong>(moveTotals[move].Item1, moveTotals[move].Item2 + 1);
+                            moveTotals[move] = new Tuple<double, double>(moveTotals[move].Item1, moveTotals[move].Item2 + 1);
                         }
 
                         childrensMoves.Add(move);
@@ -1311,6 +1249,66 @@ namespace GameCore
                 successfulInsert = true;
             }
 
+            return successfulInsert;
+        }
+        /// <summary>
+        /// The SuccessfullyMadeMove method takes a given string and checks to see if that move can be legally made.
+        /// </summary>
+        /// <param name="move">specified move - either place a wall or move a pawn</param>
+        /// <returns></returns>
+        private bool SuccessfullyMadeMove(string move)
+        {
+            bool successfulInsert = false;
+#if DEBUG
+            if (move == null || move[0] == '`' || move[0] == '0' || move[0] == 'j')
+            {
+                Console.WriteLine("ABORT!");
+            }
+#endif
+            if (!childrensMoves.Contains(move))
+            {
+                if (move.Length != 2)
+                {
+                    if (ValidWallMove(move))
+                    {
+                        if (PlaceWall(turn == 0 ? GameBoard.PlayerEnum.ONE : GameBoard.PlayerEnum.TWO, new WallCoordinate(move)))
+                        {
+
+                            children.Add(new MonteCarloNode(move, playerLocations, wallsRemaining, walls, new WallCoordinate(move), turn, this));
+
+                            childrensMoves.Add(move);
+                            //#if DEBUG
+                            //                        Console.WriteLine(move + ' ' + (turn == 0 ? GameBoard.PlayerEnum.ONE : GameBoard.PlayerEnum.TWO).ToString());
+                            //#endif
+                            successfulInsert = true;
+                        }
+                    }
+                }
+                else
+                {
+                    PlayerCoordinate moveToInsert = new PlayerCoordinate(move);
+                    if (!(moveToInsert.Row == (turn == 0 ? playerLocations[0] : playerLocations[1]).Row && moveToInsert.Col == (turn == 0 ? playerLocations[0] : playerLocations[1]).Col))
+                    {
+                        if (ValidPlayerMove(turn == 0 ? playerLocations[0] : playerLocations[1], moveToInsert))
+                        {
+                            if (MovePiece(turn == 0 ? GameBoard.PlayerEnum.ONE : GameBoard.PlayerEnum.TWO, moveToInsert))
+                            {
+                                children.Add(new MonteCarloNode(this, move));
+
+                                childrensMoves.Add(move);
+                                //#if DEBUG
+                                //                            Console.WriteLine(move + ' ' + (turn == 0 ? GameBoard.PlayerEnum.ONE : GameBoard.PlayerEnum.TWO).ToString());
+                                //#endif
+                                successfulInsert = true;
+                            }
+                        }
+                    }
+                }
+            }
+            else
+            {
+                successfulInsert = true;
+            }
             return successfulInsert;
         }
 
@@ -1351,7 +1349,7 @@ namespace GameCore
                 if (parent.turn.ToString() == MonteCarloPlayer)
                 {
                     mctsVictory = true;
-                    moveTotals[thisMove] = new Tuple<ulong, ulong>(moveTotals[thisMove].Item1 + 1, moveTotals[thisMove].Item2);
+                    moveTotals[thisMove] = new Tuple<double, double>(moveTotals[thisMove].Item1 + 1, moveTotals[thisMove].Item2);
                     ++wins;
                 }
             }
@@ -1370,7 +1368,9 @@ namespace GameCore
         /// <param name="boardState">The current GameBoard to calculate a move from</param>
         public MonteCarlo(GameBoard boardState)
         {
-            TreeSearch = MonteCarloNode.GetMonteCarloNode(boardState);
+            TreeSearch = new MonteCarloNode(boardState.GetPlayerCoordinate(GameBoard.PlayerEnum.ONE), boardState.GetPlayerCoordinate(GameBoard.PlayerEnum.TWO),
+                                                            boardState.GetPlayerWallCount(GameBoard.PlayerEnum.ONE), boardState.GetPlayerWallCount(GameBoard.PlayerEnum.TWO),
+                                                            boardState.GetWalls(), boardState.GetWhoseTurn() == 1 ? GameBoard.PlayerEnum.ONE : GameBoard.PlayerEnum.TWO);
         }
 
         public string MonteCarloTreeSearch()
