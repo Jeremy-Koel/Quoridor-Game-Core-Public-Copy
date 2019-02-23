@@ -639,12 +639,39 @@ namespace GameCore
                 EndRow = 1;
             }
 
+            PlayerCoordinate start = new PlayerCoordinate(locationToStart);
+
             for (int characterIndex = 0; characterIndex < 9; characterIndex++)
             {
-               AverageHeuristic += HeuristicCostEstimate(new PlayerCoordinate(locationToStart), new PlayerCoordinate(Convert.ToChar(97 + characterIndex).ToString() + EndRow.ToString()));
+               AverageHeuristic += HeuristicCostEstimate(start, new PlayerCoordinate(Convert.ToChar(97 + characterIndex).ToString() + EndRow.ToString()));
             }
 
-            return AverageHeuristic / 9;
+            return (AverageHeuristic / 9) * (turn == 0 ? (start.Row == 0 ? 0 : WallsSurroundingLocation(start) + 1)
+                                                       : (start.Row == 16 ? 0 : WallsSurroundingLocation(start) + 1));
+        }
+
+        private int WallsSurroundingLocation(PlayerCoordinate start)
+        {
+            int walls = 0;
+
+            if (start.Row + 1 < 17 && board[start.Row + 1].Get(start.Col))
+            {
+                ++walls;
+            }
+            if (start.Row - 1 > -1 && board[start.Row - 1].Get(start.Col))
+            {
+                ++walls;
+            }
+            if (start.Col + 1 < 17 && board[start.Row].Get(start.Col + 1))
+            {
+                ++walls;
+            }
+            if (start.Col - 1 > -1 && board[start.Row].Get(start.Col - 1))
+            {
+                ++walls;
+            }
+
+            return walls;
         }
 
         private double HeuristicCostEstimate(PlayerCoordinate start, PlayerCoordinate goal)
