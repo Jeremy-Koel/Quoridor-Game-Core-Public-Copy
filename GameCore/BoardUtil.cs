@@ -51,6 +51,15 @@ namespace GameCore
             return moveOnMyScreen;
         }
 
+        public static string MirrorWall(string opponentsWall)
+        {
+            string wallOnMyScreen = "";
+            char firstLetter = (char)(201 - opponentsWall[0]);
+            char secondLetter = (char)((57 - opponentsWall[1]) + 48);
+            wallOnMyScreen = "" + (char)firstLetter + (char)secondLetter + opponentsWall[2];
+            return wallOnMyScreen;
+        }
+
         public static int GetInteralPlayerRow(char c)
         {
             return playerRowTranslationMap[c];
