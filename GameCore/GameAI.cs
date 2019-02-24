@@ -27,7 +27,6 @@ namespace GameCore
         private static string MonteCarloPlayer;
         private static Random randomPercentileChance;
         private static List<BitArray> board;
-        private static List<List<short>> playerMoveValue;
         private static Dictionary<string, Tuple<double, double>> moveTotals;
 
         private List<MonteCarloNode> children;
