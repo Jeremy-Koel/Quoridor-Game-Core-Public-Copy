@@ -27,6 +27,7 @@ namespace GameCore
         private static string MonteCarloPlayer;
         private static Random randomPercentileChance;
         private static List<BitArray> board;
+        private static int[,] possibleMoveValues;
         private static Dictionary<string, Tuple<double, double>> moveTotals;
 
         private List<MonteCarloNode> children;
@@ -38,7 +39,6 @@ namespace GameCore
         private List<int> wallsRemaining;
 
         private double score;
-
         private double wins;
         private double timesVisited;
         private bool gameOver;
@@ -47,7 +47,6 @@ namespace GameCore
         private int depthCheck = 0;
         public static int TOTAL_ROWS = 17;
         public static int TOTAL_COLS = 17;
-        // public GameBoard boardState;
         private string thisMove;
 
         public List<BitArray> GetBoard()
@@ -80,6 +79,11 @@ namespace GameCore
             score = v;
         }
 
+        private double GetWinRate()
+        {
+            return wins / timesVisited;
+        }
+
         public int CompareTo(MonteCarloNode carloNode)
         {
             // A null value means that this object is greater.
@@ -89,19 +93,25 @@ namespace GameCore
             }
             else if (GetVisits() > carloNode.GetVisits())
             {
-                return 1;
+                if (GetWinRate() < carloNode.GetWinRate())
+                {
+                    return -1;
+                }
+                else
+                {
+                    return 1;
+                }
             }
             else if (GetVisits() < carloNode.GetVisits())
             {
-                return -1;
-            }
-            else if (GetWins() > carloNode.GetWins())
-            {
-                return 1;
-            }
-            else if (GetWins() < carloNode.GetWins())
-            {
-                return -1;
+                if (GetWinRate() > carloNode.GetWinRate())
+                {
+                    return 1;
+                }
+                else
+                {
+                    return -1;
+                }
             }
             else
             {
@@ -114,6 +124,16 @@ namespace GameCore
         {
             board = new List<BitArray>();
             moveTotals = new Dictionary<string, Tuple<double, double>>();
+            possibleMoveValues = new int[9, 9];
+
+            for (int r = 0; r < 9; r++)
+            {
+                for (int c = 0; c < 9; c++)
+                {
+                    possibleMoveValues[r, c] = 0;
+                }
+            }
+
             for (int i = 0; i < TOTAL_ROWS; i++)
             {
                 board.Add(new BitArray(17));
@@ -265,7 +285,7 @@ namespace GameCore
                     sb.Append(value: 9 - (playerLocations[turn == 0 ? 1 : 0].Row / 2) + 1 > 9 ? 9
                                    : 9 - (playerLocations[turn == 0 ? 1 : 0].Row / 2) + 1);
 
-                    validMoves.Add(new Tuple<string, double>(sb.ToString(), AverageHeuristicEstimate(sb.ToString())));
+                    validMoves.Add(new Tuple<string, double>(sb.ToString(), MinimumHeuristicEstimate(sb.ToString())));
                 }
                 if (!board[playerLocations[turn == 0 ? 0 : 1].Row + 1].Get(playerLocations[turn == 0 ? 0 : 1].Col + 2 * direction))
                 {
@@ -275,7 +295,7 @@ namespace GameCore
                     sb.Append(value: 9 - (playerLocations[turn == 0 ? 1 : 0].Row / 2) - 1 < 1 ? 1
                                    : 9 - (playerLocations[turn == 0 ? 1 : 0].Row / 2) - 1);
 
-                    validMoves.Add(new Tuple<string, double>(sb.ToString(), AverageHeuristicEstimate(sb.ToString())));
+                    validMoves.Add(new Tuple<string, double>(sb.ToString(), MinimumHeuristicEstimate(sb.ToString())));
                 }
             }
         }
@@ -293,7 +313,7 @@ namespace GameCore
                                             : 97 + (playerLocations[turn == 0 ? 1 : 0].Col / 2) + (1 * direction)));
                     sb.Append(9 - (playerLocations[turn == 0 ? 1 : 0].Row / 2));
 
-                    validMoves.Add(new Tuple<string, double>(sb.ToString(), AverageHeuristicEstimate(sb.ToString())));
+                    validMoves.Add(new Tuple<string, double>(sb.ToString(), MinimumHeuristicEstimate(sb.ToString())));
                 }
                 else
                 {
@@ -319,7 +339,7 @@ namespace GameCore
                                                   : 97 + (playerLocations[turn == 0 ? 1 : 0].Col / 2) + 1));
                     sb.Append(9 - (playerLocations[turn == 0 ? 1 : 0].Row / 2));
 
-                    validMoves.Add(new Tuple<string, double>(sb.ToString(), AverageHeuristicEstimate(sb.ToString())));
+                    validMoves.Add(new Tuple<string, double>(sb.ToString(), MinimumHeuristicEstimate(sb.ToString())));
                 }
                 if (!board[playerLocations[turn == 0 ? 0 : 1].Row + 2 * direction].Get(playerLocations[turn == 0 ? 0 : 1].Col - 1))
                 {
@@ -329,7 +349,7 @@ namespace GameCore
                                                   : 97 + (playerLocations[turn == 0 ? 1 : 0].Col / 2) - 1));
                     sb.Append(9 - (playerLocations[turn == 0 ? 1 : 0].Row / 2));
 
-                    validMoves.Add(new Tuple<string, double>(sb.ToString(), AverageHeuristicEstimate(sb.ToString())));
+                    validMoves.Add(new Tuple<string, double>(sb.ToString(), MinimumHeuristicEstimate(sb.ToString())));
                 }
             }
         }
@@ -347,7 +367,7 @@ namespace GameCore
                                    : 9 - (playerLocations[turn == 0 ? 1 : 0].Row / 2) - (1 * direction) < 1 ? 1
                                    : 9 - (playerLocations[turn == 0 ? 1 : 0].Row / 2) - (1 * direction));
 
-                    validMoves.Add(new Tuple<string, double>(sb.ToString(), AverageHeuristicEstimate(sb.ToString())));
+                    validMoves.Add(new Tuple<string, double>(sb.ToString(), MinimumHeuristicEstimate(sb.ToString())));
                 }
                 else
                 {
@@ -400,7 +420,7 @@ namespace GameCore
                     StringBuilder sb = new StringBuilder();
                     sb.Append(Convert.ToChar(97 + (playerLocations[turn == 0 ? 0 : 1].Col / 2)));
                     sb.Append(9 - (playerLocations[turn == 0 ? 0 : 1].Row / 2) - 1 < 1 ? 1 : 9 - (playerLocations[turn == 0 ? 0 : 1].Row / 2) - 1);
-                    validMoves.Add(new Tuple<string, double>(sb.ToString(), AverageHeuristicEstimate(sb.ToString())));
+                    validMoves.Add(new Tuple<string, double>(sb.ToString(), MinimumHeuristicEstimate(sb.ToString())));
                 }
                 if (playerLocations[turn == 0 ? 0 : 1].Row - 1 > -1 && !board[playerLocations[turn == 0 ? 0 : 1].Row - 1].Get(playerLocations[turn == 0 ? 0 : 1].Col)
                      && (playerLocations[turn == 0 ? 0 : 1].Row - 2 != playerLocations[turn == 0 ? 1 : 0].Row || playerLocations[turn == 0 ? 0 : 1].Col != playerLocations[turn == 0 ? 1 : 0].Col))
@@ -409,7 +429,7 @@ namespace GameCore
                     StringBuilder sb = new StringBuilder();
                     sb.Append(Convert.ToChar(97 + (playerLocations[turn == 0 ? 0 : 1].Col / 2)));
                     sb.Append(9 - (playerLocations[turn == 0 ? 0 : 1].Row / 2) + 1 > 9 ? 9 : 9 - (playerLocations[turn == 0 ? 0 : 1].Row / 2) + 1);
-                    validMoves.Add(new Tuple<string, double>(sb.ToString(), AverageHeuristicEstimate(sb.ToString())));
+                    validMoves.Add(new Tuple<string, double>(sb.ToString(), MinimumHeuristicEstimate(sb.ToString())));
                 }
                 if (playerLocations[turn == 0 ? 0 : 1].Col + 1 < 17 && !board[playerLocations[turn == 0 ? 0 : 1].Row].Get(playerLocations[turn == 0 ? 0 : 1].Col + 1)
                     && (playerLocations[turn == 0 ? 0 : 1].Row != playerLocations[turn == 0 ? 1 : 0].Row || playerLocations[turn == 0 ? 0 : 1].Col + 2 != playerLocations[turn == 0 ? 1 : 0].Col))
@@ -418,7 +438,7 @@ namespace GameCore
                     StringBuilder sb = new StringBuilder();
                     sb.Append(Convert.ToChar(97 + (playerLocations[turn == 0 ? 0 : 1].Col / 2) + 1));
                     sb.Append(9 - (playerLocations[turn == 0 ? 0 : 1].Row / 2));
-                    validMoves.Add(new Tuple<string, double>(sb.ToString(), AverageHeuristicEstimate(sb.ToString())));
+                    validMoves.Add(new Tuple<string, double>(sb.ToString(), MinimumHeuristicEstimate(sb.ToString())));
                 }
                 if (playerLocations[turn == 0 ? 0 : 1].Col - 1 > -1 && !board[playerLocations[turn == 0 ? 0 : 1].Row].Get(playerLocations[turn == 0 ? 0 : 1].Col - 1)
                     && (playerLocations[turn == 0 ? 0 : 1].Row != playerLocations[turn == 0 ? 1 : 0].Row || playerLocations[turn == 0 ? 0 : 1].Col - 2 != playerLocations[turn == 0 ? 1 : 0].Col))
@@ -427,7 +447,7 @@ namespace GameCore
                     StringBuilder sb = new StringBuilder();
                     sb.Append(Convert.ToChar(97 + (playerLocations[turn == 0 ? 0 : 1].Col / 2) - 1));
                     sb.Append(9 - (playerLocations[turn == 0 ? 0 : 1].Row / 2));
-                    validMoves.Add(new Tuple<string, double>(sb.ToString(), AverageHeuristicEstimate(sb.ToString())));
+                    validMoves.Add(new Tuple<string, double>(sb.ToString(), MinimumHeuristicEstimate(sb.ToString())));
                 }
 
 
@@ -641,10 +661,10 @@ namespace GameCore
 
         }
 
-        private double AverageHeuristicEstimate(string locationToStart)
+        private double MinimumHeuristicEstimate(string locationToStart)
         {
             int EndRow;
-            double AverageHeuristic = 0;
+            double minimumHeuristic = double.PositiveInfinity;
 
             if (turn == 0)
             {
@@ -655,12 +675,20 @@ namespace GameCore
                 EndRow = 1;
             }
 
+            PlayerCoordinate start = new PlayerCoordinate(locationToStart);
+
             for (int characterIndex = 0; characterIndex < 9; characterIndex++)
             {
-                AverageHeuristic += HeuristicCostEstimate(new PlayerCoordinate(locationToStart), new PlayerCoordinate(Convert.ToChar(97 + characterIndex).ToString() + EndRow.ToString()));
+                double possibleMinimumHeuristic = HeuristicCostEstimate(start, new PlayerCoordinate(Convert.ToChar(97 + characterIndex).ToString() + EndRow.ToString()));
+                if (possibleMinimumHeuristic < minimumHeuristic)
+                {
+                    minimumHeuristic = possibleMinimumHeuristic;
+                }
             }
 
-            return AverageHeuristic / 9;
+            int moveValue = possibleMoveValues[start.Row / 2, start.Col / 2] / 2;
+
+            return minimumHeuristic * (moveValue <= 1 ? 1 : moveValue);
         }
 
         private double HeuristicCostEstimate(PlayerCoordinate start, PlayerCoordinate goal)
@@ -1112,8 +1140,19 @@ namespace GameCore
 
             move = possibleMoves[0].Item1;
 
+            for (int i = 1; childrensMoves.Contains(move) && i < possibleMoves.Count; ++i)
+            {
+                move = possibleMoves[i].Item1;
+            }
+
+            if (childrensMoves.Contains(move))
+            {
+                move = possibleMoves[randomPercentileChance.Next(0, possibleMoves.Count)].Item1;
+            }
+
             return move;
         }
+
 
         private Tuple<bool, string> GetValidJumpMove(List<PlayerCoordinate> players)
         {
@@ -1240,7 +1279,51 @@ namespace GameCore
                 board[mid.Item1].Set(mid.Item2, true);
 
                 board[wallCoordinate.EndRow].Set(wallCoordinate.EndCol, true);
+
+                SetPlayerMoveValues(wallCoordinate, mid);
             }
+        }
+
+        private void SetPlayerMoveValues(WallCoordinate wallCoordinate, Tuple<int, int> mid)
+        {
+            if (wallCoordinate.Orientation == WallCoordinate.WallOrientation.Horizontal)
+            {
+                SetPlayerMoveValuesHorizontal(wallCoordinate, mid);
+            }
+            else
+            {
+                SetPlayerMoveValuesVertical(wallCoordinate, mid);
+            }
+        }
+
+        private void SetPlayerMoveValuesHorizontal(WallCoordinate wallCoordinate, Tuple<int, int> mid)
+        {
+            ++possibleMoveValues[(wallCoordinate.StartRow + 1) / 2, (wallCoordinate.StartCol) / 2];
+            ++possibleMoveValues[(wallCoordinate.StartRow - 1) / 2, (wallCoordinate.StartCol) / 2];
+
+            ++possibleMoveValues[(mid.Item1 + 1) / 2, (mid.Item2 + 1) / 2];
+            ++possibleMoveValues[(mid.Item1 - 1) / 2, (mid.Item2 + 1) / 2];
+
+            ++possibleMoveValues[(mid.Item1 + 1) / 2, (mid.Item2 - 1) / 2];
+            ++possibleMoveValues[(mid.Item1 - 1) / 2, (mid.Item2 - 1) / 2];
+
+            ++possibleMoveValues[(wallCoordinate.EndRow + 1) / 2, (wallCoordinate.EndCol) / 2];
+            ++possibleMoveValues[(wallCoordinate.EndRow - 1) / 2, (wallCoordinate.EndCol) / 2];
+        }
+
+        private void SetPlayerMoveValuesVertical(WallCoordinate wallCoordinate, Tuple<int, int> mid)
+        {
+            ++possibleMoveValues[(wallCoordinate.EndRow) / 2, (wallCoordinate.EndCol + 1) / 2];
+            ++possibleMoveValues[(wallCoordinate.EndRow) / 2, (wallCoordinate.EndCol - 1) / 2];
+
+            ++possibleMoveValues[(mid.Item1 + 1) / 2, (mid.Item2 + 1) / 2];
+            ++possibleMoveValues[(mid.Item1 - 1) / 2, (mid.Item2 + 1) / 2];
+
+            ++possibleMoveValues[(mid.Item1 + 1) / 2, (mid.Item2 - 1) / 2];
+            ++possibleMoveValues[(mid.Item1 - 1) / 2, (mid.Item2 - 1) / 2];
+
+            ++possibleMoveValues[(wallCoordinate.StartRow) / 2, (wallCoordinate.StartCol - 1) / 2];
+            ++possibleMoveValues[(wallCoordinate.StartRow) / 2, (wallCoordinate.StartCol - 1) / 2];
         }
 
         private void Unpopulate()
@@ -1253,7 +1336,50 @@ namespace GameCore
                 board[mid.Item1].Set(mid.Item2, false);
 
                 board[wallCoordinate.EndRow].Set(wallCoordinate.EndCol, false);
+                ResetPlayerMoveValues(wallCoordinate, mid);
             }
+        }
+
+        private void ResetPlayerMoveValues(WallCoordinate wallCoordinate, Tuple<int, int> mid)
+        {
+            if (wallCoordinate.Orientation == WallCoordinate.WallOrientation.Horizontal)
+            {
+                ResetPlayerMoveValuesHorizontal(wallCoordinate, mid);
+            }
+            else
+            {
+                ResetPlayerMoveValuesVertical(wallCoordinate, mid);
+            }
+        }
+
+        private void ResetPlayerMoveValuesHorizontal(WallCoordinate wallCoordinate, Tuple<int, int> mid)
+        {
+            possibleMoveValues[(wallCoordinate.StartRow + 1) / 2, (wallCoordinate.StartCol) / 2] =
+            possibleMoveValues[(wallCoordinate.StartRow - 1) / 2, (wallCoordinate.StartCol) / 2] =
+
+            possibleMoveValues[(mid.Item1 + 1) / 2, (mid.Item2 + 1) / 2] =
+            possibleMoveValues[(mid.Item1 - 1) / 2, (mid.Item2 + 1) / 2] =
+
+            possibleMoveValues[(mid.Item1 + 1) / 2, (mid.Item2 - 1) / 2] =
+            possibleMoveValues[(mid.Item1 - 1) / 2, (mid.Item2 - 1) / 2] =
+
+            possibleMoveValues[(wallCoordinate.EndRow + 1) / 2, (wallCoordinate.EndCol) / 2] =
+            possibleMoveValues[(wallCoordinate.EndRow - 1) / 2, (wallCoordinate.EndCol) / 2] = 0;
+        }
+
+        private void ResetPlayerMoveValuesVertical(WallCoordinate wallCoordinate, Tuple<int, int> mid)
+        {
+            possibleMoveValues[(wallCoordinate.EndRow) / 2, (wallCoordinate.EndCol + 1) / 2] =
+            possibleMoveValues[(wallCoordinate.EndRow) / 2, (wallCoordinate.EndCol - 1) / 2] =
+
+            possibleMoveValues[(mid.Item1 + 1) / 2, (mid.Item2 + 1) / 2] =
+            possibleMoveValues[(mid.Item1 - 1) / 2, (mid.Item2 + 1) / 2] =
+
+            possibleMoveValues[(mid.Item1 + 1) / 2, (mid.Item2 - 1) / 2] =
+            possibleMoveValues[(mid.Item1 - 1) / 2, (mid.Item2 - 1) / 2] =
+
+            possibleMoveValues[(wallCoordinate.StartRow) / 2, (wallCoordinate.StartCol - 1) / 2] =
+            possibleMoveValues[(wallCoordinate.StartRow) / 2, (wallCoordinate.StartCol - 1) / 2] = 0;
         }
 
         //Selection Phase Code
