@@ -45,7 +45,7 @@ namespace GameCore
         private double wins;
         private double timesVisited;
         private bool gameOver;
-        private bool canReachGoal = false;
+        private bool finalSort = false;
         private GameBoard.PlayerEnum turn;
 
         private int depthCheck = 0;
@@ -56,6 +56,16 @@ namespace GameCore
         public List<BitArray> GetBoard()
         {
             return board;
+        }
+
+        public bool DoneFinalSort()
+        {
+            return finalSort;
+        }
+
+        public void SetFinalSort(bool value)
+        {
+            finalSort = value;
         }
 
         public string GetMove()
@@ -85,7 +95,14 @@ namespace GameCore
 
         private double GetWinRate()
         {
-            return wins / timesVisited;
+            if (timesVisited != 0)
+            {
+                return wins /timesVisited;
+            }
+            else
+            {
+                return 0;
+            }
         }
 
         public int CompareTo(MonteCarloNode carloNode)
@@ -97,24 +114,32 @@ namespace GameCore
             }
             else if (GetVisits() > carloNode.GetVisits())
             {
-                if (GetWinRate() < carloNode.GetWinRate())
+                if (GetWins() < carloNode.GetWins())
+                {
+                    return -1;
+                }
+                else if (GetWins() < carloNode.GetWins())
                 {
                     return -1;
                 }
                 else
                 {
-                    return 1;
+                    return 0;
                 }
             }
             else if (GetVisits() < carloNode.GetVisits())
             {
-                if (GetWinRate() > carloNode.GetWinRate())
+                if (GetWins() > carloNode.GetWins())
                 {
                     return 1;
                 }
-                else
+                else if (GetWins() < carloNode.GetWins())
                 {
                     return -1;
+                }
+                else
+                {
+                    return 0;
                 }
             }
             else
@@ -159,18 +184,18 @@ namespace GameCore
 
             walls = new List<WallCoordinate>(wallCoordinates);
 
-            walls.Add(new WallCoordinate("c7h"));
-            walls.Add(new WallCoordinate("d3h"));
-            walls.Add(new WallCoordinate("e4h"));
-            walls.Add(new WallCoordinate("e7h"));
-            walls.Add(new WallCoordinate("g6h"));
-            walls.Add(new WallCoordinate("g7h"));
+            //walls.Add(new WallCoordinate("c7h"));
+            //walls.Add(new WallCoordinate("d3h"));
+            //walls.Add(new WallCoordinate("e4h"));
+            //walls.Add(new WallCoordinate("e7h"));
+            //walls.Add(new WallCoordinate("g6h"));
+            //walls.Add(new WallCoordinate("g7h"));
 
-            walls.Add(new WallCoordinate("c4v"));
-            walls.Add(new WallCoordinate("c6v"));
-            walls.Add(new WallCoordinate("d6v"));
-            walls.Add(new WallCoordinate("e3v"));
-            walls.Add(new WallCoordinate("f5v"));
+            //walls.Add(new WallCoordinate("c4v"));
+            //walls.Add(new WallCoordinate("c6v"));
+            //walls.Add(new WallCoordinate("d6v"));
+            //walls.Add(new WallCoordinate("e3v"));
+            //walls.Add(new WallCoordinate("f5v"));
 
             children = new List<MonteCarloNode>();
             childrensMoves = new List<string>();
@@ -480,12 +505,19 @@ namespace GameCore
 
                 Unpopulate();
 
-
-                validMoves.Sort(delegate (Tuple<string, double> lValue, Tuple<string, double> rValue)
+                try
                 {
-                    if (lValue.Item2 == rValue.Item2) return 0;
-                    else return lValue.Item2.CompareTo(rValue.Item2);
-                });
+                    validMoves.Sort(delegate (Tuple<string, double> lValue, Tuple<string, double> rValue)
+                    {
+                        if (lValue.Item2 == rValue.Item2) return 0;
+                        else return lValue.Item2.CompareTo(rValue.Item2);
+                    });
+                }
+                catch (Exception)
+                {
+
+                    throw;
+                }
 
                 return validMoves;
             }
@@ -782,7 +814,16 @@ namespace GameCore
                     }
                     else
                     {
-                        return 1;
+                        if ((move.Col / 2) + columnDirection * 2 > -1 &&
+                            (move.Col / 2) + columnDirection * 2 < 9 &&
+                            possibleMoveValues[(move.Row / 2), (move.Col / 2)] / 2 >= 1)
+                        {
+                            return double.PositiveInfinity;
+                        }
+                        else
+                        {
+                            return 1;
+                        }
                     }
                 }
                 else
@@ -1134,7 +1175,7 @@ namespace GameCore
 
         private string RandomMove()
         {
-            return randomPercentileChance.Next(1, 100) >= 37 ? FindPlayerMove() : (turn == 0 ? wallsRemaining[0] : wallsRemaining[1]) > 0 ? BoardUtil.GetRandomWallPlacementMove() : FindPlayerMove();
+            return randomPercentileChance.Next(1, 100) >= 21 ? FindPlayerMove() : (turn == 0 ? wallsRemaining[0] : wallsRemaining[1]) > 0 ? BoardUtil.GetRandomWallPlacementMove() : FindPlayerMove();
         }
 
         private string FindPlayerMove()
@@ -1420,8 +1461,8 @@ namespace GameCore
                     {
                         moveTotals.Add(child.thisMove, new Tuple<double, double>(0, 1));
                     }
-                    child.SetScore((((child.GetWins() / child.GetVisits()) + explorationFactor) *
-                      BitConverter.Int64BitsToDouble(((long)((-1 * ((int)(BitConverter.DoubleToInt64Bits(Rsqrt(Math.Log(timesVisited) / child.GetVisits())) >> 32) - 1072632447)) + 1072632447)) << 32)
+                    child.SetScore((((child.GetWinRate()) + explorationFactor) *
+                      (ulong) BitConverter.Int64BitsToDouble(((long)((-1 * ((int)(BitConverter.DoubleToInt64Bits(Rsqrt(Math.Log(timesVisited) / child.GetVisits())) >> 32) - 1072632447)) + 1072632447)) << 32)
                       + (moveTotals[child.GetMove()].Item1 / moveTotals[child.GetMove()].Item2) * (historyInfluence / (child.GetVisits() - child.GetWins() + 1))
                       ) / 1000000000000);
                 }
@@ -1540,7 +1581,7 @@ namespace GameCore
             ++timesVisited;
             bool mctsVictory = false;
 
-            if (depthCheck > 125)
+            if (depthCheck > 145)
             {
                 gameOver = true;
             }
@@ -1554,7 +1595,7 @@ namespace GameCore
                     nextNodeIndex = SelectNode(ExpandOptions());
                     lock (childrenAccess)
                     {
-                        children.Sort();
+                        children.OrderBy(i => i.GetVisits()).ToList();
                     }
                 }
                 if (children[nextNodeIndex].SimulatedGame())
@@ -1574,7 +1615,7 @@ namespace GameCore
             }
             lock (childrenAccess)
             {
-                children.Sort();
+                children.OrderBy(i => i.GetVisits()).ToList();
             }
             return mctsVictory;
         }
@@ -1596,9 +1637,15 @@ namespace GameCore
 
         private void ThreadedTreeSearch(Stopwatch timer, MonteCarloNode MonteCarlo)
         {
-            for (int i = 0; i < 10000 && timer.Elapsed.TotalSeconds < 4; ++i)
+            for (int i = 0; i < 10000 && timer.Elapsed.TotalSeconds < 5; ++i)
             {
                 MonteCarlo.SimulatedGame();
+            }
+
+            if (!MonteCarlo.DoneFinalSort())
+            {
+                MonteCarlo.GetChildrenNodes().OrderBy(i => i.GetVisits()).ToList();
+                MonteCarlo.SetFinalSort(true);
             }
         }
 
@@ -1644,7 +1691,10 @@ namespace GameCore
                 thread.Join();
             }
 
+
             timer.Stop();
+
+            TreeSearch.SetFinalSort(false);
             //#endif
             Console.WriteLine("Wins: " + TreeSearch.GetWins());
             Console.WriteLine("Visits: " + TreeSearch.GetVisits());
