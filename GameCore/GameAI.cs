@@ -157,9 +157,21 @@ namespace GameCore
             wallsRemaining.Add(playerOneTotalWalls);
             wallsRemaining.Add(playerTwoTotalWalls);
 
-
             walls = new List<WallCoordinate>(wallCoordinates);
-            
+
+            walls.Add(new WallCoordinate("c7h"));
+            walls.Add(new WallCoordinate("d3h"));
+            walls.Add(new WallCoordinate("e4h"));
+            walls.Add(new WallCoordinate("e7h"));
+            walls.Add(new WallCoordinate("g6h"));
+            walls.Add(new WallCoordinate("g7h"));
+
+            walls.Add(new WallCoordinate("c4v"));
+            walls.Add(new WallCoordinate("c6v"));
+            walls.Add(new WallCoordinate("d6v"));
+            walls.Add(new WallCoordinate("e3v"));
+            walls.Add(new WallCoordinate("f5v"));
+
             children = new List<MonteCarloNode>();
             childrensMoves = new List<string>();
 
@@ -710,25 +722,25 @@ namespace GameCore
         {
             if ((move.Col / 2) + direction > -1 && (move.Col / 2) + direction < 9)
             {
-                if (possibleMoveValues[(move.Row / 2), (move.Col / 2) + direction] / 2 > 2 || (move.Col / 2) + (direction * 2) > -1 || (move.Col / 2) + (direction * 2) < 17)
+                if (possibleMoveValues[(move.Row / 2), (move.Col / 2)] / 2 < 2)
                 {
-                    return double.PositiveInfinity;
+                    return 1;
                 }
                 else
                 {
-                    return 1;
+                    if (possibleMoveValues[(move.Row / 2), (move.Col / 2) + direction] / 2 > 2)
+                    {
+                        return double.PositiveInfinity;
+                    }
+                    else
+                    {
+                        return 1;
+                    }
                 }
             }
             else
             {
-                if (possibleMoveValues[(move.Row / 2), (move.Col / 2)] / 2 >= 2)
-                {
-                    return double.PositiveInfinity;
-                }
-                else
-                {
-                    return 1;
-                }
+                return 1;
             }
         }
 
@@ -736,25 +748,25 @@ namespace GameCore
         {
             if ((move.Row / 2) + direction > -1 && (move.Row / 2) + direction < 9)
             {
-                if (possibleMoveValues[(move.Row / 2) + direction, (move.Col / 2)] / 2 > 2 || (move.Row / 2) + (direction * 2) > -1 || (move.Row / 2) + (direction * 2) < 17)
+                if (possibleMoveValues[(move.Row / 2), (move.Col / 2)] / 2 < 2)
                 {
-                    return double.PositiveInfinity;
+                    return 1;
                 }
                 else
                 {
-                    return 1;
+                    if (possibleMoveValues[(move.Row / 2) + direction, (move.Col / 2)] / 2 > 2)
+                    {
+                        return double.PositiveInfinity;
+                    }
+                    else
+                    {
+                        return 1;
+                    }
                 }
             }
             else
             {
-                if (possibleMoveValues[(move.Row / 2), (move.Col / 2)] / 2 >= 2)
-                {
-                    return double.PositiveInfinity;
-                }
-                else
-                {
-                    return 1;
-                }
+                return 1;
             }
         }
 
