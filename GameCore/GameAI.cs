@@ -2,10 +2,11 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.Text;
 using System.Threading;
-
+using System.Threading.Tasks;
 
 namespace GameCore
 {
@@ -21,6 +22,7 @@ namespace GameCore
         private static readonly object boardAccess = new object();
         private readonly object childrenAccess = new object();
         private readonly object childrenMovesAccess = new object();
+        private readonly object canReachGoalAccess = new object();
         private static double explorationFactor = .5;
         private static double historyInfluence = 1.15;
 
@@ -42,6 +44,7 @@ namespace GameCore
         private double wins;
         private double timesVisited;
         private bool gameOver;
+        private bool canReachGoal = false;
         private GameBoard.PlayerEnum turn;
 
         private int depthCheck = 0;
@@ -155,6 +158,20 @@ namespace GameCore
 
             walls = new List<WallCoordinate>(wallCoordinates);
 
+            walls.Add(new WallCoordinate("b3h"));
+            walls.Add(new WallCoordinate("b6h"));
+            walls.Add(new WallCoordinate("c1h"));
+            walls.Add(new WallCoordinate("d2h"));
+            walls.Add(new WallCoordinate("d6h"));
+            walls.Add(new WallCoordinate("e3h"));
+            walls.Add(new WallCoordinate("e4h"));
+            walls.Add(new WallCoordinate("f2h"));
+            walls.Add(new WallCoordinate("a4v"));
+            walls.Add(new WallCoordinate("a6v"));
+            walls.Add(new WallCoordinate("b2v"));
+            walls.Add(new WallCoordinate("d1v"));
+            walls.Add(new WallCoordinate("e5v"));
+            
             children = new List<MonteCarloNode>();
             childrensMoves = new List<string>();
 
@@ -285,7 +302,17 @@ namespace GameCore
                     sb.Append(value: 9 - (playerLocations[turn == 0 ? 1 : 0].Row / 2) + 1 > 9 ? 9
                                    : 9 - (playerLocations[turn == 0 ? 1 : 0].Row / 2) + 1);
 
-                    validMoves.Add(new Tuple<string, double>(sb.ToString(), MinimumHeuristicEstimate(sb.ToString())));
+                    List<PlayerCoordinate> myCurrentNode = new List<PlayerCoordinate>();
+
+                    myCurrentNode.Add(playerLocations[turn == 0 ? 0 : 1]);
+
+                    double minimumEstimate = MinimumHeuristicEstimate(sb.ToString());
+
+                    IsThereNotAPath(myCurrentNode, new PlayerCoordinate(sb.ToString()), (turn == 0 ? 0 : 16));
+
+                    validMoves.Add(new Tuple<string, double>(sb.ToString(), (canReachGoal != true ? double.PositiveInfinity : minimumEstimate) ));
+
+                    canReachGoal = false;
                 }
                 if (!board[playerLocations[turn == 0 ? 0 : 1].Row + 1].Get(playerLocations[turn == 0 ? 0 : 1].Col + 2 * direction))
                 {
@@ -295,7 +322,21 @@ namespace GameCore
                     sb.Append(value: 9 - (playerLocations[turn == 0 ? 1 : 0].Row / 2) - 1 < 1 ? 1
                                    : 9 - (playerLocations[turn == 0 ? 1 : 0].Row / 2) - 1);
 
-                    validMoves.Add(new Tuple<string, double>(sb.ToString(), MinimumHeuristicEstimate(sb.ToString())));
+
+                    List<PlayerCoordinate> myCurrentNode = new List<PlayerCoordinate>();
+
+                    myCurrentNode.Add(playerLocations[turn == 0 ? 0 : 1]);
+
+                    double minimumEstimate = MinimumHeuristicEstimate(sb.ToString());
+
+                    lock (canReachGoalAccess)
+                    {
+                        IsThereNotAPath(myCurrentNode, new PlayerCoordinate(sb.ToString()), (turn == 0 ? 0 : 16));
+
+                        validMoves.Add(new Tuple<string, double>(sb.ToString(), (canReachGoal != true ? double.PositiveInfinity : minimumEstimate)));
+
+                        canReachGoal = false;
+                    }
                 }
             }
         }
@@ -313,7 +354,21 @@ namespace GameCore
                                             : 97 + (playerLocations[turn == 0 ? 1 : 0].Col / 2) + (1 * direction)));
                     sb.Append(9 - (playerLocations[turn == 0 ? 1 : 0].Row / 2));
 
-                    validMoves.Add(new Tuple<string, double>(sb.ToString(), MinimumHeuristicEstimate(sb.ToString())));
+
+                    List<PlayerCoordinate> myCurrentNode = new List<PlayerCoordinate>();
+
+                    myCurrentNode.Add(playerLocations[turn == 0 ? 0 : 1]);
+
+                    double minimumEstimate = MinimumHeuristicEstimate(sb.ToString());
+
+                    lock (canReachGoalAccess)
+                    {
+                        IsThereNotAPath(myCurrentNode, new PlayerCoordinate(sb.ToString()), (turn == 0 ? 0 : 16));
+
+                        validMoves.Add(new Tuple<string, double>(sb.ToString(), (canReachGoal != true ? double.PositiveInfinity : minimumEstimate)));
+
+                        canReachGoal = false;
+                    }
                 }
                 else
                 {
@@ -339,7 +394,20 @@ namespace GameCore
                                                   : 97 + (playerLocations[turn == 0 ? 1 : 0].Col / 2) + 1));
                     sb.Append(9 - (playerLocations[turn == 0 ? 1 : 0].Row / 2));
 
-                    validMoves.Add(new Tuple<string, double>(sb.ToString(), MinimumHeuristicEstimate(sb.ToString())));
+                    List<PlayerCoordinate> myCurrentNode = new List<PlayerCoordinate>();
+
+                    myCurrentNode.Add(playerLocations[turn == 0 ? 0 : 1]);
+
+                    double minimumEstimate = MinimumHeuristicEstimate(sb.ToString());
+
+                    lock (canReachGoalAccess)
+                    {
+                        IsThereNotAPath(myCurrentNode, new PlayerCoordinate(sb.ToString()), (turn == 0 ? 0 : 16));
+
+                        validMoves.Add(new Tuple<string, double>(sb.ToString(), (canReachGoal != true ? double.PositiveInfinity : minimumEstimate)));
+
+                        canReachGoal = false;
+                    }
                 }
                 if (!board[playerLocations[turn == 0 ? 0 : 1].Row + 2 * direction].Get(playerLocations[turn == 0 ? 0 : 1].Col - 1))
                 {
@@ -349,7 +417,20 @@ namespace GameCore
                                                   : 97 + (playerLocations[turn == 0 ? 1 : 0].Col / 2) - 1));
                     sb.Append(9 - (playerLocations[turn == 0 ? 1 : 0].Row / 2));
 
-                    validMoves.Add(new Tuple<string, double>(sb.ToString(), MinimumHeuristicEstimate(sb.ToString())));
+                    List<PlayerCoordinate> myCurrentNode = new List<PlayerCoordinate>();
+
+                    myCurrentNode.Add(playerLocations[turn == 0 ? 0 : 1]);
+
+                    double minimumEstimate = MinimumHeuristicEstimate(sb.ToString());
+
+                    lock (canReachGoalAccess)
+                    {
+                        IsThereNotAPath(myCurrentNode, new PlayerCoordinate(sb.ToString()), (turn == 0 ? 0 : 16));
+
+                        validMoves.Add(new Tuple<string, double>(sb.ToString(), (canReachGoal != true ? double.PositiveInfinity : minimumEstimate)));
+
+                        canReachGoal = false;
+                    }
                 }
             }
         }
@@ -367,7 +448,20 @@ namespace GameCore
                                    : 9 - (playerLocations[turn == 0 ? 1 : 0].Row / 2) - (1 * direction) < 1 ? 1
                                    : 9 - (playerLocations[turn == 0 ? 1 : 0].Row / 2) - (1 * direction));
 
-                    validMoves.Add(new Tuple<string, double>(sb.ToString(), MinimumHeuristicEstimate(sb.ToString())));
+                    List<PlayerCoordinate> myCurrentNode = new List<PlayerCoordinate>();
+
+                    myCurrentNode.Add(playerLocations[turn == 0 ? 0 : 1]);
+
+                    double minimumEstimate = MinimumHeuristicEstimate(sb.ToString());
+
+                    lock (canReachGoalAccess)
+                    {
+                        IsThereNotAPath(myCurrentNode, new PlayerCoordinate(sb.ToString()), (turn == 0 ? 0 : 16));
+
+                        validMoves.Add(new Tuple<string, double>(sb.ToString(), (canReachGoal != true ? double.PositiveInfinity : minimumEstimate)));
+
+                        canReachGoal = false;
+                    }
                 }
                 else
                 {
@@ -420,7 +514,18 @@ namespace GameCore
                     StringBuilder sb = new StringBuilder();
                     sb.Append(Convert.ToChar(97 + (playerLocations[turn == 0 ? 0 : 1].Col / 2)));
                     sb.Append(9 - (playerLocations[turn == 0 ? 0 : 1].Row / 2) - 1 < 1 ? 1 : 9 - (playerLocations[turn == 0 ? 0 : 1].Row / 2) - 1);
-                    validMoves.Add(new Tuple<string, double>(sb.ToString(), MinimumHeuristicEstimate(sb.ToString())));
+
+                    List<PlayerCoordinate> myCurrentNode = new List<PlayerCoordinate>();
+
+                    myCurrentNode.Add(playerLocations[turn == 0 ? 0 : 1]);
+
+                    double minimumEstimate = MinimumHeuristicEstimate(sb.ToString());
+
+                    IsThereNotAPath(myCurrentNode, new PlayerCoordinate(sb.ToString()), (turn == 0 ? 0 : 16));
+
+                    validMoves.Add(new Tuple<string, double>(sb.ToString(), (canReachGoal != true ? double.PositiveInfinity : minimumEstimate)));
+
+                    canReachGoal = false;
                 }
                 if (playerLocations[turn == 0 ? 0 : 1].Row - 1 > -1 && !board[playerLocations[turn == 0 ? 0 : 1].Row - 1].Get(playerLocations[turn == 0 ? 0 : 1].Col)
                      && (playerLocations[turn == 0 ? 0 : 1].Row - 2 != playerLocations[turn == 0 ? 1 : 0].Row || playerLocations[turn == 0 ? 0 : 1].Col != playerLocations[turn == 0 ? 1 : 0].Col))
@@ -429,7 +534,21 @@ namespace GameCore
                     StringBuilder sb = new StringBuilder();
                     sb.Append(Convert.ToChar(97 + (playerLocations[turn == 0 ? 0 : 1].Col / 2)));
                     sb.Append(9 - (playerLocations[turn == 0 ? 0 : 1].Row / 2) + 1 > 9 ? 9 : 9 - (playerLocations[turn == 0 ? 0 : 1].Row / 2) + 1);
-                    validMoves.Add(new Tuple<string, double>(sb.ToString(), MinimumHeuristicEstimate(sb.ToString())));
+
+                    List<PlayerCoordinate> myCurrentNode = new List<PlayerCoordinate>();
+
+                    myCurrentNode.Add(playerLocations[turn == 0 ? 0 : 1]);
+
+                    double minimumEstimate = MinimumHeuristicEstimate(sb.ToString());
+
+                    lock (canReachGoalAccess)
+                    {
+                        IsThereNotAPath(myCurrentNode, new PlayerCoordinate(sb.ToString()), (turn == 0 ? 0 : 16));
+
+                        validMoves.Add(new Tuple<string, double>(sb.ToString(), (canReachGoal != true ? double.PositiveInfinity : minimumEstimate)));
+
+                        canReachGoal = false;
+                    }
                 }
                 if (playerLocations[turn == 0 ? 0 : 1].Col + 1 < 17 && !board[playerLocations[turn == 0 ? 0 : 1].Row].Get(playerLocations[turn == 0 ? 0 : 1].Col + 1)
                     && (playerLocations[turn == 0 ? 0 : 1].Row != playerLocations[turn == 0 ? 1 : 0].Row || playerLocations[turn == 0 ? 0 : 1].Col + 2 != playerLocations[turn == 0 ? 1 : 0].Col))
@@ -438,7 +557,21 @@ namespace GameCore
                     StringBuilder sb = new StringBuilder();
                     sb.Append(Convert.ToChar(97 + (playerLocations[turn == 0 ? 0 : 1].Col / 2) + 1));
                     sb.Append(9 - (playerLocations[turn == 0 ? 0 : 1].Row / 2));
-                    validMoves.Add(new Tuple<string, double>(sb.ToString(), MinimumHeuristicEstimate(sb.ToString())));
+
+                    List<PlayerCoordinate> myCurrentNode = new List<PlayerCoordinate>();
+
+                    myCurrentNode.Add(playerLocations[turn == 0 ? 0 : 1]);
+
+                    double minimumEstimate = MinimumHeuristicEstimate(sb.ToString());
+
+                    lock (canReachGoalAccess)
+                    {
+                        IsThereNotAPath(myCurrentNode, new PlayerCoordinate(sb.ToString()), (turn == 0 ? 0 : 16));
+
+                        validMoves.Add(new Tuple<string, double>(sb.ToString(), (canReachGoal != true ? double.PositiveInfinity : minimumEstimate)));
+
+                        canReachGoal = false;
+                    }
                 }
                 if (playerLocations[turn == 0 ? 0 : 1].Col - 1 > -1 && !board[playerLocations[turn == 0 ? 0 : 1].Row].Get(playerLocations[turn == 0 ? 0 : 1].Col - 1)
                     && (playerLocations[turn == 0 ? 0 : 1].Row != playerLocations[turn == 0 ? 1 : 0].Row || playerLocations[turn == 0 ? 0 : 1].Col - 2 != playerLocations[turn == 0 ? 1 : 0].Col))
@@ -447,7 +580,21 @@ namespace GameCore
                     StringBuilder sb = new StringBuilder();
                     sb.Append(Convert.ToChar(97 + (playerLocations[turn == 0 ? 0 : 1].Col / 2) - 1));
                     sb.Append(9 - (playerLocations[turn == 0 ? 0 : 1].Row / 2));
-                    validMoves.Add(new Tuple<string, double>(sb.ToString(), MinimumHeuristicEstimate(sb.ToString())));
+
+                    List<PlayerCoordinate> myCurrentNode = new List<PlayerCoordinate>();
+
+                    myCurrentNode.Add(playerLocations[turn == 0 ? 0 : 1]);
+
+                    double minimumEstimate = MinimumHeuristicEstimate(sb.ToString());
+
+                    lock (canReachGoalAccess)
+                    {
+                        IsThereNotAPath(myCurrentNode, new PlayerCoordinate(sb.ToString()), (turn == 0 ? 0 : 16));
+
+                        validMoves.Add(new Tuple<string, double>(sb.ToString(), (canReachGoal != true ? double.PositiveInfinity : minimumEstimate)));
+
+                        canReachGoal = false;
+                    }
                 }
 
 
@@ -462,6 +609,193 @@ namespace GameCore
 
                 return validMoves;
             }
+        }
+
+        private void PossibleHorizontalDiagonalJumpsForGoalReach(List<Tuple<string, double>> validMoves, PlayerCoordinate player, PlayerCoordinate opponent, int direction)
+        {
+            if (player.Row + 1 < 17 && player.Row - 1 > -1
+                       && player.Col + 2 * direction < 17 && player.Col + 2 * direction > -1)
+            {
+                if (!board[player.Row - 1].Get(player.Col + 2 * direction))
+                {
+                    StringBuilder sb = new StringBuilder();
+
+                    sb.Append(Convert.ToChar(97 + (opponent.Col / 2)));
+                    sb.Append(value: 9 - (opponent.Row / 2) + 1 > 9 ? 9
+                                   : 9 - (opponent.Row / 2) + 1);
+
+                    validMoves.Add(new Tuple<string, double>(sb.ToString(), MinimumHeuristicEstimate(sb.ToString())));
+                }
+                if (!board[player.Row + 1].Get(player.Col + 2 * direction))
+                {
+                    StringBuilder sb = new StringBuilder();
+
+                    sb.Append(Convert.ToChar(97 + (opponent.Col / 2)));
+                    sb.Append(value: 9 - (opponent.Row / 2) - 1 < 1 ? 1
+                                   : 9 - (opponent.Row / 2) - 1);
+
+                    validMoves.Add(new Tuple<string, double>(sb.ToString(), MinimumHeuristicEstimate(sb.ToString())));
+                }
+            }
+        }
+
+        private void PossibleHorizontalJumpsForGoalReach(List<Tuple<string, double>> validMoves, PlayerCoordinate player, PlayerCoordinate opponent, int direction)
+        {
+            if (player.Col + (3 * direction) < 17 && player.Col + (3 * direction) > -1)
+            {
+                if (!board[player.Row].Get(player.Col + (3 * direction)))
+                {
+                    StringBuilder sb = new StringBuilder();
+
+                    sb.Append(Convert.ToChar(97 + (opponent.Col / 2) + (1 * direction) > 105 ? 105
+                                            : 97 + (opponent.Col / 2) + (1 * direction) < 97 ? 97
+                                            : 97 + (opponent.Col / 2) + (1 * direction)));
+                    sb.Append(9 - (opponent.Row / 2));
+
+                    validMoves.Add(new Tuple<string, double>(sb.ToString(), MinimumHeuristicEstimate(sb.ToString())));
+                }
+                else
+                {
+                    PossibleHorizontalDiagonalJumpsForGoalReach(validMoves, player, opponent, direction);
+                }
+            }
+            else
+            {
+                PossibleHorizontalDiagonalJumpsForGoalReach(validMoves, player, opponent, direction);
+            }
+        }
+
+        private void PossibleVerticalDiagonalJumpsForGoalReach(List<Tuple<string, double>> validMoves, PlayerCoordinate player, PlayerCoordinate opponent, int direction)
+        {
+            if (player.Col + 1 < 17 && player.Col - 1 > -1
+                        && player.Row + 2 * direction < 17 && player.Row + 2 * direction > -1)
+            {
+                if (!board[player.Row + 2 * direction].Get(player.Col + 1))
+                {
+                    StringBuilder sb = new StringBuilder();
+
+                    sb.Append(Convert.ToChar(value: 97 + (opponent.Col / 2) + 1 > 105 ? 105
+                                                  : 97 + (opponent.Col / 2) + 1));
+                    sb.Append(9 - (opponent.Row / 2));
+                    
+                    validMoves.Add(new Tuple<string, double>(sb.ToString(), MinimumHeuristicEstimate(sb.ToString())));
+                }
+                if (!board[player.Row + 2 * direction].Get(player.Col - 1))
+                {
+                    StringBuilder sb = new StringBuilder();
+
+                    sb.Append(Convert.ToChar(value: 97 + (opponent.Col / 2) - 1 < 97 ? 97
+                                                  : 97 + (opponent.Col / 2) - 1));
+                    sb.Append(9 - (opponent.Row / 2));
+
+                    validMoves.Add(new Tuple<string, double>(sb.ToString(), MinimumHeuristicEstimate(sb.ToString())));
+                }
+            }
+        }
+
+        private void PossibleVerticalJumpsForGoalReach(List<Tuple<string, double>> validMoves, PlayerCoordinate player, PlayerCoordinate opponent, int direction)
+        {
+            if (player.Row + (3 * direction) < 17 && player.Row + (3 * direction) > -1)
+            {
+                if (!board[player.Row + (3 * direction)].Get(player.Col))
+                {
+                    StringBuilder sb = new StringBuilder();
+
+                    sb.Append(Convert.ToChar(97 + (opponent.Col / 2)));
+                    sb.Append(value: 9 - (opponent.Row / 2) - (1 * direction) > 9 ? 9
+                                   : 9 - (opponent.Row / 2) - (1 * direction) < 1 ? 1
+                                   : 9 - (opponent.Row / 2) - (1 * direction));
+
+                    validMoves.Add(new Tuple<string, double>(sb.ToString(), MinimumHeuristicEstimate(sb.ToString())));
+                }
+                else
+                {
+                    PossibleVerticalDiagonalJumpsForGoalReach(validMoves, player, opponent, direction);
+                }
+            }
+            else
+            {
+                PossibleVerticalDiagonalJumpsForGoalReach(validMoves, player, opponent, direction);
+            }
+        }
+        private List<Tuple<string, double>> PossibleMovesFromPositionForGoalReach(PlayerCoordinate player, PlayerCoordinate opponent)
+        {
+            List<Tuple<string, double>> validMoves = new List<Tuple<string, double>>();
+
+            Populate();
+            if (PlayersAreAdjacent())
+            {
+                if (player.Row == opponent.Row)
+                {
+                    if (player.Col < opponent.Col)
+                    {
+                        PossibleHorizontalJumpsForGoalReach(validMoves, player, opponent, 1);
+                    }
+                    else
+                    {
+                        PossibleHorizontalJumpsForGoalReach(validMoves, player, opponent, -1);
+                    }
+                }
+                else
+                {
+                    if (player.Row < opponent.Row)
+                    {
+                        PossibleVerticalJumpsForGoalReach(validMoves, player, opponent, 1);
+                    }
+                    else
+                    {
+                        PossibleVerticalJumpsForGoalReach(validMoves, player, opponent, -1);
+                    }
+                }
+            }
+            if (player.Row + 1 < 17 && !board[player.Row + 1].Get(player.Col)
+                && (player.Row + 2 != opponent.Row || player.Col != opponent.Col))
+            {
+                //South
+                StringBuilder sb = new StringBuilder();
+                sb.Append(Convert.ToChar(97 + (player.Col / 2)));
+                sb.Append(9 - (player.Row / 2) - 1 < 1 ? 1 : 9 - (player.Row / 2) - 1);
+                validMoves.Add(new Tuple<string, double>(sb.ToString(), MinimumHeuristicEstimate(sb.ToString())));
+            }
+            if (player.Row - 1 > -1 && !board[player.Row - 1].Get(player.Col)
+                 && (player.Row - 2 != opponent.Row || player.Col != opponent.Col))
+            {
+                //North
+                StringBuilder sb = new StringBuilder();
+                sb.Append(Convert.ToChar(97 + (player.Col / 2)));
+                sb.Append(9 - (player.Row / 2) + 1 > 9 ? 9 : 9 - (player.Row / 2) + 1);
+                validMoves.Add(new Tuple<string, double>(sb.ToString(), MinimumHeuristicEstimate(sb.ToString())));
+            }
+            if (player.Col + 1 < 17 && !board[player.Row].Get(player.Col + 1)
+                && (player.Row != opponent.Row || player.Col + 2 != opponent.Col))
+            {
+                //East
+                StringBuilder sb = new StringBuilder();
+                sb.Append(Convert.ToChar(97 + (player.Col / 2) + 1));
+                sb.Append(9 - (player.Row / 2));
+                validMoves.Add(new Tuple<string, double>(sb.ToString(), MinimumHeuristicEstimate(sb.ToString())));
+            }
+            if (player.Col - 1 > -1 && !board[player.Row].Get(player.Col - 1)
+                && (player.Row != opponent.Row || player.Col - 2 != opponent.Col))
+            {
+                //West
+                StringBuilder sb = new StringBuilder();
+                sb.Append(Convert.ToChar(97 + (player.Col / 2) - 1));
+                sb.Append(9 - (player.Row / 2));
+                validMoves.Add(new Tuple<string, double>(sb.ToString(), MinimumHeuristicEstimate(sb.ToString())));
+            }
+
+
+            Unpopulate();
+
+
+            validMoves.Sort(delegate (Tuple<string, double> lValue, Tuple<string, double> rValue)
+            {
+                if (lValue.Item2 == rValue.Item2) return 0;
+                else return lValue.Item2.CompareTo(rValue.Item2);
+            });
+
+            return validMoves;
         }
 
         private int FindMove(string move)
@@ -1269,6 +1603,52 @@ namespace GameCore
                 || (playerLocations[turn == 0 ? 0 : 1].Row - 2 == playerLocations[turn == 0 ? 1 : 0].Row && playerLocations[turn == 0 ? 0 : 1].Col == playerLocations[turn == 0 ? 1 : 0].Col && !board[playerLocations[turn == 0 ? 0 : 1].Row - 1].Get(playerLocations[turn == 0 ? 0 : 1].Col));
         }
 
+        private void IsThereNotAPath(List<PlayerCoordinate> visited, PlayerCoordinate thisMove, int goalRow)
+        {
+            List<PlayerCoordinate> alreadyVisited = new List<PlayerCoordinate>(visited);
+            List<PlayerCoordinate> goingToVisit = new List<PlayerCoordinate>();
+
+            List<Tuple<string, double>> moves = PossibleMovesFromPositionForGoalReach(thisMove, playerLocations[turn == 0 ? 1 : 0]);
+
+            foreach (Tuple<string, double> move in moves)
+            {
+                PlayerCoordinate validMove = new PlayerCoordinate(move.Item1);
+                if (!visited.Contains(validMove))
+                {
+                    goingToVisit.Add(validMove);
+                    alreadyVisited.Add(validMove);
+                }
+                else if (validMove.Row == goalRow)
+                {
+                     canReachGoal = true;
+                }
+            }
+
+            if (goingToVisit.Count != 0 && canReachGoal == false)
+            {
+                List<Thread> pathFindingThreads = new List<Thread>();
+
+                int i = 0;
+                foreach (PlayerCoordinate move in goingToVisit)
+                {
+                    Thread simulatedPathFindingThread = new Thread(() => IsThereNotAPath(visited, move, goalRow)) { IsBackground = true };
+                    simulatedPathFindingThread.Name = String.Format("simulatedPathFindingThread{0}", i + 1);
+                    pathFindingThreads.Add(simulatedPathFindingThread);
+                    ++i;
+                }
+
+                foreach (Thread thread in pathFindingThreads)
+                {
+                    thread.Start();
+                }
+
+                foreach (Thread thread in pathFindingThreads)
+                {
+                    thread.Join();
+                }
+            }
+        }
+
         private void Populate()
         {
             foreach (var wallCoordinate in walls)
@@ -1552,7 +1932,7 @@ namespace GameCore
                     lock (childrenAccess)
                     {
                         children.Sort();
-                    }                    
+                    }
                 }
                 if (children[nextNodeIndex].SimulatedGame())
                 {
@@ -1590,7 +1970,7 @@ namespace GameCore
                                                             boardState.GetPlayerWallCount(GameBoard.PlayerEnum.ONE), boardState.GetPlayerWallCount(GameBoard.PlayerEnum.TWO),
                                                             boardState.GetWalls(), boardState.GetWhoseTurn() == 1 ? GameBoard.PlayerEnum.ONE : GameBoard.PlayerEnum.TWO);
         }
-        
+
         private void ThreadedTreeSearch(Stopwatch timer, MonteCarloNode MonteCarlo)
         {
             for (int i = 0; i < 10000 && timer.Elapsed.TotalSeconds < 5.5; ++i)
@@ -1603,42 +1983,42 @@ namespace GameCore
         {
             Stopwatch timer = new Stopwatch();
             timer.Start();
-////#if DEBUG
-//            List<Thread> simulatedGames = new List<Thread>();
+            ////#if DEBUG
+            //            List<Thread> simulatedGames = new List<Thread>();
 
-//            for (int i = 0; i < 4; ++i)
-//            {
-//                Thread simulatedGameThread = new Thread(() => ThreadedTreeSearch(timer, TreeSearch)) {IsBackground = true};
-//                simulatedGameThread.Name = String.Format("SimulatedGameThread{0}", i + 1);
-//                simulatedGameThread.Start();
-//                simulatedGames.Add(simulatedGameThread);
-//            }
-            
+            //            for (int i = 0; i < 4; ++i)
+            //            {
+            //                Thread simulatedGameThread = new Thread(() => ThreadedTreeSearch(timer, TreeSearch)) {IsBackground = true};
+            //                simulatedGameThread.Name = String.Format("SimulatedGameThread{0}", i + 1);
+            //                simulatedGameThread.Start();
+            //                simulatedGames.Add(simulatedGameThread);
+            //            }
 
-//            foreach (Thread thread in simulatedGames)
-//            {
-//                thread.Join();
-//                Console.WriteLine(timer.Elapsed.TotalSeconds);
-//            }
 
-//            timer.Stop();
+            //            foreach (Thread thread in simulatedGames)
+            //            {
+            //                thread.Join();
+            //                Console.WriteLine(timer.Elapsed.TotalSeconds);
+            //            }
 
-//            Console.WriteLine(timer.Elapsed.TotalSeconds);
-//#else
+            //            timer.Stop();
+
+            //            Console.WriteLine(timer.Elapsed.TotalSeconds);
+            //#else
             List<Thread> simulatedGames = new List<Thread>();
 
             for (int i = 0; i < 4; ++i)
             {
-                Thread simulatedGameThread = new Thread(() => ThreadedTreeSearch(timer, TreeSearch)) {IsBackground = true};
+                Thread simulatedGameThread = new Thread(() => ThreadedTreeSearch(timer, TreeSearch)) { IsBackground = true };
                 simulatedGameThread.Name = String.Format("SimulatedGameThread{0}", i + 1);
-                simulatedGameThread.Start();
                 simulatedGames.Add(simulatedGameThread);
+                simulatedGameThread.Start();
             }
-            
+
 
             foreach (Thread thread in simulatedGames)
             {
-                thread.Join();                
+                thread.Join();
             }
 
             timer.Stop();
