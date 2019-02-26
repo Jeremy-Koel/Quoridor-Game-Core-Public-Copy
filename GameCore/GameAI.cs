@@ -24,11 +24,18 @@ namespace GameCore
         private readonly object childrenAccess = new object();
         private readonly object childrenMovesAccess = new object();
         private readonly object canReachGoalAccess = new object();
-        private static double explorationFactor = .5;
-        private static double historyInfluence = .7;
+        private static double explorationFactor = 1.0 / FastSqRt(2);
+
+        private static double FastSqRt(double v)
+        {
+            return BitConverter.Int64BitsToDouble(((long)((-1 * ((int)(BitConverter.DoubleToInt64Bits(Rsqrt(v)) >> 32) - 1072632447)) + 1072632447)) << 32);
+        }
+
+        private static double historyInfluence = 1.15;
 
         private static string MonteCarloPlayer;
         private static Random randomPercentileChance;
+        private static List<int> goalRows = new List<int>();
         private static List<BitArray> board;
         private static int[,] possibleMoveValues;
         private static Dictionary<string, Tuple<double, double>> moveTotals;
@@ -171,6 +178,9 @@ namespace GameCore
             {
                 MonteCarloPlayer = currentTurn.ToString();
             }
+
+            goalRows.Add(0);
+            goalRows.Add(8);
 
             playerLocations = new List<PlayerCoordinate>();
             playerLocations.Add(new PlayerCoordinate(playerOne.Row, playerOne.Col));
@@ -1174,7 +1184,7 @@ namespace GameCore
 
         private string RandomMove()
         {
-            return randomPercentileChance.Next(1, 100) >= 21 ? FindPlayerMove() : (turn == 0 ? wallsRemaining[0] : wallsRemaining[1]) > 0 ? BoardUtil.GetRandomWallPlacementMove() : FindPlayerMove();
+            return randomPercentileChance.Next(1, 100) >= 11 + (turn == 0 ? ((playerLocations[1].Row / 2) + 1) * 5 : (8 - (playerLocations[0].Row / 2) + 1) * 5) ? FindPlayerMove() : (turn == 0 ? wallsRemaining[0] : wallsRemaining[1]) > 0 ? BoardUtil.GetRandomWallPlacementMove() : FindPlayerMove();
         }
 
         private string FindPlayerMove()
@@ -1461,9 +1471,9 @@ namespace GameCore
                         moveTotals.Add(child.thisMove, new Tuple<double, double>(0, 1));
                     }
                     child.SetScore((((child.GetWinRate()) + explorationFactor) *
-                      (ulong) BitConverter.Int64BitsToDouble(((long)((-1 * ((int)(BitConverter.DoubleToInt64Bits(Rsqrt(Math.Log(timesVisited) / child.GetVisits())) >> 32) - 1072632447)) + 1072632447)) << 32)
+                      (ulong) FastSqRt(Math.Log(timesVisited) / child.GetVisits())
                       + (moveTotals[child.GetMove()].Item1 / moveTotals[child.GetMove()].Item2) * (historyInfluence / (child.GetVisits() - child.GetWins() + 1))
-                      ) / 1000000000000);
+                      ) / 1000000000);
                 }
 
                 children.Sort(delegate (MonteCarloNode lValue, MonteCarloNode rValue)
@@ -1514,7 +1524,39 @@ namespace GameCore
                         {
                             lock (childrenAccess)
                             {
-                                children.Add(new MonteCarloNode(move, playerLocations, wallsRemaining, walls, new WallCoordinate(move), turn, depthCheck + 1, this));
+                                if (!childrensMoves.Contains(move))
+                                {
+                                    children.Add(new MonteCarloNode(move, playerLocations, wallsRemaining, walls, new WallCoordinate(move), turn, depthCheck + 1, this));
+
+                                    if (!moveTotals.ContainsKey(move))
+                                    {
+                                        moveTotals.Add(move, new Tuple<double, double>(0, 1));
+                                    }
+                                    else
+                                    {
+                                        moveTotals[move] = new Tuple<double, double>(moveTotals[move].Item1, moveTotals[move].Item2 + 1);
+                                    }
+
+                                    childrensMoves.Add(move);
+                                    //#if DEBUG
+                                    //                            Console.WriteLine(move + ' ' + (turn == 0 ? GameBoard.PlayerEnum.ONE : GameBoard.PlayerEnum.TWO).ToString());
+                                    //#endif
+                                    successfulInsert = true;
+                                }                                
+                            }
+                        }
+                    }
+                }
+                else
+                {
+                    PlayerCoordinate moveToInsert = new PlayerCoordinate(move);
+                    if (!(moveToInsert.Row == (turn == 0 ? playerLocations[0] : playerLocations[1]).Row && moveToInsert.Col == (turn == 0 ? playerLocations[0] : playerLocations[1]).Col))
+                    {
+                        lock (childrenAccess)
+                        {
+                            if (!childrensMoves.Contains(move))
+                            {
+                                children.Add(new MonteCarloNode(move, depthCheck + 1, this));
 
                                 if (!moveTotals.ContainsKey(move))
                                 {
@@ -1527,36 +1569,10 @@ namespace GameCore
 
                                 childrensMoves.Add(move);
                                 //#if DEBUG
-                                //                            Console.WriteLine(move + ' ' + (turn == 0 ? GameBoard.PlayerEnum.ONE : GameBoard.PlayerEnum.TWO).ToString());
+                                //                                Console.WriteLine(move + ' ' + (turn == 0 ? GameBoard.PlayerEnum.ONE : GameBoard.PlayerEnum.TWO).ToString());
                                 //#endif
                                 successfulInsert = true;
                             }
-                        }
-                    }
-                }
-                else
-                {
-                    PlayerCoordinate moveToInsert = new PlayerCoordinate(move);
-                    if (!(moveToInsert.Row == (turn == 0 ? playerLocations[0] : playerLocations[1]).Row && moveToInsert.Col == (turn == 0 ? playerLocations[0] : playerLocations[1]).Col))
-                    {
-                        lock (childrenAccess)
-                        {
-                            children.Add(new MonteCarloNode(move, depthCheck + 1, this));
-
-                            if (!moveTotals.ContainsKey(move))
-                            {
-                                moveTotals.Add(move, new Tuple<double, double>(0, 1));
-                            }
-                            else
-                            {
-                                moveTotals[move] = new Tuple<double, double>(moveTotals[move].Item1, moveTotals[move].Item2 + 1);
-                            }
-
-                            childrensMoves.Add(move);
-                            //#if DEBUG
-                            //                                Console.WriteLine(move + ' ' + (turn == 0 ? GameBoard.PlayerEnum.ONE : GameBoard.PlayerEnum.TWO).ToString());
-                            //#endif
-                            successfulInsert = true;
                         }
                     }
                 }
