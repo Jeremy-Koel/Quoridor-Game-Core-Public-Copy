@@ -125,13 +125,9 @@ namespace GameCore
                 {
                     return -1;
                 }
-                else if (GetWins() > carloNode.GetWins())
-                {
-                    return 1;
-                }
                 else
                 {
-                    return 0;
+                    return 1;
                 }
             }
             else if (GetVisits() < carloNode.GetVisits())
@@ -140,19 +136,16 @@ namespace GameCore
                 {
                     return 1;
                 }
-                else if (GetWins() < carloNode.GetWins())
-                {
-                    return -1;
-                }
                 else
                 {
-                    return 0;
+                    return -1;
                 }
             }
             else
             {
                 return 0;
             }
+
         }
 
         public MonteCarloNode(PlayerCoordinate playerOne, PlayerCoordinate playerTwo, int playerOneTotalWalls, int playerTwoTotalWalls, List<WallCoordinate> wallCoordinates, GameBoard.PlayerEnum currentTurn)
