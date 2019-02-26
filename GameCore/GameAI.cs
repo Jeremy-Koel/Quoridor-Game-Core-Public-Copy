@@ -25,7 +25,7 @@ namespace GameCore
         private readonly object childrenMovesAccess = new object();
         private readonly object canReachGoalAccess = new object();
         private static double explorationFactor = .5;
-        private static double historyInfluence = 1.15;
+        private static double historyInfluence = .7;
 
         private static string MonteCarloPlayer;
         private static Random randomPercentileChance;
@@ -42,8 +42,8 @@ namespace GameCore
         private List<int> wallsRemaining;
 
         private double score;
-        private double wins;
-        private double timesVisited;
+        private int wins;
+        private int timesVisited;
         private bool gameOver;
         private bool finalSort = false;
         private GameBoard.PlayerEnum turn;
@@ -93,7 +93,7 @@ namespace GameCore
             score = v;
         }
 
-        private double GetWinRate()
+        public double GetWinRate()
         {
             if (timesVisited != 0)
             {
@@ -118,9 +118,9 @@ namespace GameCore
                 {
                     return -1;
                 }
-                else if (GetWins() < carloNode.GetWins())
+                else if (GetWins() > carloNode.GetWins())
                 {
-                    return -1;
+                    return 1;
                 }
                 else
                 {
@@ -146,7 +146,6 @@ namespace GameCore
             {
                 return 0;
             }
-
         }
 
         public MonteCarloNode(PlayerCoordinate playerOne, PlayerCoordinate playerTwo, int playerOneTotalWalls, int playerTwoTotalWalls, List<WallCoordinate> wallCoordinates, GameBoard.PlayerEnum currentTurn)
@@ -1581,7 +1580,7 @@ namespace GameCore
             ++timesVisited;
             bool mctsVictory = false;
 
-            if (depthCheck > 145)
+            if (depthCheck > 91)
             {
                 gameOver = true;
             }
@@ -1589,16 +1588,22 @@ namespace GameCore
             if (!gameOver)
             {
                 int nextNodeIndex = SelectNode();
+                MonteCarloNode nextNode;
 
-                if (nextNodeIndex < 0)
+                if (nextNodeIndex >= 0)
+                {
+                    nextNode = children[nextNodeIndex];
+                }
+                else
                 {
                     nextNodeIndex = SelectNode(ExpandOptions());
+                    nextNode = children[nextNodeIndex];
                     lock (childrenAccess)
                     {
-                        children.OrderBy(i => i.GetVisits()).ToList();
+                        children.Sort();
                     }
                 }
-                if (children[nextNodeIndex].SimulatedGame())
+                if (nextNode.SimulatedGame())
                 {
                     mctsVictory = true;
                     ++wins;
@@ -1615,7 +1620,7 @@ namespace GameCore
             }
             lock (childrenAccess)
             {
-                children.OrderBy(i => i.GetVisits()).ToList();
+                children.Sort();
             }
             return mctsVictory;
         }
@@ -1644,7 +1649,7 @@ namespace GameCore
 
             if (!MonteCarlo.DoneFinalSort())
             {
-                MonteCarlo.GetChildrenNodes().OrderBy(i => i.GetVisits()).ToList();
+                MonteCarlo.GetChildrenNodes().OrderBy(i => i.GetWinRate()).ToList();
                 MonteCarlo.SetFinalSort(true);
             }
         }
