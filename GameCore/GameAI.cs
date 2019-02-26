@@ -93,24 +93,32 @@ namespace GameCore
             }
             else if (GetVisits() > carloNode.GetVisits())
             {
-                if (GetWinRate() < carloNode.GetWinRate())
+                if (GetWins() < carloNode.GetWins())
                 {
                     return -1;
                 }
-                else
+                else if (GetWins() > carloNode.GetWins())
                 {
                     return 1;
+                }
+                else
+                {
+                    return 0;
                 }
             }
             else if (GetVisits() < carloNode.GetVisits())
             {
-                if (GetWinRate() > carloNode.GetWinRate())
+                if (GetWins() > carloNode.GetWins())
                 {
                     return 1;
                 }
-                else
+                else if (GetWins() < carloNode.GetWins())
                 {
                     return -1;
+                }
+                else
+                {
+                    return 0;
                 }
             }
             else
