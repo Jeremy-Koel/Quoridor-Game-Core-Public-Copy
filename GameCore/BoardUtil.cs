@@ -70,6 +70,13 @@ namespace GameCore
             return playerColTranslationMap[c];
         }
 
+
+
+        private string PlayerCoordinateToString(PlayerCoordinate)
+        {
+            return Convert.ToChar(97 + (playerLocations[turn == 0 ? 1 : 0].Col / 2)).ToString() + (9 - (playerLocations[turn == 0 ? 1 : 0].Row / 2));
+        }
+
         // BFS to find if indicated player can reach their target row 
         public static bool CanReachGoal(char[,] gameBoard, int goalRow, int startX, int startY)
         {
