@@ -1153,7 +1153,7 @@ namespace GameCore
 
             List<string> blockingWalls = PlaceBlockingWall();
 
-            if (randomPercentileChance.Next(1, 100) <= 11 || ((playerLocations[turn == 0 ? 0 : 1].Row / 2) + (turn == 0 ? -1 : 1) == (turn == 0 ? 0 : 8) && PossibleMovesContainsVictory()) || (turn == 0 ? playerLocations[1].Row / 2 <= 5 : playerLocations[0].Row / 2 >= 3))
+            if (randomPercentileChance.Next(1, 100) <= 11 || (playerLocations[turn == 0 ? 0 : 1].Row / 2) + (turn == 0 ? -1 : 1) == (turn == 0 ? 0 : 8) || (turn == 0 ? playerLocations[1].Row / 2 <= 5 : playerLocations[0].Row / 2 >= 3))
             {
                 move = possibleMoves[0].Item1;
 
