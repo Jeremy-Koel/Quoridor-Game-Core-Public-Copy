@@ -989,22 +989,37 @@ namespace GameCore
 
         private string FindBlockingWall()
         {
-            return PlaceBlockingWall()[randomPercentileChance.Next(0, 4)];
+            List<Tuple<string, double>> blockingWalls = PlaceBlockingWall();
+            return blockingWalls[blockingWalls.Count - 1].Item1;
         }
 
-        private List<string> PlaceBlockingWall()
+        private List<Tuple<string, double>> PlaceBlockingWall()
         {
-            List<string> blockingWalls = new List<string>();
+            List<Tuple<string, double>> blockingWalls = new List<Tuple<string, double>>();
 
-            blockingWalls.Add(Convert.ToChar(97 + playerLocations[turn == 0 ? 1 : 0].Col / 2 + (playerLocations[turn == 0 ? 1 : 0].Col != 0 ? -1 : 0)).ToString() + (9 - (playerLocations[turn == 0 ? 1 : 0].Row / 2) - (turn == 0 ? 1 : 0)).ToString() + "h");
-            blockingWalls.Add(Convert.ToChar(97 + playerLocations[turn == 0 ? 1 : 0].Col / 2 + (playerLocations[turn == 0 ? 1 : 0].Col != 0 ? -1 : 0)).ToString() + (9 - (playerLocations[turn == 0 ? 1 : 0].Row / 2) - (turn == 0 ? 1 : 0)).ToString() + "v");
+            string leftHorizontalBlock = Convert.ToChar(97 + playerLocations[turn == 0 ? 1 : 0].Col / 2 + (playerLocations[turn == 0 ? 1 : 0].Col != 0 ? -1 : 0)).ToString() + (9 - (playerLocations[turn == 0 ? 1 : 0].Row / 2) - (turn == 0 ? 1 : 0)).ToString() + "h";
+            string leftVerticalBlock = Convert.ToChar(97 + playerLocations[turn == 0 ? 1 : 0].Col / 2 + (playerLocations[turn == 0 ? 1 : 0].Col != 0 ? -1 : 0)).ToString() + (9 - (playerLocations[turn == 0 ? 1 : 0].Row / 2) - (turn == 0 ? 1 : 0)).ToString() + "v";
 
-            blockingWalls.Add(Convert.ToChar(97 + playerLocations[turn == 0 ? 1 : 0].Col / 2).ToString() + (9 - (playerLocations[turn == 0 ? 1 : 0].Row / 2) - (turn == 0 ? 1 : 0)).ToString() + "h");
-            blockingWalls.Add(Convert.ToChar(97 + playerLocations[turn == 0 ? 1 : 0].Col / 2).ToString() + (9 - (playerLocations[turn == 0 ? 1 : 0].Row / 2) - (turn == 0 ? 1 : 0)).ToString() + "v");
+            string rightHorizontalBlock = Convert.ToChar(97 + playerLocations[turn == 0 ? 1 : 0].Col / 2).ToString() + (9 - (playerLocations[turn == 0 ? 1 : 0].Row / 2) - (turn == 0 ? 1 : 0)).ToString() + "h";
+            string rightVerticalBlock = Convert.ToChar(97 + playerLocations[turn == 0 ? 1 : 0].Col / 2).ToString() + (9 - (playerLocations[turn == 0 ? 1 : 0].Row / 2) - (turn == 0 ? 1 : 0)).ToString() + "v";
+
+            if (new WallCoordinate(leftHorizontalBlock).StartCol - 1 == playerLocations[turn == 0 ? 1 : 0].Col && ValidWallMove(leftHorizontalBlock))
+            {
+                blockingWalls.Add(new Tuple<string, double>(leftHorizontalBlock, MinimumHeuristicEstimate()));
+            }
+            if (new WallCoordinate(leftVerticalBlock).StartCol - 1 == playerLocations[turn == 0 ? 1 : 0].Col && ValidWallMove(leftHorizontalBlock))
+            {
+                blockingWalls.Add(leftVerticalBlock);
+            }
+
+
+
+            blockingWalls.Add();
+            blockingWalls.Add();
 
             return blockingWalls;
         }
-                
+
         private string FindPlayerMove()
         {
             string move = null;
