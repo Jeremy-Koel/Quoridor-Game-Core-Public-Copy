@@ -1003,104 +1003,7 @@ namespace GameCore
 
             return blockingWalls;
         }
-
-        private string FindPlayerMove(List<string> blockingWalls)
-        {
-            string move = null;
-
-            if (randomPercentileChance.Next(1, 100) <= 11 || (playerLocations[turn == 0 ? 0 : 1].Row / 2) + (turn == 0 ? -1 : 1) == (turn == 0 ? 0 : 8) || (turn == 0 ? playerLocations[1].Row / 2 <= 5 : playerLocations[0].Row / 2 >= 3))
-            {
-                move = possibleMoves[0].Item1;
-
-                for (int i = 1; childrensMoves.Contains(move) && i < possibleMoves.Count; ++i)
-                {
-                    move = possibleMoves[i].Item1;
-                }
-
-                if (childrensMoves.Contains(move))
-                {
-                    move = possibleMoves[randomPercentileChance.Next(0, possibleMoves.Count)].Item1;
-                }
-            }
-            else if (wallsRemaining[turn == 0 ? 0 : 1] != 0)
-            {
-                switch (randomPercentileChance.Next(0, 4))
-                {
-                    case 0:
-                        if (new WallCoordinate(blockingWalls[0]).StartCol - 1 == playerLocations[turn == 0 ? 1 : 0].Col && ValidWallMove(blockingWalls[0]))
-                        {
-                            move = blockingWalls[0];
-                        }
-                        else
-                        {
-                            move = FindPlayerMove(blockingWalls);
-                        }
-                        break;
-                    case 1:
-                        if (new WallCoordinate(blockingWalls[1]).StartCol - 1 == playerLocations[turn == 0 ? 1 : 0].Col && ValidWallMove(blockingWalls[1]))
-                        {
-                            move = blockingWalls[1];
-                        }
-                        else
-                        {
-                            move = FindPlayerMove(blockingWalls);
-                        }
-                        break;
-                    case 3:
-                        if (ValidWallMove(blockingWalls[2]))
-                        {
-                            move = blockingWalls[2];
-                        }
-                        else
-                        {
-                            move = FindPlayerMove(blockingWalls);
-                        }
-                        break;
-                    case 4:
-                        if (wallsRemaining[turn == 0 ? 0 : 1] != 0 && ValidWallMove(blockingWalls[3]))
-                        {
-                            move = blockingWalls[3];
-                        }
-                        else
-                        {
-                            move = FindPlayerMove(blockingWalls);
-                        }
-                        break;
-                }
-            }
-            else
-            {
-                move = possibleMoves[0].Item1;
-
-                for (int i = 1; childrensMoves.Contains(move) && i < possibleMoves.Count; ++i)
-                {
-                    move = possibleMoves[i].Item1;
-                }
-
-                if (childrensMoves.Contains(move))
-                {
-                    move = possibleMoves[randomPercentileChance.Next(0, possibleMoves.Count)].Item1;
-                }
-            }
-
-            if (String.IsNullOrEmpty(move))
-            {
-                move = possibleMoves[0].Item1;
-
-                for (int i = 1; childrensMoves.Contains(move) && i < possibleMoves.Count; ++i)
-                {
-                    move = possibleMoves[i].Item1;
-                }
-
-                if (childrensMoves.Contains(move))
-                {
-                    move = possibleMoves[randomPercentileChance.Next(0, possibleMoves.Count)].Item1;
-                }
-            }
-
-            return move;
-        }
-
+                
         private string FindPlayerMove()
         {
             string move = null;
@@ -1123,16 +1026,31 @@ namespace GameCore
             }
             else if (wallsRemaining[turn == 0 ? 0 : 1] != 0)
             {
-                switch (randomPercentileChance.Next(0, 4))
+                int wallCase = randomPercentileChance.Next(0, 2);
+                switch (wallCase)
                 {
                     case 0:
                         if (new WallCoordinate(blockingWalls[0]).StartCol - 1 == playerLocations[turn == 0 ? 1 : 0].Col && ValidWallMove(blockingWalls[0]))
                         {
                             move = blockingWalls[0];
                         }
+                        else if (ValidWallMove(blockingWalls[2]))
+                        {
+                            move = blockingWalls[2];
+                        }
                         else
                         {
-                            move = FindPlayerMove(blockingWalls);
+                            move = possibleMoves[0].Item1;
+
+                            for (int i = 1; childrensMoves.Contains(move) && i < possibleMoves.Count; ++i)
+                            {
+                                move = possibleMoves[i].Item1;
+                            }
+
+                            if (childrensMoves.Contains(move))
+                            {
+                                move = possibleMoves[randomPercentileChance.Next(0, possibleMoves.Count)].Item1;
+                            }
                         }
                         break;
                     case 1:
@@ -1140,29 +1058,23 @@ namespace GameCore
                         {
                             move = blockingWalls[1];
                         }
-                        else
-                        {
-                            move = FindPlayerMove(blockingWalls);
-                        }
-                        break;
-                    case 3:
-                        if (ValidWallMove(blockingWalls[2]))
-                        {
-                            move = blockingWalls[2];
-                        }
-                        else
-                        {
-                            move = FindPlayerMove(blockingWalls);
-                        }
-                        break;
-                    case 4:
-                        if (wallsRemaining[turn == 0 ? 0 : 1] != 0 && ValidWallMove(blockingWalls[3]))
+                        else if (ValidWallMove(blockingWalls[3]))
                         {
                             move = blockingWalls[3];
                         }
                         else
                         {
-                            move = FindPlayerMove(blockingWalls);
+                            move = possibleMoves[0].Item1;
+
+                            for (int i = 1; childrensMoves.Contains(move) && i < possibleMoves.Count; ++i)
+                            {
+                                move = possibleMoves[i].Item1;
+                            }
+
+                            if (childrensMoves.Contains(move))
+                            {
+                                move = possibleMoves[randomPercentileChance.Next(0, possibleMoves.Count)].Item1;
+                            }
                         }
                         break;
                 }
