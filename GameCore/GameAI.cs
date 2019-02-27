@@ -40,6 +40,7 @@ namespace GameCore
         private List<MonteCarloNode> children;
         private List<WallCoordinate> walls;
         private List<Tuple<string, double>> possibleMoves;
+        private List<Tuple<string, double>> possibleBlocks;
         private List<string> childrensMoves;
         private MonteCarloNode parent;
         private List<PlayerCoordinate> playerLocations;
