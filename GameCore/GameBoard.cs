@@ -489,9 +489,9 @@ namespace GameCore
 
             if (PlayersAreAdjacent())
             {
-                if (playerOneLocation.Row == playerTwoLocation.Row)
+                if ((whoseTurn == 0 ? (playerOneLocation) : (playerTwoLocation)).Row == (whoseTurn == 0 ? (playerTwoLocation) : (playerOneLocation)).Row)
                 {
-                    if (playerOneLocation.Col < playerTwoLocation.Col)
+                    if ((whoseTurn == 0 ? (playerOneLocation) : (playerTwoLocation)).Col < (whoseTurn == 0 ? (playerTwoLocation) : (playerOneLocation)).Col)
                     {
                         PossibleHorizontalJumps(validMoves, 1);
                     }
@@ -502,7 +502,7 @@ namespace GameCore
                 }
                 else
                 {
-                    if (playerOneLocation.Row < playerTwoLocation.Row)
+                    if ((whoseTurn == 0 ? (playerOneLocation) : (playerTwoLocation)).Row < (whoseTurn == 0 ? (playerTwoLocation) : (playerOneLocation)).Row)
                     {
                         PossibleVerticalJumps(validMoves, 1);
                     }
