@@ -740,149 +740,6 @@ namespace GameCore
             return y;
         }
 
-        // A-Star Algorithm to find Path between two points on a gameBoard
-        public bool CanReachGoalBitArrayAStar(List<BitArray> gameBoard, PlayerCoordinate start, PlayerCoordinate goal)
-        {
-            // The set of nodes already evaluated
-            HashSet<PlayerCoordinate> closedSetStart = new HashSet<PlayerCoordinate>();
-            HashSet<PlayerCoordinate> closedSetGoal = new HashSet<PlayerCoordinate>();
-
-            // The set of currently discovered nodes that are not evaluated yet.
-            // Initially, only the start node is known.
-            HashSet<PlayerCoordinate> openSetStart = new HashSet<PlayerCoordinate>();
-            HashSet<PlayerCoordinate> openSetGoal = new HashSet<PlayerCoordinate>();
-            openSetStart.Add(start);
-
-            // For each node, which node it can most efficiently be reached from.
-            // If a node can be reached from many nodes, cameFrom will eventually contain the
-            // most efficient previous step.
-            Dictionary<PlayerCoordinate, PlayerCoordinate> cameFromStart = new Dictionary<PlayerCoordinate, PlayerCoordinate>();
-            Dictionary<PlayerCoordinate, PlayerCoordinate> cameFromGoal = new Dictionary<PlayerCoordinate, PlayerCoordinate>();
-
-            // For each node, the cost of getting from the start node to that node.
-            Dictionary<PlayerCoordinate, double> gScoreStart = new Dictionary<PlayerCoordinate, double>();
-            Dictionary<PlayerCoordinate, double> gScoreGoal = new Dictionary<PlayerCoordinate, double>();
-
-            // The cost of going from start to start is zero.
-            gScoreStart[start] = 0;
-            gScoreGoal[start] = 0;
-
-            // For each node, the total cost of getting from the start node to the goal
-            // by passing by that node. That value is partly known, partly heuristic.
-            Dictionary<PlayerCoordinate, double> fScoreStart = new Dictionary<PlayerCoordinate, double>();
-            Dictionary<PlayerCoordinate, double> fScoreGoal = new Dictionary<PlayerCoordinate, double>();
-
-            // For the first node, that value is completely heuristic.
-            fScoreStart.Add(start, 5 * HeuristicCostEstimate(start, goal));
-            fScoreGoal.Add(goal, 5 * HeuristicCostEstimate(goal, start));
-
-            while (openSetStart.Count > 0 && openSetGoal.Count > 0)
-            {
-                PlayerCoordinate currentStartPath = LowestCostNodeInOpenSet(openSetStart, fScoreStart);
-                PlayerCoordinate currentGoalPath = LowestCostNodeInOpenSet(openSetGoal, fScoreGoal);
-
-                if (currentStartPath == goal || currentGoalPath == start || currentStartPath == currentGoalPath)
-                {
-                    return true;
-                }
-
-                openSetStart.Remove(currentStartPath);
-                closedSetStart.Add(currentStartPath);
-
-                openSetGoal.Remove(currentGoalPath);
-                closedSetGoal.Add(currentGoalPath);
-
-                for (int neighbor = 0; neighbor < 4; neighbor++)
-                {
-                    PlayerCoordinate startNeighbor = new PlayerCoordinate(currentStartPath.Row, currentStartPath.Col);
-
-                    switch (neighbor)
-                    {
-                        case 0:
-                            startNeighbor = new PlayerCoordinate(currentStartPath.Row - 2, currentStartPath.Col);
-                            break;
-                        case 1:
-                            startNeighbor = new PlayerCoordinate(currentStartPath.Row, currentStartPath.Col + 2);
-                            break;
-                        case 2:
-                            startNeighbor = new PlayerCoordinate(currentStartPath.Row + 2, currentStartPath.Col);
-                            break;
-                        case 3:
-                            startNeighbor = new PlayerCoordinate(currentStartPath.Row, currentStartPath.Col - 2);
-                            break;
-                    }
-
-                    if (closedSetStart.Contains(startNeighbor))
-                    {
-                        // Ignore the neighbor which is already evaluated.
-                        continue;
-                    }
-                    // The distance from start to a neighbor
-                    double tentativeGScore = gScoreStart[currentStartPath] + DistanceBetween(currentStartPath, startNeighbor);
-
-
-                    if (!openSetStart.Contains(startNeighbor))   // Discover a new node
-                    {
-                        openSetStart.Add(startNeighbor);
-                    }
-                    else if (tentativeGScore >= gScoreStart[startNeighbor])
-                    {
-                        continue;
-                    }
-
-                    // This path is the best until now. Record it!
-                    cameFromStart[startNeighbor] = currentStartPath;
-                    gScoreStart[startNeighbor] = tentativeGScore;
-                    fScoreStart[startNeighbor] = gScoreStart[startNeighbor] + 5 * HeuristicCostEstimate(startNeighbor, goal);
-                }
-                for (int neighbor = 0; neighbor < 4; neighbor++)
-                {
-                    PlayerCoordinate goalNeighbor = new PlayerCoordinate(currentGoalPath.Row, currentGoalPath.Col);
-
-                    switch (neighbor)
-                    {
-                        case 0:
-                            goalNeighbor = new PlayerCoordinate(currentGoalPath.Row - 2, currentGoalPath.Col);
-                            break;
-                        case 1:
-                            goalNeighbor = new PlayerCoordinate(currentGoalPath.Row, currentGoalPath.Col + 2);
-                            break;
-                        case 2:
-                            goalNeighbor = new PlayerCoordinate(currentGoalPath.Row + 2, currentGoalPath.Col);
-                            break;
-                        case 3:
-                            goalNeighbor = new PlayerCoordinate(currentGoalPath.Row, currentGoalPath.Col - 2);
-                            break;
-                    }
-
-                    if (closedSetStart.Contains(goalNeighbor))
-                    {
-                        // Ignore the neighbor which is already evaluated.
-                        continue;
-                    }
-                    // The distance from start to a neighbor
-                    double tentativeGScore = gScoreStart[currentGoalPath] + DistanceBetween(currentGoalPath, goalNeighbor);
-
-
-                    if (!openSetStart.Contains(goalNeighbor))   // Discover a new node
-                    {
-                        openSetStart.Add(goalNeighbor);
-                    }
-                    else if (tentativeGScore >= gScoreStart[goalNeighbor])
-                    {
-                        continue;
-                    }
-
-                    // This path is the best until now. Record it!
-                    cameFromStart[goalNeighbor] = currentStartPath;
-                    gScoreStart[goalNeighbor] = tentativeGScore;
-                    fScoreStart[goalNeighbor] = gScoreStart[goalNeighbor] + 5 * HeuristicCostEstimate(goalNeighbor, goal);
-                }
-
-            }
-            return false;
-        }
-
         private bool ValidPlayerMove(PlayerCoordinate start, PlayerCoordinate destination)
         {
             if (gameOver
@@ -1126,7 +983,7 @@ namespace GameCore
 
         private string RandomMove()
         {
-            return randomPercentileChance.Next(1, 100) >= 11 + (10 * ((turn == 0 ? (8 - playerLocations[1].Row /2 + 1) : (playerLocations[1].Row / 2 + 1)) - 1)) ? FindPlayerMove() : (turn == 0 ? wallsRemaining[0] : wallsRemaining[1]) > 0 ? (turn == 0 ? playerLocations[1].Row / 2 <= 5 : playerLocations[0].Row / 2 >= 3) ? FindBlockingWall() : BoardUtil.GetRandomWallPlacementMove() : FindPlayerMove();
+            return randomPercentileChance.Next(1, 100) >= 11 + (10 * (turn == 0 ? (playerLocations[1].Row / 2) : (8 - playerLocations[0].Row /2 + 1))) ? FindPlayerMove() : (turn == 0 ? wallsRemaining[0] : wallsRemaining[1]) > 0 ? (turn == 0 ? playerLocations[1].Row / 2 <= 5 : playerLocations[0].Row / 2 >= 3) ? FindBlockingWall() : BoardUtil.GetRandomWallPlacementMove() : FindPlayerMove();
         }
 
         private string FindBlockingWall()
@@ -1661,7 +1518,7 @@ namespace GameCore
 
         private void ThreadedTreeSearch(Stopwatch timer, MonteCarloNode MonteCarlo)
         {
-            for (int i = 0; i < 10000 && timer.Elapsed.TotalSeconds < 2; ++i)
+            for (int i = 0; i < 1000 && timer.Elapsed.TotalSeconds < 3; ++i)
             {
                 MonteCarlo.SimulatedGame();
             }
@@ -1671,28 +1528,7 @@ namespace GameCore
         {
             Stopwatch timer = new Stopwatch();
             timer.Start();
-            ////#if DEBUG
-            //            List<Thread> simulatedGames = new List<Thread>();
 
-            //            for (int i = 0; i < 4; ++i)
-            //            {
-            //                Thread simulatedGameThread = new Thread(() => ThreadedTreeSearch(timer, TreeSearch)) {IsBackground = true};
-            //                simulatedGameThread.Name = String.Format("SimulatedGameThread{0}", i + 1);
-            //                simulatedGameThread.Start();
-            //                simulatedGames.Add(simulatedGameThread);
-            //            }
-
-
-            //            foreach (Thread thread in simulatedGames)
-            //            {
-            //                thread.Join();
-            //                Console.WriteLine(timer.Elapsed.TotalSeconds);
-            //            }
-
-            //            timer.Stop();
-
-            //            Console.WriteLine(timer.Elapsed.TotalSeconds);
-            //#else
             List<Thread> simulatedGames = new List<Thread>();
 
             for (int i = 0; i < 4; ++i)
