@@ -1,7 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 
 namespace GameCore
 {
@@ -18,7 +16,6 @@ namespace GameCore
         private PlayerCoordinate playerOneLocation;
         private PlayerCoordinate playerTwoLocation;
         private List<WallCoordinate> walls;
-        private List<string> possibleMovesForCurrentPlayer;
         private int player1walls = 10;
         private int player2walls = 10;
         private char[,] board;
@@ -163,7 +160,6 @@ namespace GameCore
             playerOneLocation = new PlayerCoordinate(playerOneStart);
             playerTwoLocation = new PlayerCoordinate(playerTwoStart);
             walls = new List<WallCoordinate>();
-            possibleMovesForCurrentPlayer = new List<string>();
 
             // Init gameboard 
             board = new char[TOTAL_ROWS, TOTAL_COLS];
@@ -181,8 +177,6 @@ namespace GameCore
                     }
                 }
             }
-
-            possibleMovesForCurrentPlayer = PossibleMovesFromPosition();
         }
 
         public bool PlayerOneWin()
@@ -254,9 +248,7 @@ namespace GameCore
                     break;
             }
 
-            string move = Convert.ToChar(97 + (destinationCoordinate.Col / 2)).ToString() + (9 - destinationCoordinate.Row / 2).ToString();
-            
-            if (possibleMovesForCurrentPlayer.Contains(move)/*IsValidPlayerMove(player, startCoordinate, destinationCoordinate)*/)
+            if (IsValidPlayerMove(player, startCoordinate, destinationCoordinate))
             {
                 board[startCoordinate.Row, startCoordinate.Col] = PLAYER_SPACE;
                 switch (player)
@@ -265,13 +257,11 @@ namespace GameCore
                         playerOneLocation.Row = destinationCoordinate.Row;
                         playerOneLocation.Col = destinationCoordinate.Col;
                         whoseTurn = PlayerEnum.TWO;
-                        possibleMovesForCurrentPlayer = PossibleMovesFromPosition();
                         break;
                     case PlayerEnum.TWO:
                         playerTwoLocation.Row = destinationCoordinate.Row;
                         playerTwoLocation.Col = destinationCoordinate.Col;
                         whoseTurn = PlayerEnum.ONE;
-                        possibleMovesForCurrentPlayer = PossibleMovesFromPosition();
                         break;
                 }
                 retValue = true;
@@ -319,7 +309,6 @@ namespace GameCore
                 }
                 // Mark that this player has taken their turn 
                 ChangeTurn();
-                possibleMovesForCurrentPlayer = PossibleMovesFromPosition();
                 return true;
             }
             
@@ -374,6 +363,7 @@ namespace GameCore
             return board[row, col] == WALL_SPACE;
         }
 
+<<<<<<< HEAD
         private void PossibleHorizontalDiagonalJumps(List<string> validMoves, int direction)
         {
             if ((whoseTurn == 0 ? (playerOneLocation) : (playerTwoLocation)).Row + 1 < 17 && (whoseTurn == 0 ? (playerOneLocation) : (playerTwoLocation)).Row - 1 > -1
@@ -567,6 +557,8 @@ namespace GameCore
                 || ((whoseTurn == 0 ? (playerOneLocation) : (playerTwoLocation)).Row - 2 == (whoseTurn == 0 ? (playerTwoLocation) : (playerOneLocation)).Row && (whoseTurn == 0 ? (playerOneLocation) : (playerTwoLocation)).Col == (whoseTurn == 0 ? (playerTwoLocation) : (playerOneLocation)).Col && board[(whoseTurn == 0 ? (playerOneLocation) : (playerTwoLocation)).Row - 1, (whoseTurn == 0 ? (playerOneLocation) : (playerTwoLocation)).Col] != WALL);
         }
         
+=======
+>>>>>>> parent of 73ba825... Added Static Valid Move Creation to Fix Bug with not letting AI make a move
         public bool IsValidPlayerMove(PlayerEnum player, PlayerCoordinate start, PlayerCoordinate destination)
         {
             if (gameOver 
