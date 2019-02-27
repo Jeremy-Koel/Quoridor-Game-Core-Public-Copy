@@ -72,9 +72,9 @@ namespace GameCore
 
 
 
-        private string PlayerCoordinateToString(PlayerCoordinate)
+        private string PlayerCoordinateToString(PlayerCoordinate location)
         {
-            return Convert.ToChar(97 + (playerLocations[turn == 0 ? 1 : 0].Col / 2)).ToString() + (9 - (playerLocations[turn == 0 ? 1 : 0].Row / 2));
+            return Convert.ToChar(97 + (location.Col / 2)).ToString() + (9 - (location.Row / 2));
         }
 
         // BFS to find if indicated player can reach their target row 
