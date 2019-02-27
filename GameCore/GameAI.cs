@@ -983,7 +983,7 @@ namespace GameCore
 
         private string RandomMove()
         {
-            return randomPercentileChance.Next(1, 100) >= 11 + (10 * (turn == 0 ? (playerLocations[1].Row / 2) : (8 - playerLocations[0].Row /2 + 1))) ? FindPlayerMove() : (turn == 0 ? wallsRemaining[0] : wallsRemaining[1]) > 0 ? (turn == 0 ? playerLocations[1].Row / 2 <= 5 : playerLocations[0].Row / 2 >= 3) ? FindBlockingWall() : BoardUtil.GetRandomWallPlacementMove() : FindPlayerMove();
+            return randomPercentileChance.Next(1, 100) >= 11 + (10 * (turn == 0 ? (playerLocations[1].Row / 2) : (8 - playerLocations[0].Row / 2 + 1))) ? FindPlayerMove() : (turn == 0 ? wallsRemaining[0] : wallsRemaining[1]) > 0 ? (turn == 0 ? playerLocations[1].Row / 2 <= 5 : playerLocations[0].Row / 2 >= 3) ? FindBlockingWall() : BoardUtil.GetRandomWallPlacementMove() : FindPlayerMove();
         }
 
         private string FindBlockingWall()
@@ -1004,9 +1004,106 @@ namespace GameCore
             return blockingWalls;
         }
 
+        private string FindPlayerMove(List<string> blockingWalls)
+        {
+            string move = null;
+
+            if (randomPercentileChance.Next(1, 100) <= 11 || (playerLocations[turn == 0 ? 0 : 1].Row / 2) + (turn == 0 ? -1 : 1) == (turn == 0 ? 0 : 8) || (turn == 0 ? playerLocations[1].Row / 2 <= 5 : playerLocations[0].Row / 2 >= 3))
+            {
+                move = possibleMoves[0].Item1;
+
+                for (int i = 1; childrensMoves.Contains(move) && i < possibleMoves.Count; ++i)
+                {
+                    move = possibleMoves[i].Item1;
+                }
+
+                if (childrensMoves.Contains(move))
+                {
+                    move = possibleMoves[randomPercentileChance.Next(0, possibleMoves.Count)].Item1;
+                }
+            }
+            else if (wallsRemaining[turn == 0 ? 0 : 1] != 0)
+            {
+                switch (randomPercentileChance.Next(0, 4))
+                {
+                    case 0:
+                        if (new WallCoordinate(blockingWalls[0]).StartCol - 1 == playerLocations[turn == 0 ? 1 : 0].Col && ValidWallMove(blockingWalls[0]))
+                        {
+                            move = blockingWalls[0];
+                        }
+                        else
+                        {
+                            move = FindPlayerMove(blockingWalls);
+                        }
+                        break;
+                    case 1:
+                        if (new WallCoordinate(blockingWalls[1]).StartCol - 1 == playerLocations[turn == 0 ? 1 : 0].Col && ValidWallMove(blockingWalls[1]))
+                        {
+                            move = blockingWalls[1];
+                        }
+                        else
+                        {
+                            move = FindPlayerMove(blockingWalls);
+                        }
+                        break;
+                    case 3:
+                        if (ValidWallMove(blockingWalls[2]))
+                        {
+                            move = blockingWalls[2];
+                        }
+                        else
+                        {
+                            move = FindPlayerMove(blockingWalls);
+                        }
+                        break;
+                    case 4:
+                        if (wallsRemaining[turn == 0 ? 0 : 1] != 0 && ValidWallMove(blockingWalls[3]))
+                        {
+                            move = blockingWalls[3];
+                        }
+                        else
+                        {
+                            move = FindPlayerMove(blockingWalls);
+                        }
+                        break;
+                }
+            }
+            else
+            {
+                move = possibleMoves[0].Item1;
+
+                for (int i = 1; childrensMoves.Contains(move) && i < possibleMoves.Count; ++i)
+                {
+                    move = possibleMoves[i].Item1;
+                }
+
+                if (childrensMoves.Contains(move))
+                {
+                    move = possibleMoves[randomPercentileChance.Next(0, possibleMoves.Count)].Item1;
+                }
+            }
+
+            if (String.IsNullOrEmpty(move))
+            {
+                move = possibleMoves[0].Item1;
+
+                for (int i = 1; childrensMoves.Contains(move) && i < possibleMoves.Count; ++i)
+                {
+                    move = possibleMoves[i].Item1;
+                }
+
+                if (childrensMoves.Contains(move))
+                {
+                    move = possibleMoves[randomPercentileChance.Next(0, possibleMoves.Count)].Item1;
+                }
+            }
+
+            return move;
+        }
+
         private string FindPlayerMove()
         {
-            string move;
+            string move = null;
 
             List<string> blockingWalls = PlaceBlockingWall();
 
@@ -1024,23 +1121,68 @@ namespace GameCore
                     move = possibleMoves[randomPercentileChance.Next(0, possibleMoves.Count)].Item1;
                 }
             }
-            else if (wallsRemaining[turn == 0 ? 0: 1] != 0 && randomPercentileChance.Next(1, 100) <= 50 && new WallCoordinate(blockingWalls[0]).StartCol - 1 == playerLocations[turn == 0 ? 1 : 0].Col && ValidWallMove(blockingWalls[0]))
+            else if (wallsRemaining[turn == 0 ? 0 : 1] != 0)
             {
-                move = blockingWalls[0];
-            }
-            else if (wallsRemaining[turn == 0 ? 0 : 1] != 0 && randomPercentileChance.Next(1, 100) <= 50 && new WallCoordinate(blockingWalls[1]).StartCol - 1 == playerLocations[turn == 0 ? 1 : 0].Col && ValidWallMove(blockingWalls[1]))
-            {
-                move = blockingWalls[1];
-            }
-            else if (wallsRemaining[turn == 0 ? 0 : 1] != 0 && randomPercentileChance.Next(1, 100) <= 50 && ValidWallMove(blockingWalls[2]))
-            {
-                move = blockingWalls[2];
-            }
-            else if (wallsRemaining[turn == 0 ? 0 : 1] != 0 && ValidWallMove(blockingWalls[3]))
-            {
-                move = blockingWalls[3];
+                switch (randomPercentileChance.Next(0, 4))
+                {
+                    case 0:
+                        if (new WallCoordinate(blockingWalls[0]).StartCol - 1 == playerLocations[turn == 0 ? 1 : 0].Col && ValidWallMove(blockingWalls[0]))
+                        {
+                            move = blockingWalls[0];
+                        }
+                        else
+                        {
+                            move = FindPlayerMove(blockingWalls);
+                        }
+                        break;
+                    case 1:
+                        if (new WallCoordinate(blockingWalls[1]).StartCol - 1 == playerLocations[turn == 0 ? 1 : 0].Col && ValidWallMove(blockingWalls[1]))
+                        {
+                            move = blockingWalls[1];
+                        }
+                        else
+                        {
+                            move = FindPlayerMove(blockingWalls);
+                        }
+                        break;
+                    case 3:
+                        if (ValidWallMove(blockingWalls[2]))
+                        {
+                            move = blockingWalls[2];
+                        }
+                        else
+                        {
+                            move = FindPlayerMove(blockingWalls);
+                        }
+                        break;
+                    case 4:
+                        if (wallsRemaining[turn == 0 ? 0 : 1] != 0 && ValidWallMove(blockingWalls[3]))
+                        {
+                            move = blockingWalls[3];
+                        }
+                        else
+                        {
+                            move = FindPlayerMove(blockingWalls);
+                        }
+                        break;
+                }
             }
             else
+            {
+                move = possibleMoves[0].Item1;
+
+                for (int i = 1; childrensMoves.Contains(move) && i < possibleMoves.Count; ++i)
+                {
+                    move = possibleMoves[i].Item1;
+                }
+
+                if (childrensMoves.Contains(move))
+                {
+                    move = possibleMoves[randomPercentileChance.Next(0, possibleMoves.Count)].Item1;
+                }
+            }
+
+            if (String.IsNullOrEmpty(move))
             {
                 move = possibleMoves[0].Item1;
 
@@ -1518,7 +1660,7 @@ namespace GameCore
 
         private void ThreadedTreeSearch(Stopwatch timer, MonteCarloNode MonteCarlo)
         {
-            for (int i = 0; i < 1000 && timer.Elapsed.TotalSeconds < 3; ++i)
+            for (int i = 0; i < 1000 && timer.Elapsed.TotalSeconds < 2; ++i)
             {
                 MonteCarlo.SimulatedGame();
             }
