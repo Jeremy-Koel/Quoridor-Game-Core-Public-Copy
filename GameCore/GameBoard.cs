@@ -18,7 +18,7 @@ namespace GameCore
         private PlayerCoordinate playerOneLocation;
         private PlayerCoordinate playerTwoLocation;
         private List<WallCoordinate> walls;
-        private List<string> possibleMovesForCurrentPlayer;
+        private List<List<string>> possibleMoves;
         private int player1walls = 10;
         private int player2walls = 10;
         private char[,] board;
@@ -163,7 +163,7 @@ namespace GameCore
             playerOneLocation = new PlayerCoordinate(playerOneStart);
             playerTwoLocation = new PlayerCoordinate(playerTwoStart);
             walls = new List<WallCoordinate>();
-            possibleMovesForCurrentPlayer = new List<string>();
+            possibleMoves = new List<List<string>>();
 
             // Init gameboard 
             board = new char[TOTAL_ROWS, TOTAL_COLS];
@@ -182,7 +182,17 @@ namespace GameCore
                 }
             }
 
-            possibleMovesForCurrentPlayer = PossibleMovesFromPosition();
+            PlayerEnum actualStartingPlayer = whoseTurn;
+
+            whoseTurn = PlayerEnum.ONE;
+
+            possibleMoves.Add(PossibleMovesFromPosition());
+
+            whoseTurn = PlayerEnum.TWO;
+
+            possibleMoves.Add(PossibleMovesFromPosition());
+
+            whoseTurn = actualStartingPlayer;
         }
 
         public bool PlayerOneWin()
@@ -256,7 +266,7 @@ namespace GameCore
 
             string move = Convert.ToChar(97 + (destinationCoordinate.Col / 2)).ToString() + (9 - destinationCoordinate.Row / 2).ToString();
             
-            if (possibleMovesForCurrentPlayer.Contains(move)/*IsValidPlayerMove(player, startCoordinate, destinationCoordinate)*/)
+            if (possibleMoves[whoseTurn == 0 ? 0 : 1].Contains(move)/*IsValidPlayerMove(player, startCoordinate, destinationCoordinate)*/)
             {
                 board[startCoordinate.Row, startCoordinate.Col] = PLAYER_SPACE;
                 switch (player)
@@ -264,14 +274,16 @@ namespace GameCore
                     case PlayerEnum.ONE:
                         playerOneLocation.Row = destinationCoordinate.Row;
                         playerOneLocation.Col = destinationCoordinate.Col;
+                        possibleMoves[whoseTurn == 0 ? 0 : 1] = PossibleMovesFromPosition();
                         whoseTurn = PlayerEnum.TWO;
-                        possibleMovesForCurrentPlayer = PossibleMovesFromPosition();
+                        possibleMoves[whoseTurn == 0 ? 0 : 1] = PossibleMovesFromPosition();
                         break;
                     case PlayerEnum.TWO:
                         playerTwoLocation.Row = destinationCoordinate.Row;
                         playerTwoLocation.Col = destinationCoordinate.Col;
+                        possibleMoves[whoseTurn == 0 ? 0 : 1] = PossibleMovesFromPosition();
                         whoseTurn = PlayerEnum.ONE;
-                        possibleMovesForCurrentPlayer = PossibleMovesFromPosition();
+                        possibleMoves[whoseTurn == 0 ? 0 : 1] = PossibleMovesFromPosition();
                         break;
                 }
                 retValue = true;
@@ -318,8 +330,9 @@ namespace GameCore
                     player2walls--;
                 }
                 // Mark that this player has taken their turn 
+                possibleMoves[whoseTurn == 0 ? 0 : 1] = PossibleMovesFromPosition();
                 ChangeTurn();
-                possibleMovesForCurrentPlayer = PossibleMovesFromPosition();
+                possibleMoves[whoseTurn == 0 ? 0 : 1] = PossibleMovesFromPosition();
                 return true;
             }
             
