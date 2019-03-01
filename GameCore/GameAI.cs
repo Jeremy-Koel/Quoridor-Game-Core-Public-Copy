@@ -1007,19 +1007,25 @@ namespace GameCore
 
         private string FindWall()
         {
-           if (possibleVerticalWalls.Count > 0)
+            if (possibleVerticalWalls.Count > 0)
             {
-                string wallMove = null;
-                switch (randomPercentileChance.Next(0, 2))
+                lock (boardAccess)
                 {
-                    case 0:
-                        wallMove = possibleVerticalWalls[randomPercentileChance.Next(0, possibleVerticalWalls.Count)] + "v";
-                        break;
-                    case 1:
-                        wallMove = possibleHorizontalWalls[randomPercentileChance.Next(0, possibleHorizontalWalls.Count)] + "h";
-                        break;
+                    Populate();
+                    string wallMove = null;
+                    switch (randomPercentileChance.Next(0, 2))
+                    {
+                        case 0:
+                            wallMove = possibleVerticalWalls[randomPercentileChance.Next(0, possibleVerticalWalls.Count)] + "v";
+                            break;
+                        case 1:
+                            wallMove = possibleHorizontalWalls[randomPercentileChance.Next(0, possibleHorizontalWalls.Count)] + "h";
+                            break;
+                    }
+                    Unpopulate();
+                    return wallMove;
                 }
-                return wallMove;
+
             }
             else
             {
@@ -1034,7 +1040,7 @@ namespace GameCore
 
         private string RandomMove()
         {
-            return randomPercentileChance.Next(1, 100) >= 11 + (10 * (turn == 0 ? (playerLocations[1].Row / 2) : (8 - playerLocations[0].Row / 2 + 1))) ? FindPlayerMove() : (turn == 0 ? wallsRemaining[0] : wallsRemaining[1]) > 0 ? FindWall() : FindPlayerMove();
+            return randomPercentileChance.Next(1, 100) >= 37 ? FindPlayerMove() : (turn == 0 ? wallsRemaining[0] : wallsRemaining[1]) > 0 ? FindWall() : FindPlayerMove();
         }
 
         //private List<Tuple<string, double>> PossibleBlockingWalls()
