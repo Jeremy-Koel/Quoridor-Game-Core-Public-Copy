@@ -159,6 +159,28 @@ namespace GameCore
 
             walls = new List<WallCoordinate>(wallCoordinates);
 
+            walls.Add(new WallCoordinate("a3h"));
+            walls.Add(new WallCoordinate("a7h"));
+            walls.Add(new WallCoordinate("b5h"));
+            walls.Add(new WallCoordinate("d3h"));
+            walls.Add(new WallCoordinate("d6h"));
+            walls.Add(new WallCoordinate("d8h"));
+            walls.Add(new WallCoordinate("e5h"));
+            walls.Add(new WallCoordinate("e7h"));
+            walls.Add(new WallCoordinate("f3h"));
+            walls.Add(new WallCoordinate("g5h"));
+            walls.Add(new WallCoordinate("h3h"));
+            walls.Add(new WallCoordinate("h7h"));
+            
+            walls.Add(new WallCoordinate("a6v"));
+            walls.Add(new WallCoordinate("b3v"));
+            walls.Add(new WallCoordinate("c3v"));
+            walls.Add(new WallCoordinate("c6v"));
+            walls.Add(new WallCoordinate("c8v"));
+            walls.Add(new WallCoordinate("f6v"));
+            walls.Add(new WallCoordinate("f8v"));
+            walls.Add(new WallCoordinate("h6v"));
+                       
             children = new List<MonteCarloNode>();
             childrensMoves = new List<string>();
 
@@ -686,7 +708,7 @@ namespace GameCore
             //        minimumHeuristic = possibleMinimumHeuristic;
             //    }
             //}
-            double possibleMinimumHeuristic = HeuristicCostEstimate(start, new PlayerCoordinate(Convert.ToChar(97 + start.Col/2).ToString() + EndRow.ToString()));
+            double possibleMinimumHeuristic = HeuristicCostEstimate(start, new PlayerCoordinate(Convert.ToChar(97 + start.Col / 2).ToString() + EndRow.ToString()));
 
             int moveValue = possibleMoveValues[start.Row / 2, start.Col / 2] / 2;
 
@@ -1102,7 +1124,7 @@ namespace GameCore
         private string FindPlayerMove()
         {
             string move = null;
-            
+
             move = possibleMoves[0].Item1;
 
             for (int i = 1; childrensMoves.Contains(move) && i < possibleMoves.Count; ++i)
@@ -1234,6 +1256,90 @@ namespace GameCore
                 || (playerLocations[turn == 0 ? 0 : 1].Row - 2 == playerLocations[turn == 0 ? 1 : 0].Row && playerLocations[turn == 0 ? 0 : 1].Col == playerLocations[turn == 0 ? 1 : 0].Col && !board[playerLocations[turn == 0 ? 0 : 1].Row - 1].Get(playerLocations[turn == 0 ? 0 : 1].Col));
         }
 
+        private List<Tuple<int, int>> CanGoalReachOpenLocation(Tuple<int, int> goalStart)
+        {
+            HashSet<Tuple<int, int>> markedSet = new HashSet<Tuple<int, int>>();
+            Queue<Tuple<Tuple<int, int>, List<Tuple<int, int>>>> queue = new Queue<Tuple<Tuple<int, int>, List<Tuple<int, int>>>>();
+
+            Dictionary<Tuple<int, int>, List<Tuple<int, int>>> cameFrom = new Dictionary<Tuple<int, int>, List<Tuple<int, int>>>
+            {
+                { goalStart, new List<Tuple<int, int>>() }
+            };
+
+            markedSet.Add(goalStart);
+            queue.Enqueue(new Tuple<Tuple<int, int>, List<Tuple<int, int>>>(goalStart, cameFrom[goalStart]));
+
+            while (queue.Count > 0)
+            {
+                Tuple<Tuple<int, int>, List<Tuple<int, int>>> current = queue.Dequeue();
+                if (possibleMoveValues[current.Item1.Item1, current.Item1.Item2] == 0 && current.Item1.Item1 != goalStart.Item1)
+                {
+                    if (IsThereAnAdjacentLocationEqualToZero(current.Item1))
+                    {
+                        return current.Item2;
+                    }
+                }
+
+                if ((current.Item1.Item2 * 2) + 1 < GameBoard.TOTAL_COLS
+                    && board[current.Item1.Item1 * 2].Get((current.Item1.Item2 * 2) + 1) != true && current.Item1.Item1 != goalStart.Item1) // Can move East
+                {
+                    Tuple<int, int> neighbor = new Tuple<int, int>(current.Item1.Item1, current.Item1.Item2 + 1);
+                    if (!markedSet.Contains(neighbor))
+                    {
+                        List<Tuple<int, int>> nodesBefore = new List<Tuple<int, int>>(current.Item2);
+                        nodesBefore.Add(current.Item1);
+                        markedSet.Add(neighbor);
+                        queue.Enqueue(new Tuple<Tuple<int, int>, List<Tuple<int, int>>>(neighbor, nodesBefore));
+                    }
+                }
+                if ((current.Item1.Item2 * 2) - 1 >= 0
+                    && board[current.Item1.Item1 * 2].Get((current.Item1.Item2 * 2) - 1) != true && current.Item1.Item1 != goalStart.Item1) // Can move West 
+                {
+                    Tuple<int, int> neighbor = new Tuple<int, int>(current.Item1.Item1, current.Item1.Item2 - 1);
+                    if (!markedSet.Contains(neighbor))
+                    {
+                        List<Tuple<int, int>> nodesBefore = new List<Tuple<int, int>>(current.Item2);
+                        nodesBefore.Add(current.Item1);
+                        markedSet.Add(neighbor);
+                        queue.Enqueue(new Tuple<Tuple<int, int>, List<Tuple<int, int>>>(neighbor, nodesBefore));
+                    }
+                }
+                if ((current.Item1.Item1 * 2) - 1 >= 0
+                    && board[(current.Item1.Item1 * 2) - 1].Get((current.Item1.Item2 * 2)) != true && current.Item1.Item1 - 1 != goalStart.Item1) // Can move North 
+                {
+                    Tuple<int, int> neighbor = new Tuple<int, int>(current.Item1.Item1 - 1, current.Item1.Item2);
+                    if (!markedSet.Contains(neighbor))
+                    {
+                        List<Tuple<int, int>> nodesBefore = new List<Tuple<int, int>>(current.Item2);
+                        nodesBefore.Add(current.Item1);
+                        markedSet.Add(neighbor);
+                        queue.Enqueue(new Tuple<Tuple<int, int>, List<Tuple<int, int>>>(neighbor, nodesBefore));
+                    }
+                }
+                if ((current.Item1.Item1 * 2) + 1 < GameBoard.TOTAL_COLS
+                    && board[(current.Item1.Item1 * 2) + 1].Get((current.Item1.Item2 * 2)) != true && current.Item1.Item1 + 1 != goalStart.Item1) // Can move South 
+                {
+                    Tuple<int, int> neighbor = new Tuple<int, int>(current.Item1.Item1 + 1, current.Item1.Item2);
+                    if (!markedSet.Contains(neighbor))
+                    {
+                        List<Tuple<int, int>> nodesBefore = new List<Tuple<int, int>>(current.Item2);
+                        nodesBefore.Add(current.Item1);
+                        markedSet.Add(neighbor);
+                        queue.Enqueue(new Tuple<Tuple<int, int>, List<Tuple<int, int>>>(neighbor, nodesBefore));
+                    }
+                }
+            }
+            return new List<Tuple<int, int>>();
+        }
+
+        private bool IsThereAnAdjacentLocationEqualToZero(Tuple<int, int> current)
+        {
+            return (current.Item1 - 1 > -1 && possibleMoveValues[current.Item1 - 1, current.Item2] == 0 && !board[(current.Item1 * 2) - 1].Get((current.Item2 * 2))) ||
+                   (current.Item1 + 1 < 9 && possibleMoveValues[current.Item1 + 1, current.Item2] == 0 && !board[(current.Item1 * 2) + 1].Get((current.Item2 * 2))) ||
+                   (current.Item2 - 1 > -1 && possibleMoveValues[current.Item1, current.Item2 - 1] == 0 && !board[(current.Item1 * 2)].Get((current.Item2 * 2) - 1)) ||
+                   (current.Item2 + 1 < 9 && possibleMoveValues[current.Item1, current.Item2 + 1] == 0 && !board[(current.Item1 * 2)].Get((current.Item2 * 2) + 1));
+        }
+
         private void Populate()
         {
             foreach (var wallCoordinate in walls)
@@ -1246,6 +1352,22 @@ namespace GameCore
                 board[wallCoordinate.EndRow].Set(wallCoordinate.EndCol, true);
 
                 SetPlayerMoveValues(wallCoordinate, mid);
+            }
+
+            for (int characterIndex = 0; characterIndex < 9; characterIndex++)
+            {
+                SetPathToZero(CanGoalReachOpenLocation(new Tuple<int, int>(0, characterIndex)));
+                SetPathToZero(CanGoalReachOpenLocation(new Tuple<int, int>(8, characterIndex)));
+            }
+
+            Console.Write("");
+        }
+
+        private void SetPathToZero(List<Tuple<int, int>> list)
+        {
+            foreach (Tuple <int, int> node in list)
+            {
+                possibleMoveValues[node.Item1, node.Item2] = 0;
             }
         }
 
