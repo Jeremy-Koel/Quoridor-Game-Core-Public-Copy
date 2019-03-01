@@ -679,14 +679,14 @@ namespace GameCore
 
             PlayerCoordinate start = new PlayerCoordinate(locationToStart);
 
-            for (int characterIndex = 0; characterIndex < 9; characterIndex++)
-            {
-                double possibleMinimumHeuristic = HeuristicCostEstimate(start, new PlayerCoordinate(Convert.ToChar(97 + characterIndex).ToString() + EndRow.ToString()));
-                if (possibleMinimumHeuristic < minimumHeuristic)
-                {
-                    minimumHeuristic = possibleMinimumHeuristic;
-                }
-            }
+            //for (int characterIndex = 0; characterIndex < 9; characterIndex++)
+            //{
+            //    if (possibleMinimumHeuristic < minimumHeuristic)
+            //    {
+            //        minimumHeuristic = possibleMinimumHeuristic;
+            //    }
+            //}
+            double possibleMinimumHeuristic = HeuristicCostEstimate(start, new PlayerCoordinate(Convert.ToChar(97 + start.Col/2).ToString() + EndRow.ToString()));
 
             int moveValue = possibleMoveValues[start.Row / 2, start.Col / 2] / 2;
 
@@ -991,10 +991,10 @@ namespace GameCore
                 switch (randomPercentileChance.Next(0, 2))
                 {
                     case 0:
-                        wallMove = possibleVerticalWalls[randomPercentileChance.Next(0, possibleVerticalWalls.Count)];
+                        wallMove = possibleVerticalWalls[randomPercentileChance.Next(0, possibleVerticalWalls.Count)] + "v";
                         break;
                     case 1:
-                        wallMove = possibleHorizontalWalls[randomPercentileChance.Next(0, possibleHorizontalWalls.Count)];
+                        wallMove = possibleHorizontalWalls[randomPercentileChance.Next(0, possibleHorizontalWalls.Count)] + "h";
                         break;
                 }
                 return wallMove;
@@ -1507,7 +1507,7 @@ namespace GameCore
             ++timesVisited;
             bool mctsVictory = false;
 
-            if (depthCheck > 91)
+            if (depthCheck > 125)
             {
                 gameOver = true;
             }
@@ -1571,7 +1571,7 @@ namespace GameCore
 
         private void ThreadedTreeSearch(Stopwatch timer, MonteCarloNode MonteCarlo)
         {
-            for (int i = 0; i < 10000 && timer.Elapsed.TotalSeconds < 2; ++i)
+            for (int i = 0; i < 10000 && timer.Elapsed.TotalSeconds < 5.5; ++i)
             {
                 MonteCarlo.SimulatedGame();
             }
