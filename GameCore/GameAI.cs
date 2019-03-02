@@ -42,6 +42,9 @@ namespace GameCore
         private List<WallCoordinate> walls;
         private List<Tuple<string, double>> possibleMoves;
         private List<Tuple<string, double>> possibleBlocks;
+        private List<string> possibleHorizontalWalls;
+        private List<string> possibleVerticalWalls;
+        private List<string> lastPlayerMove;
         private List<string> childrensMoves;
         private MonteCarloNode parent;
         private List<PlayerCoordinate> playerLocations;
@@ -136,18 +139,32 @@ namespace GameCore
 
             if (MonteCarloPlayer == null)
             {
-                monteCarloPlayerEnum = turn;
+                monteCarloPlayerEnum = currentTurn;
                 MonteCarloPlayer = currentTurn.ToString();
             }
+
+            lastPlayerMove = new List<string>();
+            lastPlayerMove.Add(Convert.ToChar(97 + playerOne.Col / 2).ToString() + (9 - (playerOne.Row / 2)).ToString());
+            lastPlayerMove.Add(Convert.ToChar(97 + playerTwo.Col / 2).ToString() + (9 - (playerTwo.Row / 2)).ToString());
 
             playerLocations = new List<PlayerCoordinate>();
             playerLocations.Add(new PlayerCoordinate(playerOne.Row, playerOne.Col));
             playerLocations.Add(new PlayerCoordinate(playerTwo.Row, playerTwo.Col));
 
+            possibleHorizontalWalls = possibleVerticalWalls = new List<string>();
+
+            for (int characterIndex = 0; characterIndex < 9; characterIndex++)
+            {
+                for (int numberIndex = 1; numberIndex < 10; numberIndex++)
+                {
+                    possibleVerticalWalls.Add(Convert.ToChar(97 + characterIndex).ToString() + numberIndex.ToString());
+                }
+            }
 
             wallsRemaining = new List<int>();
             wallsRemaining.Add(playerOneTotalWalls);
             wallsRemaining.Add(playerTwoTotalWalls);
+
 
             walls = new List<WallCoordinate>(wallCoordinates);
 
@@ -161,19 +178,13 @@ namespace GameCore
             turn = currentTurn;
             possibleMoves = PossibleMovesFromPosition();
 
-#if DEBUG
-            if (possibleMoves.Count == 0)
-            {
-                Console.WriteLine("Abort");
-            }
-#endif
-
             gameOver = false;
             parent = null;
         }
 
         private MonteCarloNode(string move, List<PlayerCoordinate> players, List<int> wallCounts, List<WallCoordinate> wallCoordinates, WallCoordinate newWallCoordinate, GameBoard.PlayerEnum currentTurn, int depth, MonteCarloNode childParent)
         {
+
             turn = currentTurn;
             parent = childParent;
             board = childParent.GetBoard();
@@ -182,15 +193,29 @@ namespace GameCore
             wins = 0;
             timesVisited = 0;
 
+            lastPlayerMove = new List<string>(parent.lastPlayerMove);
+
             playerLocations = new List<PlayerCoordinate>(players);
 
             wallsRemaining = new List<int>(wallCounts);
 
             walls = new List<WallCoordinate>(wallCoordinates);
 
+
             children = new List<MonteCarloNode>();
             childrensMoves = new List<string>();
 
+            possibleHorizontalWalls = possibleVerticalWalls = new List<string>();
+
+            for (int characterIndex = 0; characterIndex < 9; characterIndex++)
+            {
+                for (int numberIndex = 1; numberIndex < 10; numberIndex++)
+                {
+                    possibleVerticalWalls.Add(Convert.ToChar(97 + characterIndex).ToString() + numberIndex.ToString());
+                }
+            }
+
+            possibleHorizontalWalls.Remove(move.Substring(0, 2));
 
             walls.Add(newWallCoordinate);
             if (currentTurn == GameBoard.PlayerEnum.ONE)
@@ -205,15 +230,31 @@ namespace GameCore
             turn = currentTurn == 0 ? GameBoard.PlayerEnum.TWO : GameBoard.PlayerEnum.ONE;
 
             possibleMoves = PossibleMovesFromPosition();
-#if DEBUG
-            if (possibleMoves.Count == 0)
+
+            int locationOfPreviousMove = DoesMoveListContain(possibleMoves, parent.lastPlayerMove[turn == 0 ? 0 : 1]);
+
+            if (possibleMoves.Count != 1 && (parent != null ? locationOfPreviousMove != -1 : false))
             {
-                Console.WriteLine("Abort");
+                possibleMoves.RemoveAt(locationOfPreviousMove);
             }
-#endif
         }
 
-        private MonteCarloNode(string move, int depth, MonteCarloNode childParent)
+        private int DoesMoveListContain(List<Tuple<string, double>> possibleMoves, string v)
+        {
+            int indexOfMove = -1;
+
+            for (int index = 0; index < possibleMoves.Count && indexOfMove == -1; index++)
+            {
+                if (possibleMoves[index].Item1 == v)
+                {
+                    indexOfMove = index;
+                }
+            }
+
+            return indexOfMove;
+        }
+
+        private MonteCarloNode(string move, int depth, List<string> availableWalls, MonteCarloNode childParent)
         {
             parent = childParent;
             board = childParent.GetBoard();
@@ -226,9 +267,22 @@ namespace GameCore
             playerLocations.Add(new PlayerCoordinate(parent.playerLocations[0].Row, parent.playerLocations[0].Col));
             playerLocations.Add(new PlayerCoordinate(parent.playerLocations[1].Row, parent.playerLocations[1].Col));
 
+            lastPlayerMove = new List<string>();
+            if (childParent.turn == 0)
+            {
+                lastPlayerMove.Add(Convert.ToChar(97 + playerLocations[0].Col / 2).ToString() + (9 - (playerLocations[0].Row / 2)).ToString());
+                lastPlayerMove.Add(childParent.lastPlayerMove[1]);
+            }
+            else
+            {
+                lastPlayerMove.Add(childParent.lastPlayerMove[0]);
+                lastPlayerMove.Add(Convert.ToChar(97 + playerLocations[1].Col / 2).ToString() + (9 - (playerLocations[1].Row / 2)).ToString());
+            }
+
             wallsRemaining = new List<int>(childParent.wallsRemaining);
 
             walls = new List<WallCoordinate>(childParent.walls);
+            possibleHorizontalWalls = possibleVerticalWalls = availableWalls;
 
             children = new List<MonteCarloNode>();
             childrensMoves = new List<string>();
@@ -259,14 +313,19 @@ namespace GameCore
                 gameOver = true;
             }
 
-            possibleMoves = PossibleMovesFromPosition();
-#if DEBUG
-            if (possibleMoves.Count == 0)
+            if (!gameOver)
             {
-                Console.WriteLine("Abort");
+                possibleMoves = PossibleMovesFromPosition();
+
+                int locationOfPreviousMove = DoesMoveListContain(possibleMoves, childParent.lastPlayerMove[turn == 0 ? 0 : 1]);
+
+                if (possibleMoves.Count != 1 && locationOfPreviousMove != -1)
+                {
+                    possibleMoves.RemoveAt(locationOfPreviousMove);
+                }
             }
-#endif
         }
+
 
         private void PossibleHorizontalDiagonalJumps(List<Tuple<string, double>> validMoves, int direction)
         {
@@ -984,7 +1043,7 @@ namespace GameCore
 
         private string RandomMove()
         {
-            return randomPercentileChance.Next(1, 100) >= 11 + (10 * (turn == 0 ? (playerLocations[1].Row / 2) : (8 - playerLocations[0].Row / 2 + 1))) ? FindPlayerMove() : (turn == 0 ? wallsRemaining[0] : wallsRemaining[1]) > 0 ? (turn == 0 ? playerLocations[1].Row / 2 <= 5 : playerLocations[0].Row / 2 >= 3) ? FindBlockingWall() : BoardUtil.GetRandomWallPlacementMove() : FindPlayerMove();
+            return randomPercentileChance.Next(1, 100) >= 51 ? FindPlayerMove() : (turn == 0 ? wallsRemaining[0] : wallsRemaining[1]) > 0 ? (turn == 0 ? playerLocations[1].Row / 2 > 5 : playerLocations[0].Row / 2 < 3) ? FindBlockingWall() : FindWall() : FindPlayerMove();
         }
 
         private string FindBlockingWall()
@@ -1004,7 +1063,7 @@ namespace GameCore
 
             return blockingWalls;
         }
-                
+
         private string FindPlayerMove()
         {
             string move = null;
@@ -1115,26 +1174,33 @@ namespace GameCore
 
         private string FindWall()
         {
-            if (possibleVerticalWalls.Count > 0)
+            if (possibleVerticalWalls.Count > 0 && MinimumHeuristicEstimate(Convert.ToChar(97 + playerLocations[monteCarloPlayerEnum == 0 ? 0 : 1].Col / 2).ToString() + (9 - playerLocations[monteCarloPlayerEnum == 0 ? 0 : 1].Row / 2).ToString()) > MinimumHeuristicEstimate(Convert.ToChar(97 + playerLocations[monteCarloPlayerEnum == 0 ? 1 : 0].Col / 2).ToString() + (9 - playerLocations[monteCarloPlayerEnum == 0 ? 1 : 0].Row / 2).ToString()))
             {
                 lock (boardAccess)
                 {
-                    Populate();
-                    string wallMove = null;
-                    PlayerCoordinate opponent = turn == 0 ? playerLocations[1] : playerLocations[0];
-
-                    switch (randomPercentileChance.Next(0, 2))
+                    if (MinimumHeuristicEstimate(Convert.ToChar(97 + playerLocations[monteCarloPlayerEnum == 0 ? 0 : 1].Col / 2).ToString() + (9 - playerLocations[monteCarloPlayerEnum == 0 ? 0 : 1].Row / 2).ToString()) > MinimumHeuristicEstimate(Convert.ToChar(97 + playerLocations[monteCarloPlayerEnum == 0 ? 1 : 0].Col / 2).ToString() + (9 - playerLocations[monteCarloPlayerEnum == 0 ? 1 : 0].Row / 2).ToString()))
                     {
-                        case 0:
-                            wallMove = possibleVerticalWalls[randomPercentileChance.Next(0, possibleVerticalWalls.Count)] + "v";
-                            break;
-                        case 1:
-                            wallMove = possibleHorizontalWalls[randomPercentileChance.Next(0, possibleHorizontalWalls.Count)] + "h";
-                            break;
-                    }
+                        Populate();
+                        string wallMove = null;
+                        PlayerCoordinate opponent = turn == 0 ? playerLocations[1] : playerLocations[0];
 
-                    Unpopulate();
-                    return wallMove;
+                        switch (randomPercentileChance.Next(0, 2))
+                        {
+                            case 0:
+                                wallMove = possibleVerticalWalls[randomPercentileChance.Next(0, possibleVerticalWalls.Count)] + "v";
+                                break;
+                            case 1:
+                                wallMove = possibleHorizontalWalls[randomPercentileChance.Next(0, possibleHorizontalWalls.Count)] + "h";
+                                break;
+                        }
+
+                        Unpopulate();
+                        return wallMove;
+                    }
+                    else
+                    {
+                        return FindBlockingWall();
+                    }
                 }
 
             }
@@ -1500,7 +1566,7 @@ namespace GameCore
                         {
                             if (!childrensMoves.Contains(move))
                             {
-                                children.Add(new MonteCarloNode(move, depthCheck + 1, this));
+                                children.Add(new MonteCarloNode(move, depthCheck + 1, possibleHorizontalWalls, this));
 
                                 if (!moveTotals.ContainsKey(move))
                                 {
@@ -1604,7 +1670,7 @@ namespace GameCore
 
         private void ThreadedTreeSearch(Stopwatch timer, MonteCarloNode MonteCarlo)
         {
-            for (int i = 0; i < 1000 && timer.Elapsed.TotalSeconds < 5.5; ++i)
+            for (int i = 0; i < 10000 && timer.Elapsed.TotalSeconds < 5.5; ++i)
             {
                 MonteCarlo.SimulatedGame();
             }
