@@ -660,7 +660,8 @@ namespace GameCore
         private double MinimumHeuristicEstimate(string locationToStart)
         {
             int EndRow;
-            double minimumHeuristic = double.PositiveInfinity;
+            double possibleMinimumHeuristicCurrentPlayer = double.PositiveInfinity;
+            double possibleMinimumHeuristicOpposingPlayer = double.PositiveInfinity;
 
             if (turn == 0)
             {
@@ -672,19 +673,16 @@ namespace GameCore
             }
 
             PlayerCoordinate start = new PlayerCoordinate(locationToStart);
+            string opponentGoalRow = Convert.ToChar(97 + playerLocations[turn == 0 ? 1 : 0].Col / 2).ToString() + (turn == 0 ? 1 : 9).ToString();
 
-            for (int characterIndex = 0; characterIndex < 9; characterIndex++)
-            {
-                double possibleMinimumHeuristic = HeuristicCostEstimate(start, new PlayerCoordinate(Convert.ToChar(97 + characterIndex).ToString() + EndRow.ToString()));
-                if (possibleMinimumHeuristic < minimumHeuristic)
-                {
-                    minimumHeuristic = possibleMinimumHeuristic;
-                }
-            }
+            possibleMinimumHeuristicCurrentPlayer = 0.5 * wallsRemaining[turn == 0 ? 0 : 1] + HeuristicCostEstimate(start, new PlayerCoordinate(Convert.ToChar(97 + start.Col / 2).ToString() + EndRow.ToString())) + possibleMoveValues/*(turn == 0 ? possibleMoveValuesPlayerOne : possibleMoveValuesPlayerTwo)*/[start.Row / 2, start.Col / 2] + 1;
+            possibleMinimumHeuristicOpposingPlayer = 0.5 * wallsRemaining[turn == 0 ? 0 : 1] + HeuristicCostEstimate(playerLocations[turn == 0 ? 1 : 0], new PlayerCoordinate(opponentGoalRow)) + possibleMoveValues/*(turn == 0 ? possibleMoveValuesPlayerTwo : possibleMoveValuesPlayerOne)*/[start.Row / 2, start.Col / 2] + 1;
 
-            int moveValue = possibleMoveValues[start.Row / 2, start.Col / 2] / 2;
 
-            return minimumHeuristic * (moveValue <= 1 ? 1 : moveValue);
+            int moveValuePlayer = possibleMoveValues/*(turn == 0 ? possibleMoveValuesPlayerOne : possibleMoveValuesPlayerTwo)*/[start.Row / 2, start.Col / 2];
+            int moveValueOpponent = possibleMoveValues/*(turn == 0 ? possibleMoveValuesPlayerTwo : possibleMoveValuesPlayerOne)*/[playerLocations[turn == 0 ? 1 : 0].Row / 2, playerLocations[turn == 0 ? 1 : 0].Col / 2];
+
+            return (possibleMinimumHeuristicCurrentPlayer / (moveValuePlayer == 0 ? 1 : moveValuePlayer)) - (possibleMinimumHeuristicOpposingPlayer / (moveValueOpponent <= 1 ? 1 : moveValueOpponent));
         }
 
         private double HeuristicCostEstimate(PlayerCoordinate start, PlayerCoordinate goal)
