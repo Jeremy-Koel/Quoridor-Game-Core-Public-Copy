@@ -1113,6 +1113,37 @@ namespace GameCore
             return move;
         }
 
+        private string FindWall()
+        {
+            if (possibleVerticalWalls.Count > 0)
+            {
+                lock (boardAccess)
+                {
+                    Populate();
+                    string wallMove = null;
+                    PlayerCoordinate opponent = turn == 0 ? playerLocations[1] : playerLocations[0];
+
+                    switch (randomPercentileChance.Next(0, 2))
+                    {
+                        case 0:
+                            wallMove = possibleVerticalWalls[randomPercentileChance.Next(0, possibleVerticalWalls.Count)] + "v";
+                            break;
+                        case 1:
+                            wallMove = possibleHorizontalWalls[randomPercentileChance.Next(0, possibleHorizontalWalls.Count)] + "h";
+                            break;
+                    }
+
+                    Unpopulate();
+                    return wallMove;
+                }
+
+            }
+            else
+            {
+                return FindPlayerMove();
+            }
+        }
+
 
         private Tuple<bool, string> GetValidJumpMove(List<PlayerCoordinate> players)
         {
