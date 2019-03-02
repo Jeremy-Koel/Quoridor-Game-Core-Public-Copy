@@ -1332,7 +1332,7 @@ namespace GameCore
                 Tuple<Tuple<int, int>, List<Tuple<int, int>>> current = queue.Dequeue();
                 if (possibleMoveValues[current.Item1.Item1, current.Item1.Item2] == 0 && current.Item1.Item1 != goalStart.Item1)
                 {
-                    if (IsThereAnAdjacentLocationEqualToZero(current.Item1))
+                    if (IsThereAnAdjacentLocationEqualToZero(current.Item1, possibleMoveValues))
                     {
                         return current.Item2;
                     }
