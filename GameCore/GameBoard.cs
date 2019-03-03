@@ -18,6 +18,7 @@ namespace GameCore
         private PlayerCoordinate playerTwoLocation;
         private List<WallCoordinate> walls;
         private List<List<string>> possibleMoves;
+        private List<string> possibleWalls
         private int player1walls = 10;
         private int player2walls = 10;
         private char[,] board;
@@ -544,15 +545,15 @@ namespace GameCore
 
         public bool IsValidWallPlacement(WallCoordinate wall)
         {
-            bool onBoard = IsMoveInBounds(wall.StartRow, wall.StartCol)
-                        && IsMoveInBounds(wall.EndRow, wall.EndCol);
+            bool onBoard = IsMoveInBounds(wall.StartRow, wall.StartCol);
+                        //&& IsMoveInBounds(wall.EndRow, wall.EndCol);
             if (!onBoard)
             {
                 return false;
             }
 
-            bool onWallSpace = IsOddSpace(wall.StartRow, wall.StartCol, wall.Orientation)
-                            && IsOddSpace(wall.EndRow, wall.EndCol, wall.Orientation);
+            bool onWallSpace = IsOddSpace(wall.StartRow, wall.StartCol, wall.Orientation);
+                            //&& IsOddSpace(wall.EndRow, wall.EndCol, wall.Orientation);
             bool isEmpty = IsEmptyWallSpace(wall.StartRow, wall.StartCol)
                        && IsEmptyWallSpace(wall.EndRow, wall.EndCol);
             return onWallSpace
