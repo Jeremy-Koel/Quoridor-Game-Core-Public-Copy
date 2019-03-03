@@ -32,7 +32,6 @@ namespace GameCore
         private static double historyInfluence = 1.15;
 
         private static string MonteCarloPlayer;
-        private static GameBoard.PlayerEnum monteCarloPlayerEnum;
         private static Random randomPercentileChance;
         private static List<BitArray> board;
         private static int[,] possibleMoveValues;
@@ -136,7 +135,6 @@ namespace GameCore
 
             if (MonteCarloPlayer == null)
             {
-                monteCarloPlayerEnum = turn;
                 MonteCarloPlayer = currentTurn.ToString();
             }
 
@@ -1510,8 +1508,7 @@ namespace GameCore
 
             if (depthCheck > 125)
             {
-                return MinimumHeuristicEstimate(Convert.ToChar(97 + playerLocations[monteCarloPlayerEnum == 0 ? 0 : 1].Col / 2).ToString() + (9 - playerLocations[monteCarloPlayerEnum == 0 ? 0 : 1].Row / 2).ToString()) >
-                       MinimumHeuristicEstimate(Convert.ToChar(97 + playerLocations[monteCarloPlayerEnum == 0 ? 1 : 0].Col / 2).ToString() + (9 - playerLocations[monteCarloPlayerEnum == 0 ? 1 : 0].Row / 2).ToString());
+                gameOver = true;
             }
 
             if (!gameOver)
@@ -1573,7 +1570,7 @@ namespace GameCore
 
         private void ThreadedTreeSearch(Stopwatch timer, MonteCarloNode MonteCarlo)
         {
-            for (int i = 0; i < 1000 && timer.Elapsed.TotalSeconds < 5.5; ++i)
+            for (int i = 0; i < 1000 && timer.Elapsed.TotalSeconds < 2; ++i)
             {
                 MonteCarlo.SimulatedGame();
             }
