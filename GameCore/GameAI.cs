@@ -1177,6 +1177,7 @@ namespace GameCore
         }
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
         private string FindWall()
         {
@@ -1207,6 +1208,30 @@ namespace GameCore
                     {
                         return FindBlockingWall();
                     }
+=======
+        private string FindWall()
+        {
+            if (possibleVerticalWalls.Count > 0)
+            {
+                lock (boardAccess)
+                {
+                    Populate();
+                    string wallMove = null;
+                    PlayerCoordinate opponent = turn == 0 ? playerLocations[1] : playerLocations[0];
+
+                    switch (randomPercentileChance.Next(0, 2))
+                    {
+                        case 0:
+                            wallMove = possibleVerticalWalls[randomPercentileChance.Next(0, possibleVerticalWalls.Count)] + "v";
+                            break;
+                        case 1:
+                            wallMove = possibleHorizontalWalls[randomPercentileChance.Next(0, possibleHorizontalWalls.Count)] + "h";
+                            break;
+                    }
+
+                    Unpopulate();
+                    return wallMove;
+>>>>>>> parent of de91e7c... Revert "Update GameAI.cs"
                 }
 
             }
@@ -1216,7 +1241,10 @@ namespace GameCore
             }
         }
 
+<<<<<<< HEAD
 >>>>>>> parent of 8a4a397... Revert "Update GameAI.cs"
+=======
+>>>>>>> parent of de91e7c... Revert "Update GameAI.cs"
 
         private Tuple<bool, string> GetValidJumpMove(List<PlayerCoordinate> players)
         {
