@@ -1572,7 +1572,7 @@ namespace GameCore
 
         private void ThreadedTreeSearch(Stopwatch timer, MonteCarloNode MonteCarlo)
         {
-            for (int i = 0; i < 1000 && timer.Elapsed.TotalSeconds < 2; ++i)
+            for (int i = 0; i < 10000 && timer.Elapsed.TotalSeconds < 4; ++i)
             {
                 MonteCarlo.SimulatedGame();
             }
