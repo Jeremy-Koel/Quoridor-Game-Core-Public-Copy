@@ -1067,10 +1067,32 @@ namespace GameCore
 
         private string FindBlockingWall()
         {
-            List<string> blockWalls = PlaceBlockingWall();
+            List<string> blockWalls = GenerateBlockingWalls();
             if (blockWalls.Count > 0)
             {
-                return blockWalls[randomPercentileChance.Next(0, 4)];
+                int random = randomPercentileChance.Next(0, blockWalls.Count);
+
+                string wallBlock = blockWalls[0];
+                if (childrensMoves.Contains(wallBlock))
+                {
+                    for (int i = 1; childrensMoves.Contains(wallBlock) && i < blockWalls.Count; i++)
+                    {
+                        wallBlock = blockWalls[i];
+                    }
+
+                    if (childrensMoves.Contains(wallBlock))
+                    {
+                        return blockWalls[random];
+                    }
+                    else
+                    {
+                        return wallBlock;
+                    }
+                }
+                else
+                {
+                    return wallBlock;
+                }
             }
             else
             {
@@ -1078,16 +1100,48 @@ namespace GameCore
             }
         }
 
-        private List<string> PlaceBlockingWall()
+        private List<string> GenerateBlockingWalls()
         {
             List<string> blockingWalls = new List<string>();
+            string opponent = Convert.ToChar(97 + playerLocations[turn == 0 ? 1 : 0].Col / 2.ToString() + (9 - playerLocations[turn == 0 ? 1 : 0].Row / 2).ToString());
 
+            if (opponent[1] + 1 < '9')
+            {
+                if (opponent[0] - 1 >= 'a')
+                {
+                    blockingWalls.Add((opponent[0] - 1).ToString() + (opponent[1] + 1).ToString() + "h");
+                }
+                if (opponent[0] < 'i')
+                {
+                    blockingWalls.Add(opponent[0].ToString() + (opponent[1] + 1).ToString() + "h");
+                }
+            }
+            if (opponent[1] < '9')
+            {
+                if (opponent[0] - 1 >= 'a')
+                {
+                    blockingWalls.Add((opponent[0] - 1).ToString() + (opponent[1] + 1).ToString() + "h");
+                }
+                if (opponent[0] - 1 >= 'a')
+                {
+                    blockingWalls.Add((opponent[0] - 1).ToString() + (opponent[1] + 1).ToString() + "h");
+                }
+                if (opponent[0] < 'i')
+                {
+                    blockingWalls.Add(opponent[0].ToString() + (opponent[1] + 1).ToString() + "h");
+                }
+                blockingWalls.Add(opponent[0].ToString() + (opponent[1]).ToString() + "h");
+            }
+            if (opponent[1] - 1 >= '1')
+            {
+                blockingWalls.Add(opponent[0].ToString() + (opponent[1] - 1).ToString() + "h");
+            }
             blockingWalls.Add(Convert.ToChar(97 + playerLocations[turn == 0 ? 1 : 0].Col / 2 + (playerLocations[turn == 0 ? 1 : 0].Col != 0 ? -1 : 0)).ToString() + (9 - (playerLocations[turn == 0 ? 1 : 0].Row / 2) - (turn == 0 ? 1 : 0)).ToString() + "h");
-            blockingWalls.Add(Convert.ToChar(97 + playerLocations[turn == 0 ? 1 : 0].Col / 2 + (playerLocations[turn == 0 ? 1 : 0].Col != 0 ? -1 : 0)).ToString() + (9 - (playerLocations[turn == 0 ? 1 : 0].Row / 2) - (turn == 0 ? 1 : 0)).ToString() + "v");
+                blockingWalls.Add(Convert.ToChar(97 + playerLocations[turn == 0 ? 1 : 0].Col / 2 + (playerLocations[turn == 0 ? 1 : 0].Col != 0 ? -1 : 0)).ToString() + (9 - (playerLocations[turn == 0 ? 1 : 0].Row / 2) - (turn == 0 ? 1 : 0)).ToString() + "v");
 
-            blockingWalls.Add(Convert.ToChar(97 + playerLocations[turn == 0 ? 1 : 0].Col / 2).ToString() + (9 - (playerLocations[turn == 0 ? 1 : 0].Row / 2) - (turn == 0 ? 1 : 0)).ToString() + "h");
-            blockingWalls.Add(Convert.ToChar(97 + playerLocations[turn == 0 ? 1 : 0].Col / 2).ToString() + (9 - (playerLocations[turn == 0 ? 1 : 0].Row / 2) - (turn == 0 ? 1 : 0)).ToString() + "v");
-
+                blockingWalls.Add(Convert.ToChar(97 + playerLocations[turn == 0 ? 1 : 0].Col / 2).ToString() + (9 - (playerLocations[turn == 0 ? 1 : 0].Row / 2) - (turn == 0 ? 1 : 0)).ToString() + "h");
+                blockingWalls.Add(Convert.ToChar(97 + playerLocations[turn == 0 ? 1 : 0].Col / 2).ToString() + (9 - (playerLocations[turn == 0 ? 1 : 0].Row / 2) - (turn == 0 ? 1 : 0)).ToString() + "v");
+            }
             return blockingWalls;
         }
 
@@ -1095,7 +1149,7 @@ namespace GameCore
         {
             string move = null;
 
-            List<string> blockingWalls = PlaceBlockingWall();
+            List<string> blockingWalls = GenerateBlockingWalls();
 
             if (randomPercentileChance.Next(1, 100) <= 11 || (playerLocations[turn == 0 ? 0 : 1].Row / 2) + (turn == 0 ? -1 : 1) == (turn == 0 ? 0 : 8) || (turn == 0 ? playerLocations[1].Row / 2 < 4 : playerLocations[0].Row / 2 > 4))
             {
@@ -1573,7 +1627,7 @@ namespace GameCore
             ++timesVisited;
             bool mctsVictory = false;
 
-            if (depthCheck > 21)
+            if (depthCheck > 7)
             {
                 return MinimumHeuristicEstimate(Convert.ToChar(97 + playerLocations[monteCarloPlayerEnum == 0 ? 0 : 1].Col / 2).ToString() + (9 - playerLocations[monteCarloPlayerEnum == 0 ? 0 : 1].Row / 2).ToString()) >
                     MinimumHeuristicEstimate(Convert.ToChar(97 + playerLocations[monteCarloPlayerEnum == 0 ? 1 : 0].Col / 2).ToString() + (9 - playerLocations[monteCarloPlayerEnum == 0 ? 1 : 0].Row / 2).ToString());
