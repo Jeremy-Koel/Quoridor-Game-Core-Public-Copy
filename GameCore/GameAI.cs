@@ -1043,7 +1043,7 @@ namespace GameCore
 
         private string RandomMove()
         {
-            return randomPercentileChance.Next(1, 100) >= 37 ? FindPlayerMove() : (turn == 0 ? wallsRemaining[0] : wallsRemaining[1]) > 0 ? (turn == 0 ? playerLocations[1].Row / 2 > 5 : playerLocations[0].Row / 2 < 3) ? FindBlockingWall() : FindWall() : FindPlayerMove();
+            return randomPercentileChance.Next(1, 100) >= 51 ? FindPlayerMove() : (turn == 0 ? wallsRemaining[0] : wallsRemaining[1]) > 0 ? (turn == 0 ? playerLocations[1].Row / 2 > 5 : playerLocations[0].Row / 2 < 3) ? FindBlockingWall() : FindWall() : FindPlayerMove();
         }
 
         private string FindBlockingWall()
@@ -1209,90 +1209,7 @@ namespace GameCore
                 return FindPlayerMove();
             }
         }
-        
-        private List<Tuple<int, int>> CanGoalReachOpenLocation(Tuple<int, int> goalStart, int[,] possibleMoveValues)
-        {
-            HashSet<Tuple<int, int>> markedSet = new HashSet<Tuple<int, int>>();
-            Queue<Tuple<Tuple<int, int>, List<Tuple<int, int>>>> queue = new Queue<Tuple<Tuple<int, int>, List<Tuple<int, int>>>>();
 
-            Dictionary<Tuple<int, int>, List<Tuple<int, int>>> cameFrom = new Dictionary<Tuple<int, int>, List<Tuple<int, int>>>
-            {
-                { goalStart, new List<Tuple<int, int>>() }
-            };
-
-            markedSet.Add(goalStart);
-            queue.Enqueue(new Tuple<Tuple<int, int>, List<Tuple<int, int>>>(goalStart, cameFrom[goalStart]));
-
-            while (queue.Count > 0)
-            {
-                Tuple<Tuple<int, int>, List<Tuple<int, int>>> current = queue.Dequeue();
-                if (possibleMoveValues[current.Item1.Item1, current.Item1.Item2] == 0 && current.Item1.Item1 != goalStart.Item1)
-                {
-                    if (IsThereAnAdjacentLocationEqualToZero(current.Item1, possibleMoveValues))
-                    {
-                        return current.Item2;
-                    }
-                }
-
-                if ((current.Item1.Item2 * 2) + 1 < GameBoard.TOTAL_COLS
-                    && board[current.Item1.Item1 * 2].Get((current.Item1.Item2 * 2) + 1) != true && current.Item1.Item1 != goalStart.Item1) // Can move East
-                {
-                    Tuple<int, int> neighbor = new Tuple<int, int>(current.Item1.Item1, current.Item1.Item2 + 1);
-                    if (!markedSet.Contains(neighbor))
-                    {
-                        List<Tuple<int, int>> nodesBefore = new List<Tuple<int, int>>(current.Item2);
-                        nodesBefore.Add(current.Item1);
-                        markedSet.Add(neighbor);
-                        queue.Enqueue(new Tuple<Tuple<int, int>, List<Tuple<int, int>>>(neighbor, nodesBefore));
-                    }
-                }
-                if ((current.Item1.Item2 * 2) - 1 >= 0
-                    && board[current.Item1.Item1 * 2].Get((current.Item1.Item2 * 2) - 1) != true && current.Item1.Item1 != goalStart.Item1) // Can move West 
-                {
-                    Tuple<int, int> neighbor = new Tuple<int, int>(current.Item1.Item1, current.Item1.Item2 - 1);
-                    if (!markedSet.Contains(neighbor))
-                    {
-                        List<Tuple<int, int>> nodesBefore = new List<Tuple<int, int>>(current.Item2);
-                        nodesBefore.Add(current.Item1);
-                        markedSet.Add(neighbor);
-                        queue.Enqueue(new Tuple<Tuple<int, int>, List<Tuple<int, int>>>(neighbor, nodesBefore));
-                    }
-                }
-                if ((current.Item1.Item1 * 2) - 1 >= 0
-                    && board[(current.Item1.Item1 * 2) - 1].Get((current.Item1.Item2 * 2)) != true && current.Item1.Item1 - 1 != goalStart.Item1) // Can move North 
-                {
-                    Tuple<int, int> neighbor = new Tuple<int, int>(current.Item1.Item1 - 1, current.Item1.Item2);
-                    if (!markedSet.Contains(neighbor))
-                    {
-                        List<Tuple<int, int>> nodesBefore = new List<Tuple<int, int>>(current.Item2);
-                        nodesBefore.Add(current.Item1);
-                        markedSet.Add(neighbor);
-                        queue.Enqueue(new Tuple<Tuple<int, int>, List<Tuple<int, int>>>(neighbor, nodesBefore));
-                    }
-                }
-                if ((current.Item1.Item1 * 2) + 1 < GameBoard.TOTAL_COLS
-                    && board[(current.Item1.Item1 * 2) + 1].Get((current.Item1.Item2 * 2)) != true && current.Item1.Item1 + 1 != goalStart.Item1) // Can move South 
-                {
-                    Tuple<int, int> neighbor = new Tuple<int, int>(current.Item1.Item1 + 1, current.Item1.Item2);
-                    if (!markedSet.Contains(neighbor))
-                    {
-                        List<Tuple<int, int>> nodesBefore = new List<Tuple<int, int>>(current.Item2);
-                        nodesBefore.Add(current.Item1);
-                        markedSet.Add(neighbor);
-                        queue.Enqueue(new Tuple<Tuple<int, int>, List<Tuple<int, int>>>(neighbor, nodesBefore));
-                    }
-                }
-            }
-            return new List<Tuple<int, int>>();
-        }
-
-        private bool IsThereAnAdjacentLocationEqualToZero(Tuple<int, int> current, int[,] possibleMoveValues)
-        {
-            return (current.Item1 - 1 > -1 && possibleMoveValues[current.Item1 - 1, current.Item2] == 0 && !board[(current.Item1 * 2) - 1].Get((current.Item2 * 2))) ||
-                   (current.Item1 + 1 < 9 && possibleMoveValues[current.Item1 + 1, current.Item2] == 0 && !board[(current.Item1 * 2) + 1].Get((current.Item2 * 2))) ||
-                   (current.Item2 - 1 > -1 && possibleMoveValues[current.Item1, current.Item2 - 1] == 0 && !board[(current.Item1 * 2)].Get((current.Item2 * 2) - 1)) ||
-                   (current.Item2 + 1 < 9 && possibleMoveValues[current.Item1, current.Item2 + 1] == 0 && !board[(current.Item1 * 2)].Get((current.Item2 * 2) + 1));
-        }
 
         private Tuple<bool, string> GetValidJumpMove(List<PlayerCoordinate> players)
         {
@@ -1438,32 +1355,32 @@ namespace GameCore
 
         private void SetPlayerMoveValuesHorizontal(WallCoordinate wallCoordinate, Tuple<int, int> mid)
         {
-            ++possibleMoveValues[(mid.Item1 + 1) / 2, (mid.Item2 + 1) / 2];
-            ++possibleMoveValues[(mid.Item1 - 1) / 2, (mid.Item2 + 1) / 2];
-
-            ++possibleMoveValues[(mid.Item1 + 1) / 2, (mid.Item2 - 1) / 2];
-            ++possibleMoveValues[(mid.Item1 - 1) / 2, (mid.Item2 - 1) / 2];
+            ++possibleMoveValues[(wallCoordinate.StartRow + 1) / 2, (wallCoordinate.StartCol) / 2];
+            ++possibleMoveValues[(wallCoordinate.StartRow - 1) / 2, (wallCoordinate.StartCol) / 2];
 
             ++possibleMoveValues[(mid.Item1 + 1) / 2, (mid.Item2 + 1) / 2];
             ++possibleMoveValues[(mid.Item1 - 1) / 2, (mid.Item2 + 1) / 2];
 
             ++possibleMoveValues[(mid.Item1 + 1) / 2, (mid.Item2 - 1) / 2];
             ++possibleMoveValues[(mid.Item1 - 1) / 2, (mid.Item2 - 1) / 2];
+
+            ++possibleMoveValues[(wallCoordinate.EndRow + 1) / 2, (wallCoordinate.EndCol) / 2];
+            ++possibleMoveValues[(wallCoordinate.EndRow - 1) / 2, (wallCoordinate.EndCol) / 2];
         }
 
         private void SetPlayerMoveValuesVertical(WallCoordinate wallCoordinate, Tuple<int, int> mid)
         {
-            ++possibleMoveValues[(mid.Item1 + 1) / 2, (mid.Item2 + 1) / 2];
-            ++possibleMoveValues[(mid.Item1 - 1) / 2, (mid.Item2 + 1) / 2];
-
-            ++possibleMoveValues[(mid.Item1 + 1) / 2, (mid.Item2 - 1) / 2];
-            ++possibleMoveValues[(mid.Item1 - 1) / 2, (mid.Item2 - 1) / 2];
+            ++possibleMoveValues[(wallCoordinate.EndRow) / 2, (wallCoordinate.EndCol + 1) / 2];
+            ++possibleMoveValues[(wallCoordinate.EndRow) / 2, (wallCoordinate.EndCol - 1) / 2];
 
             ++possibleMoveValues[(mid.Item1 + 1) / 2, (mid.Item2 + 1) / 2];
             ++possibleMoveValues[(mid.Item1 - 1) / 2, (mid.Item2 + 1) / 2];
 
             ++possibleMoveValues[(mid.Item1 + 1) / 2, (mid.Item2 - 1) / 2];
             ++possibleMoveValues[(mid.Item1 - 1) / 2, (mid.Item2 - 1) / 2];
+
+            ++possibleMoveValues[(wallCoordinate.StartRow) / 2, (wallCoordinate.StartCol - 1) / 2];
+            ++possibleMoveValues[(wallCoordinate.StartRow) / 2, (wallCoordinate.StartCol - 1) / 2];
         }
 
         private void Unpopulate()
