@@ -82,7 +82,7 @@ namespace GameCore
 
         public double GetStateValue()
         {
-            return (Math.Atan(0.5 * (MinimumHeuristicEstimate(thisMove)))/ Math.PI) + 0.5;
+            return (Math.Atan(0.5 * (MinimumHeuristicEstimate(thisMove))) / Math.PI) + 0.5;
         }
 
         public double GetScore()
@@ -723,7 +723,6 @@ namespace GameCore
         public double MinimumHeuristicEstimate(string locationToStart)
         {
             int EndRow;
-            double minimumHeuristic = double.PositiveInfinity;
 
             if (turn == 0)
             {
@@ -763,7 +762,7 @@ namespace GameCore
                 ResetPlayerMoveValues(wallCoordinate, mid);
             }
 
-            return (possibleMinimumHeuristicCurrentPlayer) - (possibleMinimumHeuristicOpposingPlayer);
+            return (possibleMinimumHeuristicCurrentPlayer / possibleMoveValues[playerLocations[turn == 0 ? 0 : 1].Row / 2, playerLocations[turn == 0 ? 0 : 1].Col / 2]) - (possibleMinimumHeuristicOpposingPlayer / possibleMoveValues[playerLocations[turn == 0 ? 1 : 0].Row / 2, playerLocations[turn == 0 ? 1 : 0].Col / 2]);
         }
 
         private double HeuristicCostEstimate(PlayerCoordinate start, PlayerCoordinate goal)
@@ -1082,13 +1081,13 @@ namespace GameCore
         private List<string> PlaceBlockingWall()
         {
             List<string> blockingWalls = new List<string>();
-                    
+
             blockingWalls.Add(Convert.ToChar(97 + playerLocations[turn == 0 ? 1 : 0].Col / 2 + (playerLocations[turn == 0 ? 1 : 0].Col != 0 ? -1 : 0)).ToString() + (9 - (playerLocations[turn == 0 ? 1 : 0].Row / 2) - (turn == 0 ? 1 : 0)).ToString() + "h");
             blockingWalls.Add(Convert.ToChar(97 + playerLocations[turn == 0 ? 1 : 0].Col / 2 + (playerLocations[turn == 0 ? 1 : 0].Col != 0 ? -1 : 0)).ToString() + (9 - (playerLocations[turn == 0 ? 1 : 0].Row / 2) - (turn == 0 ? 1 : 0)).ToString() + "v");
 
             blockingWalls.Add(Convert.ToChar(97 + playerLocations[turn == 0 ? 1 : 0].Col / 2).ToString() + (9 - (playerLocations[turn == 0 ? 1 : 0].Row / 2) - (turn == 0 ? 1 : 0)).ToString() + "h");
             blockingWalls.Add(Convert.ToChar(97 + playerLocations[turn == 0 ? 1 : 0].Col / 2).ToString() + (9 - (playerLocations[turn == 0 ? 1 : 0].Row / 2) - (turn == 0 ? 1 : 0)).ToString() + "v");
-            
+
             return blockingWalls;
         }
 
@@ -1574,7 +1573,7 @@ namespace GameCore
             ++timesVisited;
             bool mctsVictory = false;
 
-            if (depthCheck > 5)
+            if (depthCheck > 21)
             {
                 return MinimumHeuristicEstimate(Convert.ToChar(97 + playerLocations[monteCarloPlayerEnum == 0 ? 0 : 1].Col / 2).ToString() + (9 - playerLocations[monteCarloPlayerEnum == 0 ? 0 : 1].Row / 2).ToString()) >
                     MinimumHeuristicEstimate(Convert.ToChar(97 + playerLocations[monteCarloPlayerEnum == 0 ? 1 : 0].Col / 2).ToString() + (9 - playerLocations[monteCarloPlayerEnum == 0 ? 1 : 0].Row / 2).ToString());
