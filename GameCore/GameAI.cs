@@ -1779,7 +1779,25 @@ namespace GameCore
             Console.WriteLine("Wins: " + TreeSearch.GetWins());
             Console.WriteLine("Visits: " + TreeSearch.GetVisits());
             List<MonteCarloNode> childrenToChoose = TreeSearch.GetChildrenNodes();
-            childrenToChoose.Sort();
+            childrenToChoose.Sort(delegate (MonteCarloNode lValue, MonteCarloNode rValue)
+            {
+                if (rValue == null)
+                {
+                    return 1;
+                }
+                else if (lValue.GetVisits() > rValue.GetVisits())
+                {
+                    return 1;
+                }
+                else if (lValue.GetVisits() < rValue.GetVisits())
+                {
+                    return -1;
+                }
+                else
+                {
+                    return 0;
+                }
+            });
             return childrenToChoose[childrenToChoose.Count - 1].GetMove();
         }
 
