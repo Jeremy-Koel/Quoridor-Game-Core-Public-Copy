@@ -314,6 +314,17 @@ namespace GameCore
 
         public bool PlaceWall(PlayerEnum player, WallCoordinate wallCoordinate)
         {
+            string wallString;
+            if (wallCoordinate.Orientation == WallCoordinate.WallOrientation.Horizontal)
+            {
+                wallString = Convert.ToChar(97 + wallCoordinate.StartCol / 2) + (9 - (wallCoordinate.StartRow + 1) / 2).ToString();
+            }
+            else
+            {
+                wallString = Convert.ToChar(97 + (wallCoordinate.StartCol - 1) / 2) + (9 - wallCoordinate.StartRow / 2).ToString();
+            }
+
+
             if (gameOver || whoseTurn != player)
             {
                 return false;
@@ -326,10 +337,11 @@ namespace GameCore
             {
                 return false;
             }
-            if (IsValidWallPlacement(wallCoordinate) && CanPlayersReachGoal(wallCoordinate))
+            if (possibleWalls.Contains(wallString)/*IsValidWallPlacement(wallCoordinate)*/ && CanPlayersReachGoal(wallCoordinate))
             {
                 walls.Add(wallCoordinate);
                 board[wallCoordinate.StartRow, wallCoordinate.StartCol] = board[wallCoordinate.EndRow, wallCoordinate.EndCol] = WALL;
+                possibleWalls.Remove(wallString);
                 if (player == PlayerEnum.ONE)
                 {
                     player1walls--;
