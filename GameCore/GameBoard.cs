@@ -195,11 +195,11 @@ namespace GameCore
 
             whoseTurn = PlayerEnum.ONE;
 
-            possibleMoves.Add(GetPossibleMovesFromPosition());
+            possibleMoves.Add(PossibleMovesFromPosition());
 
             whoseTurn = PlayerEnum.TWO;
 
-            possibleMoves.Add(GetPossibleMovesFromPosition());
+            possibleMoves.Add(PossibleMovesFromPosition());
 
             whoseTurn = actualStartingPlayer;
         }
@@ -275,7 +275,7 @@ namespace GameCore
 
             string move = Convert.ToChar(97 + (destinationCoordinate.Col / 2)).ToString() + (9 - destinationCoordinate.Row / 2).ToString();
 
-            if (possibleMoves[whoseTurn == PlayerEnum.ONE ? 0 : 1].Contains(move)/*IsValidPlayerMove(player, startCoordinate, destinationCoordinate)*/)
+            if (possibleMoves[whoseTurn == 0 ? 0 : 1].Contains(move)/*IsValidPlayerMove(player, startCoordinate, destinationCoordinate)*/)
             {
                 board[startCoordinate.Row, startCoordinate.Col] = PLAYER_SPACE;
                 switch (player)
@@ -283,16 +283,16 @@ namespace GameCore
                     case PlayerEnum.ONE:
                         playerOneLocation.Row = destinationCoordinate.Row;
                         playerOneLocation.Col = destinationCoordinate.Col;
-                        possibleMoves[whoseTurn == PlayerEnum.ONE ? 0 : 1] = GetPossibleMovesFromPosition();
+                        possibleMoves[whoseTurn == 0 ? 0 : 1] = PossibleMovesFromPosition();
                         whoseTurn = PlayerEnum.TWO;
-                        possibleMoves[whoseTurn == PlayerEnum.ONE ? 0 : 1] = GetPossibleMovesFromPosition();
+                        possibleMoves[whoseTurn == 0 ? 0 : 1] = PossibleMovesFromPosition();
                         break;
                     case PlayerEnum.TWO:
                         playerTwoLocation.Row = destinationCoordinate.Row;
                         playerTwoLocation.Col = destinationCoordinate.Col;
-                        possibleMoves[whoseTurn == PlayerEnum.ONE ? 0 : 1] = GetPossibleMovesFromPosition();
+                        possibleMoves[whoseTurn == 0 ? 0 : 1] = PossibleMovesFromPosition();
                         whoseTurn = PlayerEnum.ONE;
-                        possibleMoves[whoseTurn == PlayerEnum.ONE ? 0 : 1] = GetPossibleMovesFromPosition();
+                        possibleMoves[whoseTurn == 0 ? 0 : 1] = PossibleMovesFromPosition();
                         break;
                 }
                 retValue = true;
@@ -344,192 +344,194 @@ namespace GameCore
                 possibleWalls.Remove(wallString);
                 if (player == PlayerEnum.ONE)
                 {
-                    --player1walls;
+                    player1walls--;
                 }
                 else if (player == PlayerEnum.TWO)
                 {
-                    --player2walls;
+                    player2walls--;
                 }
                 // Mark that this player has taken their turn 
-                possibleMoves[whoseTurn == PlayerEnum.ONE ? 0 : 1] = GetPossibleMovesFromPosition();
+                possibleMoves[whoseTurn == 0 ? 0 : 1] = PossibleMovesFromPosition();
                 ChangeTurn();
-                possibleMoves[whoseTurn == PlayerEnum.ONE ? 0 : 1] = GetPossibleMovesFromPosition();
+                possibleMoves[whoseTurn == 0 ? 0 : 1] = PossibleMovesFromPosition();
                 return true;
             }
 
             return false;
         }
 
-        private void GeneratePossibleHorizontalDiagonalJumps(List<string> validMoves, int direction)
+        private void PossibleHorizontalDiagonalJumps(List<string> validMoves, int direction)
         {
-            if ((whoseTurn == PlayerEnum.ONE ? (playerOneLocation) : (playerTwoLocation)).Row + 1 < 17 && (whoseTurn == PlayerEnum.ONE ? (playerOneLocation) : (playerTwoLocation)).Row - 1 > -1
-                       && (whoseTurn == PlayerEnum.ONE ? (playerOneLocation) : (playerTwoLocation)).Col + 2 * direction < 17 && (whoseTurn == PlayerEnum.ONE ? (playerOneLocation) : (playerTwoLocation)).Col + 2 * direction > -1)
+            if ((whoseTurn == 0 ? (playerOneLocation) : (playerTwoLocation)).Row + 1 < 17 && (whoseTurn == 0 ? (playerOneLocation) : (playerTwoLocation)).Row - 1 > -1
+                       && (whoseTurn == 0 ? (playerOneLocation) : (playerTwoLocation)).Col + 2 * direction < 17 && (whoseTurn == 0 ? (playerOneLocation) : (playerTwoLocation)).Col + 2 * direction > -1)
             {
-                if (board[(whoseTurn == PlayerEnum.ONE ? (playerOneLocation) : (playerTwoLocation)).Row - 1, (whoseTurn == PlayerEnum.ONE ? (playerOneLocation) : (playerTwoLocation)).Col + 2 * direction] != WALL)
+                if (board[(whoseTurn == 0 ? (playerOneLocation) : (playerTwoLocation)).Row - 1, (whoseTurn == 0 ? (playerOneLocation) : (playerTwoLocation)).Col + 2 * direction] != WALL)
                 {
                     StringBuilder sb = new StringBuilder();
 
-                    sb.Append(Convert.ToChar(97 + ((whoseTurn == PlayerEnum.ONE ? (playerTwoLocation) : (playerOneLocation)).Col / 2)));
-                    sb.Append(value: 9 - ((whoseTurn == PlayerEnum.ONE ? (playerTwoLocation) : (playerOneLocation)).Row / 2) + 1 > 9 ? 9
-                                   : 9 - ((whoseTurn == PlayerEnum.ONE ? (playerTwoLocation) : (playerOneLocation)).Row / 2) + 1);
+                    sb.Append(Convert.ToChar(97 + ((whoseTurn == 0 ? (playerTwoLocation) : (playerOneLocation)).Col / 2)));
+                    sb.Append(value: 9 - ((whoseTurn == 0 ? (playerTwoLocation) : (playerOneLocation)).Row / 2) + 1 > 9 ? 9
+                                   : 9 - ((whoseTurn == 0 ? (playerTwoLocation) : (playerOneLocation)).Row / 2) + 1);
 
                     validMoves.Add(sb.ToString());
                 }
-                if (board[(whoseTurn == PlayerEnum.ONE ? (playerOneLocation) : (playerTwoLocation)).Row + 1, (whoseTurn == PlayerEnum.ONE ? (playerOneLocation) : (playerTwoLocation)).Col + 2 * direction] != WALL)
+                if (board[(whoseTurn == 0 ? (playerOneLocation) : (playerTwoLocation)).Row + 1, (whoseTurn == 0 ? (playerOneLocation) : (playerTwoLocation)).Col + 2 * direction] != WALL)
                 {
                     StringBuilder sb = new StringBuilder();
 
-                    sb.Append(Convert.ToChar(97 + ((whoseTurn == PlayerEnum.ONE ? (playerTwoLocation) : (playerOneLocation)).Col / 2)));
-                    sb.Append(value: 9 - ((whoseTurn == PlayerEnum.ONE ? (playerTwoLocation) : (playerOneLocation)).Row / 2) - 1 < 1 ? 1
-                                   : 9 - ((whoseTurn == PlayerEnum.ONE ? (playerTwoLocation) : (playerOneLocation)).Row / 2) - 1);
+                    sb.Append(Convert.ToChar(97 + ((whoseTurn == 0 ? (playerTwoLocation) : (playerOneLocation)).Col / 2)));
+                    sb.Append(value: 9 - ((whoseTurn == 0 ? (playerTwoLocation) : (playerOneLocation)).Row / 2) - 1 < 1 ? 1
+                                   : 9 - ((whoseTurn == 0 ? (playerTwoLocation) : (playerOneLocation)).Row / 2) - 1);
 
                     validMoves.Add(sb.ToString());
                 }
             }
         }
 
-        private void GeneratePossibleHorizontalJumps(List<string> validMoves, int direction)
+        private void PossibleHorizontalJumps(List<string> validMoves, int direction)
         {
-            if ((whoseTurn == PlayerEnum.ONE ? (playerOneLocation) : (playerTwoLocation)).Col + (3 * direction) < 17 && (whoseTurn == PlayerEnum.ONE ? (playerOneLocation) : (playerTwoLocation)).Col + (3 * direction) > -1)
+            if ((whoseTurn == 0 ? (playerOneLocation) : (playerTwoLocation)).Col + (3 * direction) < 17 && (whoseTurn == 0 ? (playerOneLocation) : (playerTwoLocation)).Col + (3 * direction) > -1)
             {
-                if (board[(whoseTurn == PlayerEnum.ONE ? (playerOneLocation) : (playerTwoLocation)).Row, (whoseTurn == PlayerEnum.ONE ? (playerOneLocation) : (playerTwoLocation)).Col + (3 * direction)] != WALL)
+                if (board[(whoseTurn == 0 ? (playerOneLocation) : (playerTwoLocation)).Row, (whoseTurn == 0 ? (playerOneLocation) : (playerTwoLocation)).Col + (3 * direction)] != WALL)
                 {
                     StringBuilder sb = new StringBuilder();
 
-                    sb.Append(Convert.ToChar(97 + ((whoseTurn == PlayerEnum.ONE ? (playerTwoLocation) : (playerOneLocation)).Col / 2) + (1 * direction) > 105 ? 105
-                                            : 97 + ((whoseTurn == PlayerEnum.ONE ? (playerTwoLocation) : (playerOneLocation)).Col / 2) + (1 * direction) < 97 ? 97
-                                            : 97 + ((whoseTurn == PlayerEnum.ONE ? (playerTwoLocation) : (playerOneLocation)).Col / 2) + (1 * direction)));
-                    sb.Append(9 - ((whoseTurn == PlayerEnum.ONE ? (playerTwoLocation) : (playerOneLocation)).Row / 2));
+                    sb.Append(Convert.ToChar(97 + ((whoseTurn == 0 ? (playerTwoLocation) : (playerOneLocation)).Col / 2) + (1 * direction) > 105 ? 105
+                                            : 97 + ((whoseTurn == 0 ? (playerTwoLocation) : (playerOneLocation)).Col / 2) + (1 * direction) < 97 ? 97
+                                            : 97 + ((whoseTurn == 0 ? (playerTwoLocation) : (playerOneLocation)).Col / 2) + (1 * direction)));
+                    sb.Append(9 - ((whoseTurn == 0 ? (playerTwoLocation) : (playerOneLocation)).Row / 2));
 
                     validMoves.Add(sb.ToString());
                 }
                 else
                 {
-                    GeneratePossibleHorizontalDiagonalJumps(validMoves, direction);
+                    PossibleHorizontalDiagonalJumps(validMoves, direction);
                 }
             }
             else
             {
-                GeneratePossibleHorizontalDiagonalJumps(validMoves, direction);
+                PossibleHorizontalDiagonalJumps(validMoves, direction);
             }
         }
 
-        private void GeneratePossibleVerticalDiagonalJumps(List<string> validMoves, int direction)
+        private void PossibleVerticalDiagonalJumps(List<string> validMoves, int direction)
         {
-            if ((whoseTurn == PlayerEnum.ONE ? (playerOneLocation) : (playerTwoLocation)).Col + 1 < 17 && (whoseTurn == PlayerEnum.ONE ? (playerOneLocation) : (playerTwoLocation)).Col - 1 > -1
-                        && (whoseTurn == PlayerEnum.ONE ? (playerOneLocation) : (playerTwoLocation)).Row + 2 * direction < 17 && (whoseTurn == PlayerEnum.ONE ? (playerOneLocation) : (playerTwoLocation)).Row + 2 * direction > -1)
+            if ((whoseTurn == 0 ? (playerOneLocation) : (playerTwoLocation)).Col + 1 < 17 && (whoseTurn == 0 ? (playerOneLocation) : (playerTwoLocation)).Col - 1 > -1
+                        && (whoseTurn == 0 ? (playerOneLocation) : (playerTwoLocation)).Row + 2 * direction < 17 && (whoseTurn == 0 ? (playerOneLocation) : (playerTwoLocation)).Row + 2 * direction > -1)
             {
-                if (board[(whoseTurn == PlayerEnum.ONE ? (playerOneLocation) : (playerTwoLocation)).Row + 2 * direction, (whoseTurn == PlayerEnum.ONE ? (playerOneLocation) : (playerTwoLocation)).Col + 1] != WALL)
+                if (board[(whoseTurn == 0 ? (playerOneLocation) : (playerTwoLocation)).Row + 2 * direction, (whoseTurn == 0 ? (playerOneLocation) : (playerTwoLocation)).Col + 1] != WALL)
                 {
                     StringBuilder sb = new StringBuilder();
 
-                    sb.Append(Convert.ToChar(value: 97 + ((whoseTurn == PlayerEnum.ONE ? (playerTwoLocation) : (playerOneLocation)).Col / 2) + 1 > 105 ? 105
-                                                  : 97 + ((whoseTurn == PlayerEnum.ONE ? (playerTwoLocation) : (playerOneLocation)).Col / 2) + 1));
-                    sb.Append(9 - ((whoseTurn == PlayerEnum.ONE ? (playerTwoLocation) : (playerOneLocation)).Row / 2));
+                    sb.Append(Convert.ToChar(value: 97 + ((whoseTurn == 0 ? (playerTwoLocation) : (playerOneLocation)).Col / 2) + 1 > 105 ? 105
+                                                  : 97 + ((whoseTurn == 0 ? (playerTwoLocation) : (playerOneLocation)).Col / 2) + 1));
+                    sb.Append(9 - ((whoseTurn == 0 ? (playerTwoLocation) : (playerOneLocation)).Row / 2));
 
                     validMoves.Add(sb.ToString());
                 }
-                if (board[(whoseTurn == PlayerEnum.ONE ? (playerOneLocation) : (playerTwoLocation)).Row + 2 * direction, (whoseTurn == PlayerEnum.ONE ? (playerOneLocation) : (playerTwoLocation)).Col - 1] != WALL)
+                if (board[(whoseTurn == 0 ? (playerOneLocation) : (playerTwoLocation)).Row + 2 * direction, (whoseTurn == 0 ? (playerOneLocation) : (playerTwoLocation)).Col - 1] != WALL)
                 {
                     StringBuilder sb = new StringBuilder();
 
-                    sb.Append(Convert.ToChar(value: 97 + ((whoseTurn == PlayerEnum.ONE ? (playerTwoLocation) : (playerOneLocation)).Col / 2) - 1 < 97 ? 97
-                                                  : 97 + ((whoseTurn == PlayerEnum.ONE ? (playerTwoLocation) : (playerOneLocation)).Col / 2) - 1));
-                    sb.Append(9 - ((whoseTurn == PlayerEnum.ONE ? (playerTwoLocation) : (playerOneLocation)).Row / 2));
+                    sb.Append(Convert.ToChar(value: 97 + ((whoseTurn == 0 ? (playerTwoLocation) : (playerOneLocation)).Col / 2) - 1 < 97 ? 97
+                                                  : 97 + ((whoseTurn == 0 ? (playerTwoLocation) : (playerOneLocation)).Col / 2) - 1));
+                    sb.Append(9 - ((whoseTurn == 0 ? (playerTwoLocation) : (playerOneLocation)).Row / 2));
 
                     validMoves.Add(sb.ToString());
                 }
             }
         }
 
-        private void GeneratePossibleVerticalJumps(List<string> validMoves, int direction)
+        private void PossibleVerticalJumps(List<string> validMoves, int direction)
         {
-            if ((whoseTurn == PlayerEnum.ONE ? (playerOneLocation) : (playerTwoLocation)).Row + (3 * direction) < 17 && (whoseTurn == PlayerEnum.ONE ? (playerOneLocation) : (playerTwoLocation)).Row + (3 * direction) > -1)
+            if ((whoseTurn == 0 ? (playerOneLocation) : (playerTwoLocation)).Row + (3 * direction) < 17 && (whoseTurn == 0 ? (playerOneLocation) : (playerTwoLocation)).Row + (3 * direction) > -1)
             {
-                if (board[(whoseTurn == PlayerEnum.ONE ? (playerOneLocation) : (playerTwoLocation)).Row + (3 * direction), (whoseTurn == PlayerEnum.ONE ? (playerOneLocation) : (playerTwoLocation)).Col] != WALL)
+                if (board[(whoseTurn == 0 ? (playerOneLocation) : (playerTwoLocation)).Row + (3 * direction), (whoseTurn == 0 ? (playerOneLocation) : (playerTwoLocation)).Col] != WALL)
                 {
                     StringBuilder sb = new StringBuilder();
 
-                    sb.Append(Convert.ToChar(97 + ((whoseTurn == PlayerEnum.ONE ? (playerTwoLocation) : (playerOneLocation)).Col / 2)));
-                    sb.Append(value: 9 - ((whoseTurn == PlayerEnum.ONE ? (playerTwoLocation) : (playerOneLocation)).Row / 2) - (1 * direction) > 9 ? 9
-                                   : 9 - ((whoseTurn == PlayerEnum.ONE ? (playerTwoLocation) : (playerOneLocation)).Row / 2) - (1 * direction) < 1 ? 1
-                                   : 9 - ((whoseTurn == PlayerEnum.ONE ? (playerTwoLocation) : (playerOneLocation)).Row / 2) - (1 * direction));
+                    sb.Append(Convert.ToChar(97 + ((whoseTurn == 0 ? (playerTwoLocation) : (playerOneLocation)).Col / 2)));
+                    sb.Append(value: 9 - ((whoseTurn == 0 ? (playerTwoLocation) : (playerOneLocation)).Row / 2) - (1 * direction) > 9 ? 9
+                                   : 9 - ((whoseTurn == 0 ? (playerTwoLocation) : (playerOneLocation)).Row / 2) - (1 * direction) < 1 ? 1
+                                   : 9 - ((whoseTurn == 0 ? (playerTwoLocation) : (playerOneLocation)).Row / 2) - (1 * direction));
 
                     validMoves.Add(sb.ToString());
                 }
                 else
                 {
-                    GeneratePossibleVerticalDiagonalJumps(validMoves, direction);
+                    PossibleVerticalDiagonalJumps(validMoves, direction);
                 }
             }
             else
             {
-                GeneratePossibleVerticalDiagonalJumps(validMoves, direction);
+                PossibleVerticalDiagonalJumps(validMoves, direction);
             }
         }
 
 
-        private List<string> GetPossibleMovesFromPosition()
+        private List<string> PossibleMovesFromPosition()
         {
             List<string> validMoves = new List<string>();
 
-            if (ArePlayersAdjacent())
+            if (PlayersAreAdjacent())
             {
-                if ((whoseTurn == PlayerEnum.ONE ? (playerOneLocation) : (playerTwoLocation)).Row == (whoseTurn == PlayerEnum.ONE ? (playerTwoLocation) : (playerOneLocation)).Row)
+                if ((whoseTurn == 0 ? (playerOneLocation) : (playerTwoLocation)).Row == (whoseTurn == 0 ? (playerTwoLocation) : (playerOneLocation)).Row)
                 {
-                    if ((whoseTurn == PlayerEnum.ONE ? (playerOneLocation) : (playerTwoLocation)).Col < (whoseTurn == PlayerEnum.ONE ? (playerTwoLocation) : (playerOneLocation)).Col)
+                    if ((whoseTurn == 0 ? (playerOneLocation) : (playerTwoLocation)).Col < (whoseTurn == 0 ? (playerTwoLocation) : (playerOneLocation)).Col)
                     {
-                        GeneratePossibleHorizontalJumps(validMoves, 1);
+                        PossibleHorizontalJumps(validMoves, 1);
                     }
                     else
                     {
-                        GeneratePossibleHorizontalJumps(validMoves, -1);
+                        PossibleHorizontalJumps(validMoves, -1);
                     }
                 }
                 else
                 {
-                    if ((whoseTurn == PlayerEnum.ONE ? (playerOneLocation) : (playerTwoLocation)).Row < (whoseTurn == PlayerEnum.ONE ? (playerTwoLocation) : (playerOneLocation)).Row)
+                    if ((whoseTurn == 0 ? (playerOneLocation) : (playerTwoLocation)).Row < (whoseTurn == 0 ? (playerTwoLocation) : (playerOneLocation)).Row)
                     {
-                        GeneratePossibleVerticalJumps(validMoves, 1);
+                        PossibleVerticalJumps(validMoves, 1);
                     }
                     else
                     {
-                        GeneratePossibleVerticalJumps(validMoves, -1);
+                        PossibleVerticalJumps(validMoves, -1);
                     }
                 }
             }
-
-            StringBuilder sb = new StringBuilder();
-            if ((whoseTurn == PlayerEnum.ONE ? (playerOneLocation) : (playerTwoLocation)).Row + 1 < 17 && board[(whoseTurn == PlayerEnum.ONE ? (playerOneLocation) : (playerTwoLocation)).Row + 1, (whoseTurn == PlayerEnum.ONE ? (playerOneLocation) : (playerTwoLocation)).Col] != WALL
-                && ((whoseTurn == PlayerEnum.ONE ? (playerOneLocation) : (playerTwoLocation)).Row + 2 != (whoseTurn == PlayerEnum.ONE ? (playerTwoLocation) : (playerOneLocation)).Row || (whoseTurn == PlayerEnum.ONE ? (playerOneLocation) : (playerTwoLocation)).Col != (whoseTurn == PlayerEnum.ONE ? (playerTwoLocation) : (playerOneLocation)).Col))
+            if ((whoseTurn == 0 ? (playerOneLocation) : (playerTwoLocation)).Row + 1 < 17 && board[(whoseTurn == 0 ? (playerOneLocation) : (playerTwoLocation)).Row + 1, (whoseTurn == 0 ? (playerOneLocation) : (playerTwoLocation)).Col] != WALL
+                && ((whoseTurn == 0 ? (playerOneLocation) : (playerTwoLocation)).Row + 2 != (whoseTurn == 0 ? (playerTwoLocation) : (playerOneLocation)).Row || (whoseTurn == 0 ? (playerOneLocation) : (playerTwoLocation)).Col != (whoseTurn == 0 ? (playerTwoLocation) : (playerOneLocation)).Col))
             {
                 //South
-                sb.Append(Convert.ToChar(97 + ((whoseTurn == PlayerEnum.ONE ? (playerOneLocation) : (playerTwoLocation)).Col / 2)));
-                sb.Append(9 - ((whoseTurn == PlayerEnum.ONE ? (playerOneLocation) : (playerTwoLocation)).Row / 2) - 1 < 1 ? 1 : 9 - ((whoseTurn == PlayerEnum.ONE ? (playerOneLocation) : (playerTwoLocation)).Row / 2) - 1);
+                StringBuilder sb = new StringBuilder();
+                sb.Append(Convert.ToChar(97 + ((whoseTurn == 0 ? (playerOneLocation) : (playerTwoLocation)).Col / 2)));
+                sb.Append(9 - ((whoseTurn == 0 ? (playerOneLocation) : (playerTwoLocation)).Row / 2) - 1 < 1 ? 1 : 9 - ((whoseTurn == 0 ? (playerOneLocation) : (playerTwoLocation)).Row / 2) - 1);
                 validMoves.Add(sb.ToString());
             }
-            if ((whoseTurn == PlayerEnum.ONE ? (playerOneLocation) : (playerTwoLocation)).Row - 1 > -1 && board[(whoseTurn == PlayerEnum.ONE ? (playerOneLocation) : (playerTwoLocation)).Row - 1, (whoseTurn == PlayerEnum.ONE ? (playerOneLocation) : (playerTwoLocation)).Col] != WALL
-                 && ((whoseTurn == PlayerEnum.ONE ? (playerOneLocation) : (playerTwoLocation)).Row - 2 != (whoseTurn == PlayerEnum.ONE ? (playerTwoLocation) : (playerOneLocation)).Row || (whoseTurn == PlayerEnum.ONE ? (playerOneLocation) : (playerTwoLocation)).Col != (whoseTurn == PlayerEnum.ONE ? (playerTwoLocation) : (playerOneLocation)).Col))
+            if ((whoseTurn == 0 ? (playerOneLocation) : (playerTwoLocation)).Row - 1 > -1 && board[(whoseTurn == 0 ? (playerOneLocation) : (playerTwoLocation)).Row - 1, (whoseTurn == 0 ? (playerOneLocation) : (playerTwoLocation)).Col] != WALL
+                 && ((whoseTurn == 0 ? (playerOneLocation) : (playerTwoLocation)).Row - 2 != (whoseTurn == 0 ? (playerTwoLocation) : (playerOneLocation)).Row || (whoseTurn == 0 ? (playerOneLocation) : (playerTwoLocation)).Col != (whoseTurn == 0 ? (playerTwoLocation) : (playerOneLocation)).Col))
             {
                 //North
-                sb.Append(Convert.ToChar(97 + ((whoseTurn == PlayerEnum.ONE ? (playerOneLocation) : (playerTwoLocation)).Col / 2)));
-                sb.Append(9 - ((whoseTurn == PlayerEnum.ONE ? (playerOneLocation) : (playerTwoLocation)).Row / 2) + 1 > 9 ? 9 : 9 - ((whoseTurn == PlayerEnum.ONE ? (playerOneLocation) : (playerTwoLocation)).Row / 2) + 1);
+                StringBuilder sb = new StringBuilder();
+                sb.Append(Convert.ToChar(97 + ((whoseTurn == 0 ? (playerOneLocation) : (playerTwoLocation)).Col / 2)));
+                sb.Append(9 - ((whoseTurn == 0 ? (playerOneLocation) : (playerTwoLocation)).Row / 2) + 1 > 9 ? 9 : 9 - ((whoseTurn == 0 ? (playerOneLocation) : (playerTwoLocation)).Row / 2) + 1);
                 validMoves.Add(sb.ToString());
             }
-            if ((whoseTurn == PlayerEnum.ONE ? (playerOneLocation) : (playerTwoLocation)).Col + 1 < 17 && board[(whoseTurn == PlayerEnum.ONE ? (playerOneLocation) : (playerTwoLocation)).Row, (whoseTurn == PlayerEnum.ONE ? (playerOneLocation) : (playerTwoLocation)).Col + 1] != WALL
-                && ((whoseTurn == PlayerEnum.ONE ? (playerOneLocation) : (playerTwoLocation)).Row != (whoseTurn == PlayerEnum.ONE ? (playerTwoLocation) : (playerOneLocation)).Row || (whoseTurn == PlayerEnum.ONE ? (playerOneLocation) : (playerTwoLocation)).Col + 2 != (whoseTurn == PlayerEnum.ONE ? (playerTwoLocation) : (playerOneLocation)).Col))
+            if ((whoseTurn == 0 ? (playerOneLocation) : (playerTwoLocation)).Col + 1 < 17 && board[(whoseTurn == 0 ? (playerOneLocation) : (playerTwoLocation)).Row, (whoseTurn == 0 ? (playerOneLocation) : (playerTwoLocation)).Col + 1] != WALL
+                && ((whoseTurn == 0 ? (playerOneLocation) : (playerTwoLocation)).Row != (whoseTurn == 0 ? (playerTwoLocation) : (playerOneLocation)).Row || (whoseTurn == 0 ? (playerOneLocation) : (playerTwoLocation)).Col + 2 != (whoseTurn == 0 ? (playerTwoLocation) : (playerOneLocation)).Col))
             {
                 //East
-                sb.Append(Convert.ToChar(97 + ((whoseTurn == PlayerEnum.ONE ? (playerOneLocation) : (playerTwoLocation)).Col / 2) + 1));
-                sb.Append(9 - ((whoseTurn == PlayerEnum.ONE ? (playerOneLocation) : (playerTwoLocation)).Row / 2));
+                StringBuilder sb = new StringBuilder();
+                sb.Append(Convert.ToChar(97 + ((whoseTurn == 0 ? (playerOneLocation) : (playerTwoLocation)).Col / 2) + 1));
+                sb.Append(9 - ((whoseTurn == 0 ? (playerOneLocation) : (playerTwoLocation)).Row / 2));
                 validMoves.Add(sb.ToString());
             }
-            if ((whoseTurn == PlayerEnum.ONE ? (playerOneLocation) : (playerTwoLocation)).Col - 1 > -1 && board[(whoseTurn == PlayerEnum.ONE ? (playerOneLocation) : (playerTwoLocation)).Row, (whoseTurn == PlayerEnum.ONE ? (playerOneLocation) : (playerTwoLocation)).Col - 1] != WALL
-                && ((whoseTurn == PlayerEnum.ONE ? (playerOneLocation) : (playerTwoLocation)).Row != (whoseTurn == PlayerEnum.ONE ? (playerTwoLocation) : (playerOneLocation)).Row || (whoseTurn == PlayerEnum.ONE ? (playerOneLocation) : (playerTwoLocation)).Col - 2 != (whoseTurn == PlayerEnum.ONE ? (playerTwoLocation) : (playerOneLocation)).Col))
+            if ((whoseTurn == 0 ? (playerOneLocation) : (playerTwoLocation)).Col - 1 > -1 && board[(whoseTurn == 0 ? (playerOneLocation) : (playerTwoLocation)).Row, (whoseTurn == 0 ? (playerOneLocation) : (playerTwoLocation)).Col - 1] != WALL
+                && ((whoseTurn == 0 ? (playerOneLocation) : (playerTwoLocation)).Row != (whoseTurn == 0 ? (playerTwoLocation) : (playerOneLocation)).Row || (whoseTurn == 0 ? (playerOneLocation) : (playerTwoLocation)).Col - 2 != (whoseTurn == 0 ? (playerTwoLocation) : (playerOneLocation)).Col))
             {
                 //West
-                sb.Append(Convert.ToChar(97 + ((whoseTurn == PlayerEnum.ONE ? (playerOneLocation) : (playerTwoLocation)).Col / 2) - 1));
-                sb.Append(9 - ((whoseTurn == PlayerEnum.ONE ? (playerOneLocation) : (playerTwoLocation)).Row / 2));
+                StringBuilder sb = new StringBuilder();
+                sb.Append(Convert.ToChar(97 + ((whoseTurn == 0 ? (playerOneLocation) : (playerTwoLocation)).Col / 2) - 1));
+                sb.Append(9 - ((whoseTurn == 0 ? (playerOneLocation) : (playerTwoLocation)).Row / 2));
                 validMoves.Add(sb.ToString());
             }
 
@@ -543,12 +545,12 @@ namespace GameCore
             return validMoves;
         }
 
-        private bool ArePlayersAdjacent()
+        private bool PlayersAreAdjacent()
         {
-            return ((whoseTurn == PlayerEnum.ONE ? playerOneLocation : playerTwoLocation).Row == (whoseTurn == PlayerEnum.ONE ? playerTwoLocation : playerOneLocation).Row && (whoseTurn == PlayerEnum.ONE ? playerOneLocation : playerTwoLocation).Col + 2 == (whoseTurn == PlayerEnum.ONE ? playerTwoLocation : playerOneLocation).Col && board[(whoseTurn == PlayerEnum.ONE ? playerOneLocation : playerTwoLocation).Row, (whoseTurn == PlayerEnum.ONE ? playerOneLocation : playerTwoLocation).Col + 1] != WALL)
-                || ((whoseTurn == PlayerEnum.ONE ? (playerOneLocation) : (playerTwoLocation)).Row == (whoseTurn == PlayerEnum.ONE ? (playerTwoLocation) : (playerOneLocation)).Row && (whoseTurn == PlayerEnum.ONE ? (playerOneLocation) : (playerTwoLocation)).Col - 2 == (whoseTurn == PlayerEnum.ONE ? (playerTwoLocation) : (playerOneLocation)).Col && board[(whoseTurn == PlayerEnum.ONE ? (playerOneLocation) : (playerTwoLocation)).Row, ((whoseTurn == PlayerEnum.ONE ? (playerOneLocation) : (playerTwoLocation)).Col - 1)] != WALL)
-                || ((whoseTurn == PlayerEnum.ONE ? (playerOneLocation) : (playerTwoLocation)).Row + 2 == (whoseTurn == PlayerEnum.ONE ? (playerTwoLocation) : (playerOneLocation)).Row && (whoseTurn == PlayerEnum.ONE ? (playerOneLocation) : (playerTwoLocation)).Col == (whoseTurn == PlayerEnum.ONE ? (playerTwoLocation) : (playerOneLocation)).Col && board[(whoseTurn == PlayerEnum.ONE ? (playerOneLocation) : (playerTwoLocation)).Row + 1, ((whoseTurn == PlayerEnum.ONE ? (playerOneLocation) : (playerTwoLocation)).Col)] != WALL)
-                || ((whoseTurn == PlayerEnum.ONE ? (playerOneLocation) : (playerTwoLocation)).Row - 2 == (whoseTurn == PlayerEnum.ONE ? (playerTwoLocation) : (playerOneLocation)).Row && (whoseTurn == PlayerEnum.ONE ? (playerOneLocation) : (playerTwoLocation)).Col == (whoseTurn == PlayerEnum.ONE ? (playerTwoLocation) : (playerOneLocation)).Col && board[(whoseTurn == PlayerEnum.ONE ? (playerOneLocation) : (playerTwoLocation)).Row - 1, (whoseTurn == PlayerEnum.ONE ? (playerOneLocation) : (playerTwoLocation)).Col] != WALL);
+            return ((whoseTurn == 0 ? playerOneLocation : playerTwoLocation).Row == (whoseTurn == 0 ? playerTwoLocation : playerOneLocation).Row && (whoseTurn == 0 ? playerOneLocation : playerTwoLocation).Col + 2 == (whoseTurn == 0 ? playerTwoLocation : playerOneLocation).Col && board[(whoseTurn == 0 ? playerOneLocation : playerTwoLocation).Row, (whoseTurn == 0 ? playerOneLocation : playerTwoLocation).Col + 1] != WALL)
+                || ((whoseTurn == 0 ? (playerOneLocation) : (playerTwoLocation)).Row == (whoseTurn == 0 ? (playerTwoLocation) : (playerOneLocation)).Row && (whoseTurn == 0 ? (playerOneLocation) : (playerTwoLocation)).Col - 2 == (whoseTurn == 0 ? (playerTwoLocation) : (playerOneLocation)).Col && board[(whoseTurn == 0 ? (playerOneLocation) : (playerTwoLocation)).Row, ((whoseTurn == 0 ? (playerOneLocation) : (playerTwoLocation)).Col - 1)] != WALL)
+                || ((whoseTurn == 0 ? (playerOneLocation) : (playerTwoLocation)).Row + 2 == (whoseTurn == 0 ? (playerTwoLocation) : (playerOneLocation)).Row && (whoseTurn == 0 ? (playerOneLocation) : (playerTwoLocation)).Col == (whoseTurn == 0 ? (playerTwoLocation) : (playerOneLocation)).Col && board[(whoseTurn == 0 ? (playerOneLocation) : (playerTwoLocation)).Row + 1, ((whoseTurn == 0 ? (playerOneLocation) : (playerTwoLocation)).Col)] != WALL)
+                || ((whoseTurn == 0 ? (playerOneLocation) : (playerTwoLocation)).Row - 2 == (whoseTurn == 0 ? (playerTwoLocation) : (playerOneLocation)).Row && (whoseTurn == 0 ? (playerOneLocation) : (playerTwoLocation)).Col == (whoseTurn == 0 ? (playerTwoLocation) : (playerOneLocation)).Col && board[(whoseTurn == 0 ? (playerOneLocation) : (playerTwoLocation)).Row - 1, (whoseTurn == 0 ? (playerOneLocation) : (playerTwoLocation)).Col] != WALL);
         }
 
         private bool CanPlayersReachGoal(WallCoordinate wallCoordinate)
