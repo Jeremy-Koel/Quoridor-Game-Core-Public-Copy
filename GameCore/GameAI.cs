@@ -1363,6 +1363,14 @@ namespace GameCore
             return new List<Tuple<int, int>>();
         }
 
+        private bool IsThereAnAdjacentLocationEqualToZero(Tuple<int, int> current, int[,] possibleMoveValues)
+        {
+            return (current.Item1 - 1 > -1 && possibleMoveValues[current.Item1 - 1, current.Item2] == 0 && !board[(current.Item1 * 2) - 1].Get((current.Item2 * 2))) ||
+                   (current.Item1 + 1 < 9 && possibleMoveValues[current.Item1 + 1, current.Item2] == 0 && !board[(current.Item1 * 2) + 1].Get((current.Item2 * 2))) ||
+                   (current.Item2 - 1 > -1 && possibleMoveValues[current.Item1, current.Item2 - 1] == 0 && !board[(current.Item1 * 2)].Get((current.Item2 * 2) - 1)) ||
+                   (current.Item2 + 1 < 9 && possibleMoveValues[current.Item1, current.Item2 + 1] == 0 && !board[(current.Item1 * 2)].Get((current.Item2 * 2) + 1));
+        }
+
         private bool PlayersAreAdjacent()
         {
             return (playerLocations[turn == 0 ? 0 : 1].Row == playerLocations[turn == 0 ? 1 : 0].Row && playerLocations[turn == 0 ? 0 : 1].Col + 2 == playerLocations[turn == 0 ? 1 : 0].Col && !board[playerLocations[turn == 0 ? 0 : 1].Row].Get(playerLocations[turn == 0 ? 0 : 1].Col + 1))
