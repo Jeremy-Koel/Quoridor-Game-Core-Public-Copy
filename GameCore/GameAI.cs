@@ -1287,6 +1287,82 @@ namespace GameCore
 
         }
 
+        private List<Tuple<int, int>> CanGoalReachOpenLocation(Tuple<int, int> goalStart, int[,] possibleMoveValues)
+        {
+            HashSet<Tuple<int, int>> markedSet = new HashSet<Tuple<int, int>>();
+            Queue<Tuple<Tuple<int, int>, List<Tuple<int, int>>>> queue = new Queue<Tuple<Tuple<int, int>, List<Tuple<int, int>>>>();
+
+            Dictionary<Tuple<int, int>, List<Tuple<int, int>>> cameFrom = new Dictionary<Tuple<int, int>, List<Tuple<int, int>>>
+            {
+                { goalStart, new List<Tuple<int, int>>() }
+            };
+
+            markedSet.Add(goalStart);
+            queue.Enqueue(new Tuple<Tuple<int, int>, List<Tuple<int, int>>>(goalStart, cameFrom[goalStart]));
+
+            while (queue.Count > 0)
+            {
+                Tuple<Tuple<int, int>, List<Tuple<int, int>>> current = queue.Dequeue();
+                if (possibleMoveValues[current.Item1.Item1, current.Item1.Item2] == 0 && current.Item1.Item1 != goalStart.Item1)
+                {
+                    if (IsThereAnAdjacentLocationEqualToZero(current.Item1, possibleMoveValues))
+                    {
+                        return current.Item2;
+                    }
+                }
+
+                if ((current.Item1.Item2 * 2) + 1 < GameBoard.TOTAL_COLS
+                    && board[current.Item1.Item1 * 2].Get((current.Item1.Item2 * 2) + 1) != true && current.Item1.Item1 != goalStart.Item1) // Can move East
+                {
+                    Tuple<int, int> neighbor = new Tuple<int, int>(current.Item1.Item1, current.Item1.Item2 + 1);
+                    if (!markedSet.Contains(neighbor))
+                    {
+                        List<Tuple<int, int>> nodesBefore = new List<Tuple<int, int>>(current.Item2);
+                        nodesBefore.Add(current.Item1);
+                        markedSet.Add(neighbor);
+                        queue.Enqueue(new Tuple<Tuple<int, int>, List<Tuple<int, int>>>(neighbor, nodesBefore));
+                    }
+                }
+                if ((current.Item1.Item2 * 2) - 1 >= 0
+                    && board[current.Item1.Item1 * 2].Get((current.Item1.Item2 * 2) - 1) != true && current.Item1.Item1 != goalStart.Item1) // Can move West 
+                {
+                    Tuple<int, int> neighbor = new Tuple<int, int>(current.Item1.Item1, current.Item1.Item2 - 1);
+                    if (!markedSet.Contains(neighbor))
+                    {
+                        List<Tuple<int, int>> nodesBefore = new List<Tuple<int, int>>(current.Item2);
+                        nodesBefore.Add(current.Item1);
+                        markedSet.Add(neighbor);
+                        queue.Enqueue(new Tuple<Tuple<int, int>, List<Tuple<int, int>>>(neighbor, nodesBefore));
+                    }
+                }
+                if ((current.Item1.Item1 * 2) - 1 >= 0
+                    && board[(current.Item1.Item1 * 2) - 1].Get((current.Item1.Item2 * 2)) != true && current.Item1.Item1 - 1 != goalStart.Item1) // Can move North 
+                {
+                    Tuple<int, int> neighbor = new Tuple<int, int>(current.Item1.Item1 - 1, current.Item1.Item2);
+                    if (!markedSet.Contains(neighbor))
+                    {
+                        List<Tuple<int, int>> nodesBefore = new List<Tuple<int, int>>(current.Item2);
+                        nodesBefore.Add(current.Item1);
+                        markedSet.Add(neighbor);
+                        queue.Enqueue(new Tuple<Tuple<int, int>, List<Tuple<int, int>>>(neighbor, nodesBefore));
+                    }
+                }
+                if ((current.Item1.Item1 * 2) + 1 < GameBoard.TOTAL_COLS
+                    && board[(current.Item1.Item1 * 2) + 1].Get((current.Item1.Item2 * 2)) != true && current.Item1.Item1 + 1 != goalStart.Item1) // Can move South 
+                {
+                    Tuple<int, int> neighbor = new Tuple<int, int>(current.Item1.Item1 + 1, current.Item1.Item2);
+                    if (!markedSet.Contains(neighbor))
+                    {
+                        List<Tuple<int, int>> nodesBefore = new List<Tuple<int, int>>(current.Item2);
+                        nodesBefore.Add(current.Item1);
+                        markedSet.Add(neighbor);
+                        queue.Enqueue(new Tuple<Tuple<int, int>, List<Tuple<int, int>>>(neighbor, nodesBefore));
+                    }
+                }
+            }
+            return new List<Tuple<int, int>>();
+        }
+
         private bool PlayersAreAdjacent()
         {
             return (playerLocations[turn == 0 ? 0 : 1].Row == playerLocations[turn == 0 ? 1 : 0].Row && playerLocations[turn == 0 ? 0 : 1].Col + 2 == playerLocations[turn == 0 ? 1 : 0].Col && !board[playerLocations[turn == 0 ? 0 : 1].Row].Get(playerLocations[turn == 0 ? 0 : 1].Col + 1))
