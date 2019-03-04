@@ -1658,7 +1658,7 @@ namespace GameCore
             ++timesVisited;
             bool mctsVictory = false;
 
-            if (depthCheck > 125)
+            if (depthCheck > 25)
             {
                 gameOver = true;
             }
