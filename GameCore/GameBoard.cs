@@ -18,7 +18,7 @@ namespace GameCore
         private PlayerCoordinate playerTwoLocation;
         private List<WallCoordinate> walls;
         private List<List<string>> possibleMoves;
-        private List<string> possibleWalls
+        private List<string> possibleWalls;
         private int player1walls = 10;
         private int player2walls = 10;
         private char[,] board;
@@ -160,6 +160,7 @@ namespace GameCore
             playerOneWin = false;
             playerTwoWin = false;
 
+            possibleWalls = new List<string>();
             playerOneLocation = new PlayerCoordinate(playerOneStart);
             playerTwoLocation = new PlayerCoordinate(playerTwoStart);
             walls = new List<WallCoordinate>();
@@ -179,6 +180,14 @@ namespace GameCore
                     {
                         board[r, c] = WALL_SPACE;
                     }
+                }
+            }
+
+            for (int r = 0; r < 8; ++r)
+            {
+                for (int c = 0; c < 8; ++c)
+                {
+                    possibleWalls.Add((Convert.ToChar('a' + c)).ToString() + (Convert.ToChar('1' + r)).ToString());
                 }
             }
 
@@ -545,15 +554,15 @@ namespace GameCore
 
         public bool IsValidWallPlacement(WallCoordinate wall)
         {
-            bool onBoard = IsMoveInBounds(wall.StartRow, wall.StartCol);
-                        //&& IsMoveInBounds(wall.EndRow, wall.EndCol);
+            bool onBoard = IsMoveInBounds(wall.StartRow, wall.StartCol)
+                        && IsMoveInBounds(wall.EndRow, wall.EndCol);
             if (!onBoard)
             {
                 return false;
             }
 
-            bool onWallSpace = IsOddSpace(wall.StartRow, wall.StartCol, wall.Orientation);
-                            //&& IsOddSpace(wall.EndRow, wall.EndCol, wall.Orientation);
+            bool onWallSpace = IsOddSpace(wall.StartRow, wall.StartCol, wall.Orientation)
+                            && IsOddSpace(wall.EndRow, wall.EndCol, wall.Orientation);
             bool isEmpty = IsEmptyWallSpace(wall.StartRow, wall.StartCol)
                        && IsEmptyWallSpace(wall.EndRow, wall.EndCol);
             return onWallSpace
