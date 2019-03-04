@@ -18,7 +18,6 @@ namespace GameCore
         private PlayerCoordinate playerTwoLocation;
         private List<WallCoordinate> walls;
         private List<List<string>> possibleMoves;
-        private List<string> possibleWalls;
         private int player1walls = 10;
         private int player2walls = 10;
         private char[,] board;
@@ -160,7 +159,6 @@ namespace GameCore
             playerOneWin = false;
             playerTwoWin = false;
 
-            possibleWalls = new List<string>();
             playerOneLocation = new PlayerCoordinate(playerOneStart);
             playerTwoLocation = new PlayerCoordinate(playerTwoStart);
             walls = new List<WallCoordinate>();
@@ -180,14 +178,6 @@ namespace GameCore
                     {
                         board[r, c] = WALL_SPACE;
                     }
-                }
-            }
-
-            for (int r = 0; r < 8; ++r)
-            {
-                for (int c = 0; c < 8; ++c)
-                {
-                    possibleWalls.Add((Convert.ToChar('a' + c)).ToString() + (Convert.ToChar('1' + r)).ToString());
                 }
             }
 
@@ -254,30 +244,6 @@ namespace GameCore
             }
         }
 
-        private PlayerCoordinate GetCurrentPlayerCoodinate()
-        {
-            switch (whoseTurn)
-            {
-                case PlayerEnum.ONE:
-                    return playerOneLocation;
-                case PlayerEnum.TWO:
-                    return playerTwoLocation;
-            }
-            return null;
-        }
-
-        private PlayerCoordinate GetCurrentOpponentCoordinate()
-        {
-            switch (whoseTurn)
-            {
-                case PlayerEnum.ONE:
-                    return playerTwoLocation;
-                case PlayerEnum.TWO:
-                    return playerOneLocation;
-            }
-            return null;
-        }
-
         public bool MovePiece(PlayerEnum player, PlayerCoordinate destinationCoordinate)
         {
             if (gameOver || player != whoseTurn)
@@ -338,17 +304,6 @@ namespace GameCore
 
         public bool PlaceWall(PlayerEnum player, WallCoordinate wallCoordinate)
         {
-            string wallString;
-            if (wallCoordinate.Orientation == WallCoordinate.WallOrientation.Horizontal)
-            {
-                wallString = Convert.ToChar(97 + wallCoordinate.StartCol / 2) + (9 - (wallCoordinate.StartRow + 1) / 2).ToString();
-            }
-            else
-            {
-                wallString = Convert.ToChar(97 + (wallCoordinate.StartCol - 1) / 2) + (9 - wallCoordinate.StartRow / 2).ToString();
-            }
-
-
             if (gameOver || whoseTurn != player)
             {
                 return false;
@@ -361,11 +316,10 @@ namespace GameCore
             {
                 return false;
             }
-            if (possibleWalls.Contains(wallString)/*IsValidWallPlacement(wallCoordinate)*/ && CanPlayersReachGoal(wallCoordinate))
+            if (IsValidWallPlacement(wallCoordinate) && CanPlayersReachGoal(wallCoordinate))
             {
                 walls.Add(wallCoordinate);
                 board[wallCoordinate.StartRow, wallCoordinate.StartCol] = board[wallCoordinate.EndRow, wallCoordinate.EndCol] = WALL;
-                possibleWalls.Remove(wallString);
                 if (player == PlayerEnum.ONE)
                 {
                     player1walls--;
@@ -386,29 +340,26 @@ namespace GameCore
 
         private void PossibleHorizontalDiagonalJumps(List<string> validMoves, int direction)
         {
-            PlayerCoordinate playerCoordinate = GetCurrentPlayerCoodinate();
-            PlayerCoordinate opponentCoord = GetCurrentOpponentCoordinate();
-
-            if (playerCoordinate.Row + 1 < 17 && playerCoordinate.Row - 1 > -1
-                       && playerCoordinate.Col + 2 * direction < 17 && playerCoordinate.Col + 2 * direction > -1)
+            if ((whoseTurn == 0 ? (playerOneLocation) : (playerTwoLocation)).Row + 1 < 17 && (whoseTurn == 0 ? (playerOneLocation) : (playerTwoLocation)).Row - 1 > -1
+                       && (whoseTurn == 0 ? (playerOneLocation) : (playerTwoLocation)).Col + 2 * direction < 17 && (whoseTurn == 0 ? (playerOneLocation) : (playerTwoLocation)).Col + 2 * direction > -1)
             {
-                if (board[playerCoordinate.Row - 1, playerCoordinate.Col + 2 * direction] != WALL)
+                if (board[(whoseTurn == 0 ? (playerOneLocation) : (playerTwoLocation)).Row - 1, (whoseTurn == 0 ? (playerOneLocation) : (playerTwoLocation)).Col + 2 * direction] != WALL)
                 {
                     StringBuilder sb = new StringBuilder();
 
-                    sb.Append(Convert.ToChar(97 + (opponentCoord.Col / 2)));
-                    sb.Append(value: 9 - (opponentCoord.Row / 2) + 1 > 9 ? 9
-                                   : 9 - (opponentCoord.Row / 2) + 1);
+                    sb.Append(Convert.ToChar(97 + ((whoseTurn == 0 ? (playerTwoLocation) : (playerOneLocation)).Col / 2)));
+                    sb.Append(value: 9 - ((whoseTurn == 0 ? (playerTwoLocation) : (playerOneLocation)).Row / 2) + 1 > 9 ? 9
+                                   : 9 - ((whoseTurn == 0 ? (playerTwoLocation) : (playerOneLocation)).Row / 2) + 1);
 
                     validMoves.Add(sb.ToString());
                 }
-                if (board[playerCoordinate.Row + 1, playerCoordinate.Col + 2 * direction] != WALL)
+                if (board[(whoseTurn == 0 ? (playerOneLocation) : (playerTwoLocation)).Row + 1, (whoseTurn == 0 ? (playerOneLocation) : (playerTwoLocation)).Col + 2 * direction] != WALL)
                 {
                     StringBuilder sb = new StringBuilder();
 
-                    sb.Append(Convert.ToChar(97 + (opponentCoord.Col / 2)));
-                    sb.Append(value: 9 - (opponentCoord.Row / 2) - 1 < 1 ? 1
-                                   : 9 - (opponentCoord.Row / 2) - 1);
+                    sb.Append(Convert.ToChar(97 + ((whoseTurn == 0 ? (playerTwoLocation) : (playerOneLocation)).Col / 2)));
+                    sb.Append(value: 9 - ((whoseTurn == 0 ? (playerTwoLocation) : (playerOneLocation)).Row / 2) - 1 < 1 ? 1
+                                   : 9 - ((whoseTurn == 0 ? (playerTwoLocation) : (playerOneLocation)).Row / 2) - 1);
 
                     validMoves.Add(sb.ToString());
                 }
@@ -417,19 +368,16 @@ namespace GameCore
 
         private void PossibleHorizontalJumps(List<string> validMoves, int direction)
         {
-            PlayerCoordinate playerCoordinate = GetCurrentPlayerCoodinate();
-            PlayerCoordinate opponentCoord = GetCurrentOpponentCoordinate();
-
-            if (playerCoordinate.Col + (3 * direction) < 17 && playerCoordinate.Col + (3 * direction) > -1)
+            if ((whoseTurn == 0 ? (playerOneLocation) : (playerTwoLocation)).Col + (3 * direction) < 17 && (whoseTurn == 0 ? (playerOneLocation) : (playerTwoLocation)).Col + (3 * direction) > -1)
             {
-                if (board[playerCoordinate.Row, playerCoordinate.Col + (3 * direction)] != WALL)
+                if (board[(whoseTurn == 0 ? (playerOneLocation) : (playerTwoLocation)).Row, (whoseTurn == 0 ? (playerOneLocation) : (playerTwoLocation)).Col + (3 * direction)] != WALL)
                 {
                     StringBuilder sb = new StringBuilder();
 
-                    sb.Append(Convert.ToChar(97 + (opponentCoord.Col / 2) + (1 * direction) > 105 ? 105
-                                            : 97 + (opponentCoord.Col / 2) + (1 * direction) < 97 ? 97
-                                            : 97 + (opponentCoord.Col / 2) + (1 * direction)));
-                    sb.Append(9 - (opponentCoord.Row / 2));
+                    sb.Append(Convert.ToChar(97 + ((whoseTurn == 0 ? (playerTwoLocation) : (playerOneLocation)).Col / 2) + (1 * direction) > 105 ? 105
+                                            : 97 + ((whoseTurn == 0 ? (playerTwoLocation) : (playerOneLocation)).Col / 2) + (1 * direction) < 97 ? 97
+                                            : 97 + ((whoseTurn == 0 ? (playerTwoLocation) : (playerOneLocation)).Col / 2) + (1 * direction)));
+                    sb.Append(9 - ((whoseTurn == 0 ? (playerTwoLocation) : (playerOneLocation)).Row / 2));
 
                     validMoves.Add(sb.ToString());
                 }
@@ -446,29 +394,26 @@ namespace GameCore
 
         private void PossibleVerticalDiagonalJumps(List<string> validMoves, int direction)
         {
-            PlayerCoordinate playerCoordinate = GetCurrentPlayerCoodinate();
-            PlayerCoordinate opponentCoord = GetCurrentOpponentCoordinate();
-
-            if (playerCoordinate.Col + 1 < 17 && playerCoordinate.Col - 1 > -1
-                        && playerCoordinate.Row + 2 * direction < 17 && playerCoordinate.Row + 2 * direction > -1)
+            if ((whoseTurn == 0 ? (playerOneLocation) : (playerTwoLocation)).Col + 1 < 17 && (whoseTurn == 0 ? (playerOneLocation) : (playerTwoLocation)).Col - 1 > -1
+                        && (whoseTurn == 0 ? (playerOneLocation) : (playerTwoLocation)).Row + 2 * direction < 17 && (whoseTurn == 0 ? (playerOneLocation) : (playerTwoLocation)).Row + 2 * direction > -1)
             {
-                if (board[playerCoordinate.Row + 2 * direction, playerCoordinate.Col + 1] != WALL)
+                if (board[(whoseTurn == 0 ? (playerOneLocation) : (playerTwoLocation)).Row + 2 * direction, (whoseTurn == 0 ? (playerOneLocation) : (playerTwoLocation)).Col + 1] != WALL)
                 {
                     StringBuilder sb = new StringBuilder();
 
-                    sb.Append(Convert.ToChar(value: 97 + (opponentCoord.Col / 2) + 1 > 105 ? 105
-                                                  : 97 + (opponentCoord.Col / 2) + 1));
-                    sb.Append(9 - (opponentCoord.Row / 2));
+                    sb.Append(Convert.ToChar(value: 97 + ((whoseTurn == 0 ? (playerTwoLocation) : (playerOneLocation)).Col / 2) + 1 > 105 ? 105
+                                                  : 97 + ((whoseTurn == 0 ? (playerTwoLocation) : (playerOneLocation)).Col / 2) + 1));
+                    sb.Append(9 - ((whoseTurn == 0 ? (playerTwoLocation) : (playerOneLocation)).Row / 2));
 
                     validMoves.Add(sb.ToString());
                 }
-                if (board[playerCoordinate.Row + 2 * direction, playerCoordinate.Col - 1] != WALL)
+                if (board[(whoseTurn == 0 ? (playerOneLocation) : (playerTwoLocation)).Row + 2 * direction, (whoseTurn == 0 ? (playerOneLocation) : (playerTwoLocation)).Col - 1] != WALL)
                 {
                     StringBuilder sb = new StringBuilder();
 
-                    sb.Append(Convert.ToChar(value: 97 + (opponentCoord.Col / 2) - 1 < 97 ? 97
-                                                  : 97 + (opponentCoord.Col / 2) - 1));
-                    sb.Append(9 - (opponentCoord.Row / 2));
+                    sb.Append(Convert.ToChar(value: 97 + ((whoseTurn == 0 ? (playerTwoLocation) : (playerOneLocation)).Col / 2) - 1 < 97 ? 97
+                                                  : 97 + ((whoseTurn == 0 ? (playerTwoLocation) : (playerOneLocation)).Col / 2) - 1));
+                    sb.Append(9 - ((whoseTurn == 0 ? (playerTwoLocation) : (playerOneLocation)).Row / 2));
 
                     validMoves.Add(sb.ToString());
                 }
@@ -477,19 +422,16 @@ namespace GameCore
 
         private void PossibleVerticalJumps(List<string> validMoves, int direction)
         {
-            PlayerCoordinate playerCoordinate = GetCurrentPlayerCoodinate();
-            PlayerCoordinate opponentCoord = GetCurrentOpponentCoordinate();
-
-            if (playerCoordinate.Row + (3 * direction) < 17 && playerCoordinate.Row + (3 * direction) > -1)
+            if ((whoseTurn == 0 ? (playerOneLocation) : (playerTwoLocation)).Row + (3 * direction) < 17 && (whoseTurn == 0 ? (playerOneLocation) : (playerTwoLocation)).Row + (3 * direction) > -1)
             {
-                if (board[playerCoordinate.Row + (3 * direction), playerCoordinate.Col] != WALL)
+                if (board[(whoseTurn == 0 ? (playerOneLocation) : (playerTwoLocation)).Row + (3 * direction), (whoseTurn == 0 ? (playerOneLocation) : (playerTwoLocation)).Col] != WALL)
                 {
                     StringBuilder sb = new StringBuilder();
 
-                    sb.Append(Convert.ToChar(97 + (opponentCoord.Col / 2)));
-                    sb.Append(value: 9 - (opponentCoord.Row / 2) - (1 * direction) > 9 ? 9
-                                   : 9 - (opponentCoord.Row / 2) - (1 * direction) < 1 ? 1
-                                   : 9 - (opponentCoord.Row / 2) - (1 * direction));
+                    sb.Append(Convert.ToChar(97 + ((whoseTurn == 0 ? (playerTwoLocation) : (playerOneLocation)).Col / 2)));
+                    sb.Append(value: 9 - ((whoseTurn == 0 ? (playerTwoLocation) : (playerOneLocation)).Row / 2) - (1 * direction) > 9 ? 9
+                                   : 9 - ((whoseTurn == 0 ? (playerTwoLocation) : (playerOneLocation)).Row / 2) - (1 * direction) < 1 ? 1
+                                   : 9 - ((whoseTurn == 0 ? (playerTwoLocation) : (playerOneLocation)).Row / 2) - (1 * direction));
 
                     validMoves.Add(sb.ToString());
                 }
@@ -508,14 +450,12 @@ namespace GameCore
         private List<string> PossibleMovesFromPosition()
         {
             List<string> validMoves = new List<string>();
-            PlayerCoordinate playerCoordinate = GetCurrentPlayerCoodinate();
-            PlayerCoordinate opponentCoord = GetCurrentOpponentCoordinate();
 
             if (PlayersAreAdjacent())
             {
-                if (playerCoordinate.Row == opponentCoord.Row)
+                if ((whoseTurn == 0 ? (playerOneLocation) : (playerTwoLocation)).Row == (whoseTurn == 0 ? (playerTwoLocation) : (playerOneLocation)).Row)
                 {
-                    if (playerCoordinate.Col < opponentCoord.Col)
+                    if ((whoseTurn == 0 ? (playerOneLocation) : (playerTwoLocation)).Col < (whoseTurn == 0 ? (playerTwoLocation) : (playerOneLocation)).Col)
                     {
                         PossibleHorizontalJumps(validMoves, 1);
                     }
@@ -526,7 +466,7 @@ namespace GameCore
                 }
                 else
                 {
-                    if (playerCoordinate.Row < opponentCoord.Row)
+                    if ((whoseTurn == 0 ? (playerOneLocation) : (playerTwoLocation)).Row < (whoseTurn == 0 ? (playerTwoLocation) : (playerOneLocation)).Row)
                     {
                         PossibleVerticalJumps(validMoves, 1);
                     }
@@ -536,40 +476,40 @@ namespace GameCore
                     }
                 }
             }
-            if (playerCoordinate.Row + 1 < 17 && board[playerCoordinate.Row + 1, playerCoordinate.Col] != WALL
-                && (playerCoordinate.Row + 2 != opponentCoord.Row || playerCoordinate.Col != opponentCoord.Col))
+            if ((whoseTurn == 0 ? (playerOneLocation) : (playerTwoLocation)).Row + 1 < 17 && board[(whoseTurn == 0 ? (playerOneLocation) : (playerTwoLocation)).Row + 1, (whoseTurn == 0 ? (playerOneLocation) : (playerTwoLocation)).Col] != WALL
+                && ((whoseTurn == 0 ? (playerOneLocation) : (playerTwoLocation)).Row + 2 != (whoseTurn == 0 ? (playerTwoLocation) : (playerOneLocation)).Row || (whoseTurn == 0 ? (playerOneLocation) : (playerTwoLocation)).Col != (whoseTurn == 0 ? (playerTwoLocation) : (playerOneLocation)).Col))
             {
                 //South
                 StringBuilder sb = new StringBuilder();
-                sb.Append(Convert.ToChar(97 + (playerCoordinate.Col / 2)));
-                sb.Append(9 - (playerCoordinate.Row / 2) - 1 < 1 ? 1 : 9 - (playerCoordinate.Row / 2) - 1);
+                sb.Append(Convert.ToChar(97 + ((whoseTurn == 0 ? (playerOneLocation) : (playerTwoLocation)).Col / 2)));
+                sb.Append(9 - ((whoseTurn == 0 ? (playerOneLocation) : (playerTwoLocation)).Row / 2) - 1 < 1 ? 1 : 9 - ((whoseTurn == 0 ? (playerOneLocation) : (playerTwoLocation)).Row / 2) - 1);
                 validMoves.Add(sb.ToString());
             }
-            if (playerCoordinate.Row - 1 > -1 && board[playerCoordinate.Row - 1, playerCoordinate.Col] != WALL
-                 && (playerCoordinate.Row - 2 != opponentCoord.Row || playerCoordinate.Col != opponentCoord.Col))
+            if ((whoseTurn == 0 ? (playerOneLocation) : (playerTwoLocation)).Row - 1 > -1 && board[(whoseTurn == 0 ? (playerOneLocation) : (playerTwoLocation)).Row - 1, (whoseTurn == 0 ? (playerOneLocation) : (playerTwoLocation)).Col] != WALL
+                 && ((whoseTurn == 0 ? (playerOneLocation) : (playerTwoLocation)).Row - 2 != (whoseTurn == 0 ? (playerTwoLocation) : (playerOneLocation)).Row || (whoseTurn == 0 ? (playerOneLocation) : (playerTwoLocation)).Col != (whoseTurn == 0 ? (playerTwoLocation) : (playerOneLocation)).Col))
             {
                 //North
                 StringBuilder sb = new StringBuilder();
-                sb.Append(Convert.ToChar(97 + (playerCoordinate.Col / 2)));
-                sb.Append(9 - (playerCoordinate.Row / 2) + 1 > 9 ? 9 : 9 - (playerCoordinate.Row / 2) + 1);
+                sb.Append(Convert.ToChar(97 + ((whoseTurn == 0 ? (playerOneLocation) : (playerTwoLocation)).Col / 2)));
+                sb.Append(9 - ((whoseTurn == 0 ? (playerOneLocation) : (playerTwoLocation)).Row / 2) + 1 > 9 ? 9 : 9 - ((whoseTurn == 0 ? (playerOneLocation) : (playerTwoLocation)).Row / 2) + 1);
                 validMoves.Add(sb.ToString());
             }
-            if (playerCoordinate.Col + 1 < 17 && board[playerCoordinate.Row, playerCoordinate.Col + 1] != WALL
-                && (playerCoordinate.Row != opponentCoord.Row || playerCoordinate.Col + 2 != opponentCoord.Col))
+            if ((whoseTurn == 0 ? (playerOneLocation) : (playerTwoLocation)).Col + 1 < 17 && board[(whoseTurn == 0 ? (playerOneLocation) : (playerTwoLocation)).Row, (whoseTurn == 0 ? (playerOneLocation) : (playerTwoLocation)).Col + 1] != WALL
+                && ((whoseTurn == 0 ? (playerOneLocation) : (playerTwoLocation)).Row != (whoseTurn == 0 ? (playerTwoLocation) : (playerOneLocation)).Row || (whoseTurn == 0 ? (playerOneLocation) : (playerTwoLocation)).Col + 2 != (whoseTurn == 0 ? (playerTwoLocation) : (playerOneLocation)).Col))
             {
                 //East
                 StringBuilder sb = new StringBuilder();
-                sb.Append(Convert.ToChar(97 + (playerCoordinate.Col / 2) + 1));
-                sb.Append(9 - (playerCoordinate.Row / 2));
+                sb.Append(Convert.ToChar(97 + ((whoseTurn == 0 ? (playerOneLocation) : (playerTwoLocation)).Col / 2) + 1));
+                sb.Append(9 - ((whoseTurn == 0 ? (playerOneLocation) : (playerTwoLocation)).Row / 2));
                 validMoves.Add(sb.ToString());
             }
-            if (playerCoordinate.Col - 1 > -1 && board[playerCoordinate.Row, playerCoordinate.Col - 1] != WALL
-                && (playerCoordinate.Row != opponentCoord.Row || playerCoordinate.Col - 2 != opponentCoord.Col))
+            if ((whoseTurn == 0 ? (playerOneLocation) : (playerTwoLocation)).Col - 1 > -1 && board[(whoseTurn == 0 ? (playerOneLocation) : (playerTwoLocation)).Row, (whoseTurn == 0 ? (playerOneLocation) : (playerTwoLocation)).Col - 1] != WALL
+                && ((whoseTurn == 0 ? (playerOneLocation) : (playerTwoLocation)).Row != (whoseTurn == 0 ? (playerTwoLocation) : (playerOneLocation)).Row || (whoseTurn == 0 ? (playerOneLocation) : (playerTwoLocation)).Col - 2 != (whoseTurn == 0 ? (playerTwoLocation) : (playerOneLocation)).Col))
             {
                 //West
                 StringBuilder sb = new StringBuilder();
-                sb.Append(Convert.ToChar(97 + (playerCoordinate.Col / 2) - 1));
-                sb.Append(9 - (playerCoordinate.Row / 2));
+                sb.Append(Convert.ToChar(97 + ((whoseTurn == 0 ? (playerOneLocation) : (playerTwoLocation)).Col / 2) - 1));
+                sb.Append(9 - ((whoseTurn == 0 ? (playerOneLocation) : (playerTwoLocation)).Row / 2));
                 validMoves.Add(sb.ToString());
             }
 
@@ -585,12 +525,10 @@ namespace GameCore
 
         private bool PlayersAreAdjacent()
         {
-            PlayerCoordinate playerCoordinate = (whoseTurn == 0 ? (playerOneLocation) : (playerTwoLocation));
-            PlayerCoordinate opponentCoord = (whoseTurn == 0 ? (playerTwoLocation) : (playerOneLocation));
             return ((whoseTurn == 0 ? playerOneLocation : playerTwoLocation).Row == (whoseTurn == 0 ? playerTwoLocation : playerOneLocation).Row && (whoseTurn == 0 ? playerOneLocation : playerTwoLocation).Col + 2 == (whoseTurn == 0 ? playerTwoLocation : playerOneLocation).Col && board[(whoseTurn == 0 ? playerOneLocation : playerTwoLocation).Row, (whoseTurn == 0 ? playerOneLocation : playerTwoLocation).Col + 1] != WALL)
-                || (playerCoordinate.Row == opponentCoord.Row && playerCoordinate.Col - 2 == opponentCoord.Col && board[playerCoordinate.Row, (playerCoordinate.Col - 1)] != WALL)
-                || (playerCoordinate.Row + 2 == opponentCoord.Row && playerCoordinate.Col == opponentCoord.Col && board[playerCoordinate.Row + 1, (playerCoordinate.Col)] != WALL)
-                || (playerCoordinate.Row - 2 == opponentCoord.Row && playerCoordinate.Col == opponentCoord.Col && board[playerCoordinate.Row - 1, playerCoordinate.Col] != WALL);
+                || ((whoseTurn == 0 ? (playerOneLocation) : (playerTwoLocation)).Row == (whoseTurn == 0 ? (playerTwoLocation) : (playerOneLocation)).Row && (whoseTurn == 0 ? (playerOneLocation) : (playerTwoLocation)).Col - 2 == (whoseTurn == 0 ? (playerTwoLocation) : (playerOneLocation)).Col && board[(whoseTurn == 0 ? (playerOneLocation) : (playerTwoLocation)).Row, ((whoseTurn == 0 ? (playerOneLocation) : (playerTwoLocation)).Col - 1)] != WALL)
+                || ((whoseTurn == 0 ? (playerOneLocation) : (playerTwoLocation)).Row + 2 == (whoseTurn == 0 ? (playerTwoLocation) : (playerOneLocation)).Row && (whoseTurn == 0 ? (playerOneLocation) : (playerTwoLocation)).Col == (whoseTurn == 0 ? (playerTwoLocation) : (playerOneLocation)).Col && board[(whoseTurn == 0 ? (playerOneLocation) : (playerTwoLocation)).Row + 1, ((whoseTurn == 0 ? (playerOneLocation) : (playerTwoLocation)).Col)] != WALL)
+                || ((whoseTurn == 0 ? (playerOneLocation) : (playerTwoLocation)).Row - 2 == (whoseTurn == 0 ? (playerTwoLocation) : (playerOneLocation)).Row && (whoseTurn == 0 ? (playerOneLocation) : (playerTwoLocation)).Col == (whoseTurn == 0 ? (playerTwoLocation) : (playerOneLocation)).Col && board[(whoseTurn == 0 ? (playerOneLocation) : (playerTwoLocation)).Row - 1, (whoseTurn == 0 ? (playerOneLocation) : (playerTwoLocation)).Col] != WALL);
         }
 
         private bool CanPlayersReachGoal(WallCoordinate wallCoordinate)
