@@ -22,12 +22,8 @@ namespace GameCore
         private static readonly object boardAccess = new object();
         private readonly object childrenAccess = new object();
         private readonly object childrenMovesAccess = new object();
-        private static double explorationFactor = 1.0 / FastSqRt(2.0);
+        private static double explorationFactor = 1.0 / Math.Sqrt(2.0);
 
-        private static double FastSqRt(double value)
-        {
-            return BitConverter.Int64BitsToDouble(((long)((-1 * ((int)(BitConverter.DoubleToInt64Bits(Rsqrt(value)) >> 32) - 1072632447)) + 1072632447)) << 32);
-        }
 
         private static double historyInfluence = 1.15;
         private GameBoard.PlayerEnum monteCarloPlayerEnum;
@@ -80,10 +76,10 @@ namespace GameCore
             return timesVisited;
         }
 
-        public double GetStateValue()
-        {
-            return (Math.Atan(0.5 * (MinimumHeuristicEstimate(thisMove))) / Math.PI) + 0.5;
-        }
+        //public double GetStateValue()
+        //{
+        //    return (Math.Atan(0.5 * (MinimumHeuristicEstimate(thisMove, turn))) / Math.PI) + 0.5;
+        //}
 
         public double GetScore()
         {
@@ -97,7 +93,7 @@ namespace GameCore
 
         private double GetWinRate()
         {
-            return wins / timesVisited;
+            return score / timesVisited;
         }
 
         public int CompareTo(MonteCarloNode carloNode)
@@ -107,11 +103,11 @@ namespace GameCore
             {
                 return 1;
             }
-            else if (GetStateValue() > carloNode.GetStateValue())
+            else if (GetVisits() > carloNode.GetVisits())
             {
                 return 1;
             }
-            else if (GetStateValue() < carloNode.GetStateValue())
+            else if (GetVisits() < carloNode.GetVisits())
             {
                 return -1;
             }
@@ -125,7 +121,7 @@ namespace GameCore
         public MonteCarloNode(PlayerCoordinate playerOne, PlayerCoordinate playerTwo, int playerOneTotalWalls, int playerTwoTotalWalls, List<WallCoordinate> wallCoordinates, GameBoard.PlayerEnum currentTurn)
         {
             board = new List<BitArray>();
-            moveTotals = new Dictionary<string, Tuple<double, double>>();
+            //moveTotals = new Dictionary<string, Tuple<double, double>>();
             possibleMoveValues = new int[9, 9];
 
             for (int r = 0; r < 9; r++)
@@ -178,7 +174,7 @@ namespace GameCore
             randomPercentileChance = new Random();
 
             wins = 0;
-            timesVisited = 0;
+            timesVisited = 1;
             turn = currentTurn;
             possibleMoves = PossibleMovesFromPosition();
 
@@ -344,7 +340,7 @@ namespace GameCore
                     sb.Append(value: 9 - (playerLocations[turn == 0 ? 1 : 0].Row / 2) + 1 > 9 ? 9
                                    : 9 - (playerLocations[turn == 0 ? 1 : 0].Row / 2) + 1);
 
-                    validMoves.Add(new Tuple<string, double>(sb.ToString(), MinimumHeuristicEstimate(sb.ToString())));
+                    validMoves.Add(new Tuple<string, double>(sb.ToString(), MinimumHeuristicEstimate(sb.ToString(), turn == 0 ? 9 : 1)));
                 }
                 if (!board[playerLocations[turn == 0 ? 0 : 1].Row + 1].Get(playerLocations[turn == 0 ? 0 : 1].Col + 2 * direction))
                 {
@@ -354,7 +350,7 @@ namespace GameCore
                     sb.Append(value: 9 - (playerLocations[turn == 0 ? 1 : 0].Row / 2) - 1 < 1 ? 1
                                    : 9 - (playerLocations[turn == 0 ? 1 : 0].Row / 2) - 1);
 
-                    validMoves.Add(new Tuple<string, double>(sb.ToString(), MinimumHeuristicEstimate(sb.ToString())));
+                    validMoves.Add(new Tuple<string, double>(sb.ToString(), MinimumHeuristicEstimate(sb.ToString(), turn == 0 ? 9 : 1)));
                 }
             }
         }
@@ -372,7 +368,7 @@ namespace GameCore
                                             : 97 + (playerLocations[turn == 0 ? 1 : 0].Col / 2) + (1 * direction)));
                     sb.Append(9 - (playerLocations[turn == 0 ? 1 : 0].Row / 2));
 
-                    validMoves.Add(new Tuple<string, double>(sb.ToString(), MinimumHeuristicEstimate(sb.ToString())));
+                    validMoves.Add(new Tuple<string, double>(sb.ToString(), MinimumHeuristicEstimate(sb.ToString(), turn == 0 ? 9 : 1)));
                 }
                 else
                 {
@@ -398,7 +394,7 @@ namespace GameCore
                                                   : 97 + (playerLocations[turn == 0 ? 1 : 0].Col / 2) + 1));
                     sb.Append(9 - (playerLocations[turn == 0 ? 1 : 0].Row / 2));
 
-                    validMoves.Add(new Tuple<string, double>(sb.ToString(), MinimumHeuristicEstimate(sb.ToString())));
+                    validMoves.Add(new Tuple<string, double>(sb.ToString(), MinimumHeuristicEstimate(sb.ToString(), turn == 0 ? 9 : 1)));
                 }
                 if (!board[playerLocations[turn == 0 ? 0 : 1].Row + 2 * direction].Get(playerLocations[turn == 0 ? 0 : 1].Col - 1))
                 {
@@ -408,7 +404,7 @@ namespace GameCore
                                                   : 97 + (playerLocations[turn == 0 ? 1 : 0].Col / 2) - 1));
                     sb.Append(9 - (playerLocations[turn == 0 ? 1 : 0].Row / 2));
 
-                    validMoves.Add(new Tuple<string, double>(sb.ToString(), MinimumHeuristicEstimate(sb.ToString())));
+                    validMoves.Add(new Tuple<string, double>(sb.ToString(), MinimumHeuristicEstimate(sb.ToString(), turn == 0 ? 9 : 1)));
                 }
             }
         }
@@ -426,7 +422,7 @@ namespace GameCore
                                    : 9 - (playerLocations[turn == 0 ? 1 : 0].Row / 2) - (1 * direction) < 1 ? 1
                                    : 9 - (playerLocations[turn == 0 ? 1 : 0].Row / 2) - (1 * direction));
 
-                    validMoves.Add(new Tuple<string, double>(sb.ToString(), MinimumHeuristicEstimate(sb.ToString())));
+                    validMoves.Add(new Tuple<string, double>(sb.ToString(), MinimumHeuristicEstimate(sb.ToString(), turn == 0 ? 9 : 1)));
                 }
                 else
                 {
@@ -481,7 +477,7 @@ namespace GameCore
                     StringBuilder sb = new StringBuilder();
                     sb.Append(Convert.ToChar(97 + (playerLocations[currentPlayer].Col / 2)));
                     sb.Append(9 - (playerLocations[currentPlayer].Row / 2) - 1 < 1 ? 1 : 9 - (playerLocations[currentPlayer].Row / 2) - 1);
-                    validMoves.Add(new Tuple<string, double>(sb.ToString(), MinimumHeuristicEstimate(sb.ToString())));
+                    validMoves.Add(new Tuple<string, double>(sb.ToString(), MinimumHeuristicEstimate(sb.ToString(), turn == 0 ? 9 : 1)));
                 }
                 if (playerLocations[currentPlayer].Row - 1 > -1 && !board[playerLocations[currentPlayer].Row - 1].Get(playerLocations[currentPlayer].Col)
                      && (playerLocations[currentPlayer].Row - 2 != playerLocations[opponent].Row || playerLocations[currentPlayer].Col != playerLocations[opponent].Col))
@@ -490,7 +486,7 @@ namespace GameCore
                     StringBuilder sb = new StringBuilder();
                     sb.Append(Convert.ToChar(97 + (playerLocations[currentPlayer].Col / 2)));
                     sb.Append(9 - (playerLocations[currentPlayer].Row / 2) + 1 > 9 ? 9 : 9 - (playerLocations[currentPlayer].Row / 2) + 1);
-                    validMoves.Add(new Tuple<string, double>(sb.ToString(), MinimumHeuristicEstimate(sb.ToString())));
+                    validMoves.Add(new Tuple<string, double>(sb.ToString(), MinimumHeuristicEstimate(sb.ToString(), turn == 0 ? 9 : 1)));
                 }
                 if (playerLocations[currentPlayer].Col + 1 < 17 && !board[playerLocations[currentPlayer].Row].Get(playerLocations[currentPlayer].Col + 1)
                     && (playerLocations[currentPlayer].Row != playerLocations[opponent].Row || playerLocations[currentPlayer].Col + 2 != playerLocations[opponent].Col))
@@ -499,7 +495,7 @@ namespace GameCore
                     StringBuilder sb = new StringBuilder();
                     sb.Append(Convert.ToChar(97 + (playerLocations[currentPlayer].Col / 2) + 1));
                     sb.Append(9 - (playerLocations[currentPlayer].Row / 2));
-                    validMoves.Add(new Tuple<string, double>(sb.ToString(), MinimumHeuristicEstimate(sb.ToString())));
+                    validMoves.Add(new Tuple<string, double>(sb.ToString(), MinimumHeuristicEstimate(sb.ToString(), turn == 0 ? 9 : 1)));
                 }
                 if (playerLocations[currentPlayer].Col - 1 > -1 && !board[playerLocations[currentPlayer].Row].Get(playerLocations[currentPlayer].Col - 1)
                     && (playerLocations[currentPlayer].Row != playerLocations[opponent].Row || playerLocations[currentPlayer].Col - 2 != playerLocations[opponent].Col))
@@ -508,7 +504,7 @@ namespace GameCore
                     StringBuilder sb = new StringBuilder();
                     sb.Append(Convert.ToChar(97 + (playerLocations[currentPlayer].Col / 2) - 1));
                     sb.Append(9 - (playerLocations[currentPlayer].Row / 2));
-                    validMoves.Add(new Tuple<string, double>(sb.ToString(), MinimumHeuristicEstimate(sb.ToString())));
+                    validMoves.Add(new Tuple<string, double>(sb.ToString(), MinimumHeuristicEstimate(sb.ToString(), turn == 0 ? 9 : 1)));
                 }
 
                 Unpopulate();
@@ -720,19 +716,9 @@ namespace GameCore
 
         }
 
-        public double MinimumHeuristicEstimate(string locationToStart)
+        public double MinimumHeuristicEstimate(string locationToStart, int goal)
         {
-            int EndRow;
-            double minimumHeuristic = double.PositiveInfinity;
-
-            if (turn == 0)
-            {
-                EndRow = 9;
-            }
-            else
-            {
-                EndRow = 1;
-            }
+            int EndRow = goal;
 
             PlayerCoordinate start;
             WallCoordinate wallCoordinate = null;
@@ -753,9 +739,11 @@ namespace GameCore
                 SetPlayerMoveValues(wallCoordinate, mid);
             }
 
-            string opponentGoalRow = Convert.ToChar(97 + playerLocations[turn == 0 ? 1 : 0].Col / 2).ToString() + (turn == 0 ? 1 : 9).ToString();
-            double possibleMinimumHeuristicCurrentPlayer = 0.5 * wallsRemaining[turn == 0 ? 0 : 1] + HeuristicCostEstimate(start, new PlayerCoordinate(Convert.ToChar(97 + start.Col / 2).ToString() + EndRow.ToString())) + possibleMoveValues/*(turn == 0 ? possibleMoveValuesPlayerOne : possibleMoveValuesPlayerTwo)*/[start.Row / 2, start.Col / 2] + 1;
-            double possibleMinimumHeuristicOpposingPlayer = 0.5 * wallsRemaining[turn == 0 ? 0 : 1] + HeuristicCostEstimate(playerLocations[turn == 0 ? 1 : 0], new PlayerCoordinate(opponentGoalRow)) + possibleMoveValues/*(turn == 0 ? possibleMoveValuesPlayerTwo : possibleMoveValuesPlayerOne)*/[start.Row / 2, start.Col / 2] + 1;
+            double possibleMinimumHeuristic = HeuristicCostEstimate(start, new PlayerCoordinate(EndRow, start.Col));
+
+            //string opponentGoalRow = Convert.ToChar(97 + playerLocations[turn == 0 ? 1 : 0].Col / 2).ToString() + (turn == 0 ? 1 : 9).ToString();
+            //double possibleMinimumHeuristicCurrentPlayer = 0.5 * wallsRemaining[turn == 0 ? 0 : 1] + HeuristicCostEstimate(start, new PlayerCoordinate(Convert.ToChar(97 + start.Col / 2).ToString() + EndRow.ToString())) + possibleMoveValues/*(turn == 0 ? possibleMoveValuesPlayerOne : possibleMoveValuesPlayerTwo)*/[start.Row / 2, start.Col / 2] + 1;
+            //double possibleMinimumHeuristicOpposingPlayer = 0.5 * wallsRemaining[turn == 0 ? 0 : 1] + HeuristicCostEstimate(playerLocations[turn == 0 ? 1 : 0], new PlayerCoordinate(opponentGoalRow)) + possibleMoveValues/*(turn == 0 ? possibleMoveValuesPlayerTwo : possibleMoveValuesPlayerOne)*/[start.Row / 2, start.Col / 2] + 1;
 
             if (wallCoordinate != null)
             {
@@ -763,7 +751,7 @@ namespace GameCore
                 ResetPlayerMoveValues(wallCoordinate, mid);
             }
 
-            return (possibleMinimumHeuristicCurrentPlayer) - (possibleMinimumHeuristicOpposingPlayer);
+            return possibleMinimumHeuristic + possibleMoveValues[start.Row / 2, start.Col / 2] + 1;
         }
 
         private double HeuristicCostEstimate(PlayerCoordinate start, PlayerCoordinate goal)
@@ -801,24 +789,7 @@ namespace GameCore
             }
             return distance;
         }
-
-        // Fast Inverse Square Root Function
-        public static double Rsqrt(double number)
-        {
-            long i;
-            double x2, y;
-            const float threehalfs = 1.5F;
-
-            x2 = number * 0.5F;
-            y = number;
-            i = BitConverter.ToInt32(BitConverter.GetBytes(y), 0);                       // evil floating point bit level hacking
-            i = 0x5f3759df - (i >> 1);
-            y = BitConverter.ToSingle(BitConverter.GetBytes(i), 0);
-            y = y * (threehalfs - (x2 * y * y));
-
-
-            return y;
-        }
+            
 
         private bool ValidPlayerMove(PlayerCoordinate start, PlayerCoordinate destination)
         {
@@ -1063,7 +1034,7 @@ namespace GameCore
 
         private string RandomMove()
         {
-            return randomPercentileChance.Next(1, 100) >= 37 ? FindPlayerMove() : (turn == 0 ? wallsRemaining[0] : wallsRemaining[1]) > 0 ? (turn == 0 ? playerLocations[1].Row / 2 < 4 : playerLocations[0].Row / 2 > 4) ? FindBlockingWall() : FindWall() : FindPlayerMove();
+            return randomPercentileChance.Next(1, 100) >= 51 ? FindPlayerMove() : (turn == 0 ? wallsRemaining[0] : wallsRemaining[1]) > 0 ? BoardUtil.GetRandomWallPlacementMove() : FindPlayerMove();
         }
 
         private string FindBlockingWall()
@@ -1096,10 +1067,28 @@ namespace GameCore
         {
             string move = null;
 
-            List<string> blockingWalls = PlaceBlockingWall();
+            //List<string> blockingWalls = PlaceBlockingWall();
 
-            if (randomPercentileChance.Next(1, 100) <= 11 || (playerLocations[turn == 0 ? 0 : 1].Row / 2) + (turn == 0 ? -1 : 1) == (turn == 0 ? 0 : 8) || (turn == 0 ? playerLocations[1].Row / 2 < 4 : playerLocations[0].Row / 2 > 4))
-            {
+            //if (randomPercentileChance.Next(1, 100) <= 11 || (playerLocations[turn == 0 ? 0 : 1].Row / 2) + (turn == 0 ? -1 : 1) == (turn == 0 ? 0 : 8) || (turn == 0 ? playerLocations[1].Row / 2 < 4 : playerLocations[0].Row / 2 > 4))
+            //{
+            //    move = possibleMoves[0].Item1;
+
+            //    for (int i = 1; childrensMoves.Contains(move) && i < possibleMoves.Count; ++i)
+            //    {
+            //        move = possibleMoves[i].Item1;
+            //    }
+
+            //    if (childrensMoves.Contains(move))
+            //    {
+            //        move = possibleMoves[randomPercentileChance.Next(0, possibleMoves.Count)].Item1;
+            //    }
+            //}
+            //else if (wallsRemaining[turn == 0 ? 0 : 1] != 0 && possibleVerticalWalls.Count > 0)
+            //{
+            //    return FindBlockingWall();
+            //}
+            //else
+            //{
                 move = possibleMoves[0].Item1;
 
                 for (int i = 1; childrensMoves.Contains(move) && i < possibleMoves.Count; ++i)
@@ -1111,40 +1100,22 @@ namespace GameCore
                 {
                     move = possibleMoves[randomPercentileChance.Next(0, possibleMoves.Count)].Item1;
                 }
-            }
-            else if (wallsRemaining[turn == 0 ? 0 : 1] != 0 && possibleVerticalWalls.Count > 0)
-            {
-                return FindBlockingWall();
-            }
-            else
-            {
-                move = possibleMoves[0].Item1;
+            //}
 
-                for (int i = 1; childrensMoves.Contains(move) && i < possibleMoves.Count; ++i)
-                {
-                    move = possibleMoves[i].Item1;
-                }
+            //if (String.IsNullOrEmpty(move))
+            ////{
+            //    move = possibleMoves[0].Item1;
 
-                if (childrensMoves.Contains(move))
-                {
-                    move = possibleMoves[randomPercentileChance.Next(0, possibleMoves.Count)].Item1;
-                }
-            }
+            //    for (int i = 1; childrensMoves.Contains(move) && i < possibleMoves.Count; ++i)
+            //    {
+            //        move = possibleMoves[i].Item1;
+            //    }
 
-            if (String.IsNullOrEmpty(move))
-            {
-                move = possibleMoves[0].Item1;
-
-                for (int i = 1; childrensMoves.Contains(move) && i < possibleMoves.Count; ++i)
-                {
-                    move = possibleMoves[i].Item1;
-                }
-
-                if (childrensMoves.Contains(move))
-                {
-                    move = possibleMoves[randomPercentileChance.Next(0, possibleMoves.Count)].Item1;
-                }
-            }
+            //    if (childrensMoves.Contains(move))
+            //    {
+            //        move = possibleMoves[randomPercentileChance.Next(0, possibleMoves.Count)].Item1;
+            //    }
+            //}
 
             return move;
         }
@@ -1497,55 +1468,31 @@ namespace GameCore
         /// SelectNode selects a node at random given a nodes children. If there are no nodes available the function returns -1 otherwise it returns the index of the selcted node.
         /// </summary>
         /// <returns></returns>
-        private int SelectNode(int expandedNodeIndex = -1)
+        public MonteCarloNode SelectNode(MonteCarloNode root)
         {
-            int isAValidNodeAvailable = -1;
-
-            if (children.Count != 0 && (randomPercentileChance.Next(1, 100) < 71))
+            if (children.Count != 0 && (randomPercentileChance.Next(1, 100) >= 51))
             {
-                isAValidNodeAvailable = SelectionAlgorithm();
+                return root.SelectNode(SelectionAlgorithm());
+
             }
-            else if (expandedNodeIndex >= 0)
+            else
             {
-                isAValidNodeAvailable = expandedNodeIndex;
+                return this;
             }
 
-            return isAValidNodeAvailable;
         }
 
         /// <summary>
         /// The SelectionAlgorithm calculates a score for each move based on the knowledge currently in the tree.
         /// </summary>
         /// <returns></returns>
-        private int SelectionAlgorithm()
+        private MonteCarloNode SelectionAlgorithm()
         {
             lock (childrenAccess)
             {
-                foreach (var child in children)
-                {
-                    if (!moveTotals.ContainsKey(child.thisMove))
-                    {
-                        moveTotals.Add(child.thisMove, new Tuple<double, double>(0, 0));
-                        child.SetScore(double.PositiveInfinity);
-                    }
-                    else if (child.GetVisits() == 0)
-                    {
-                        child.SetScore(double.PositiveInfinity);
-                    }
-                    else
-                    {
-                        child.SetScore((((child.GetWins() / child.GetVisits()) + explorationFactor) * FastSqRt(Math.Log(timesVisited) / child.GetVisits()))
-                        + (moveTotals[child.GetMove()].Item1 / moveTotals[child.GetMove()].Item2) * (historyInfluence / (child.GetVisits() - child.GetWins() + 1)));
-                    }
-                }
+                children.Sort();
 
-                children.Sort(delegate (MonteCarloNode lValue, MonteCarloNode rValue)
-                {
-                    if (lValue.GetScore() == rValue.GetScore()) return 0;
-                    else return lValue.GetScore().CompareTo(rValue.GetScore());
-                });
-
-                return children.Count - 1;
+                return children[children.Count - 1];
             }
         }
 
@@ -1554,7 +1501,7 @@ namespace GameCore
         /// The <c>ExpandOptions</c> method calls the <c>RandomMove</c> method to generate a move to expand the current options from the current <c>MonteCarloNode</c>
         /// and returns true after it has expanded the child options.
         /// </summary>
-        private int ExpandOptions()
+        public MonteCarloNode ExpandOptions(MonteCarloNode root)
         {
             string move;
             move = RandomMove();
@@ -1565,7 +1512,41 @@ namespace GameCore
 
             }
 
-            return FindMove(move);
+            return children[FindMove(move)];
+        }
+
+        private double Evaluate(MonteCarloNode child)
+        {
+            string opponent = Convert.ToChar(97 + playerLocations[turn == 0 ? 1 : 0].Col / 2).ToString() + (9 - playerLocations[turn == 0 ? 1 : 0].Row / 2).ToString();
+            string player;
+            string move = child.thisMove;
+
+            if (move.Length > 2)
+            {
+                player = Convert.ToChar(97 + playerLocations[turn == 0 ? 0 : 1].Col / 2).ToString() + (9 - playerLocations[turn == 0 ? 0 : 1].Row / 2).ToString();
+
+            }
+            else
+            {
+                player = move;
+
+            }
+
+            //if (!moveTotals.ContainsKey(child.thisMove))
+            //{
+            //    moveTotals.Add(child.thisMove, new Tuple<double, double>(0, 1));
+            //}
+
+            return StateValue(opponent, player) + explorationFactor
+                             * Math.Sqrt(Math.Log(timesVisited) / child.GetVisits());
+                            //(moveTotals[child.GetMove()].Item1 / moveTotals[child.GetMove()].Item2)
+                            //* (historyInfluence / (child.GetVisits() - child.GetWins() + 1));
+
+        }
+
+        private double StateValue(string opponent, string player)
+        {
+           return (Math.Atan(0.5 * (0.9 *((MinimumHeuristicEstimate(player, turn == 0 ? 9 : 1) - MinimumHeuristicEstimate(opponent, turn == 0 ? 1 : 9))))) / Math.PI) + 0.5;
         }
 
         /// <summary>
@@ -1591,14 +1572,10 @@ namespace GameCore
                                 {
                                     children.Add(new MonteCarloNode(move, playerLocations, wallsRemaining, walls, new WallCoordinate(move), turn, depthCheck + 1, this));
 
-                                    if (!moveTotals.ContainsKey(move))
-                                    {
-                                        moveTotals.Add(move, new Tuple<double, double>(0, 0));
-                                    }
-                                    else
-                                    {
-                                        moveTotals[move] = new Tuple<double, double>(moveTotals[move].Item1, moveTotals[move].Item2 + 1);
-                                    }
+                                    //if (moveTotals.ContainsKey(move))
+                                    //{
+                                    //    moveTotals[move] = new Tuple<double, double>(moveTotals[move].Item1, moveTotals[move].Item2 + 1);
+                                    //}
 
                                     childrensMoves.Add(move);
                                     //#if DEBUG
@@ -1621,14 +1598,11 @@ namespace GameCore
                             {
                                 children.Add(new MonteCarloNode(move, depthCheck + 1, possibleHorizontalWalls, this));
 
-                                if (!moveTotals.ContainsKey(move))
-                                {
-                                    moveTotals.Add(move, new Tuple<double, double>(0, 0));
-                                }
-                                else
-                                {
-                                    moveTotals[move] = new Tuple<double, double>(moveTotals[move].Item1, moveTotals[move].Item2 + 1);
-                                }
+                                //if (moveTotals.ContainsKey(move))
+                                //{
+                                //    moveTotals[move] = new Tuple<double, double>(moveTotals[move].Item1, moveTotals[move].Item2 + 1);
+                                //}
+
                                 childrensMoves.Add(move);
                                 //#if DEBUG
                                 //                                Console.WriteLine(move + ' ' + (turn == 0 ? GameBoard.PlayerEnum.ONE : GameBoard.PlayerEnum.TWO).ToString());
@@ -1653,56 +1627,75 @@ namespace GameCore
         /// On a losing endstate the function returns false and true on a victory.
         /// </summary>
         /// <returns>Whether or not the function reached a victorious endstate</returns>
-        public bool SimulatedGame()
+        //public bool SimulatedGame()
+        //{
+        //    ++timesVisited;
+        //    bool mctsVictory = false;
+
+        //    if (depthCheck > 25)
+        //    {
+        //        gameOver = true;
+        //    }
+
+        //    if (!gameOver)
+        //    {
+        //        int nextNodeIndex = SelectNode();
+
+        //        if (nextNodeIndex < 0)
+        //        {
+        //            nextNodeIndex = SelectNode(ExpandOptions());
+        //            lock (childrenAccess)
+        //            {
+        //                children.Sort(delegate (MonteCarloNode lValue, MonteCarloNode rValue)
+        //                {
+        //                    if (lValue.wins == rValue.wins) return 0;
+        //                    else return lValue.wins.CompareTo(rValue.wins);
+        //                });
+        //            }
+        //        }
+        //        if (children[nextNodeIndex].SimulatedGame())
+        //        {
+        //            mctsVictory = true;
+        //            ++wins;
+        //        }
+        //    }
+        //    else
+        //    {
+        //        if (parent.turn.ToString() == MonteCarloPlayer)
+        //        {
+        //            mctsVictory = true;
+        //            moveTotals[thisMove] = new Tuple<double, double>(moveTotals[thisMove].Item1 + 1, moveTotals[thisMove].Item2);
+        //            ++wins;
+        //        }
+        //    }
+        //    lock (childrenAccess)
+        //    {
+        //        children.Sort(delegate (MonteCarloNode lValue, MonteCarloNode rValue)
+        //        {
+        //            if (lValue.wins == rValue.wins) return 0;
+        //            else return lValue.wins.CompareTo(rValue.wins);
+        //        });
+        //    }
+        //    return mctsVictory;
+        //}
+
+        public void Backpropagate(MonteCarloNode newlyAddedNode)
         {
-            ++timesVisited;
-            bool mctsVictory = false;
-
-            if (depthCheck > 25)
-            {
-                gameOver = true;
-            }
-
-            if (!gameOver)
-            {
-                int nextNodeIndex = SelectNode();
-
-                if (nextNodeIndex < 0)
-                {
-                    nextNodeIndex = SelectNode(ExpandOptions());
-                    lock (childrenAccess)
-                    {
-                        children.Sort(delegate (MonteCarloNode lValue, MonteCarloNode rValue)
-                        {
-                            if (lValue.wins == rValue.wins) return 0;
-                            else return lValue.wins.CompareTo(rValue.wins);
-                        });
-                    }
-                }
-                if (children[nextNodeIndex].SimulatedGame())
-                {
-                    mctsVictory = true;
-                    ++wins;
-                }
-            }
-            else
-            {
-                if (parent.turn.ToString() == MonteCarloPlayer)
-                {
-                    mctsVictory = true;
-                    moveTotals[thisMove] = new Tuple<double, double>(moveTotals[thisMove].Item1 + 1, moveTotals[thisMove].Item2);
-                    ++wins;
-                }
-            }
             lock (childrenAccess)
             {
-                children.Sort(delegate (MonteCarloNode lValue, MonteCarloNode rValue)
+                MonteCarloNode node = newlyAddedNode;
+                node.timesVisited++;
+                double result = Evaluate(newlyAddedNode);
+                node.SetScore(result);
+                node = node.parent;
+
+                while (node != null)
                 {
-                    if (lValue.wins == rValue.wins) return 0;
-                    else return lValue.wins.CompareTo(rValue.wins);
-                });
+                    node.SetScore(score + result);
+                    node.timesVisited++;
+                    node = node.parent;
+                }
             }
-            return mctsVictory;
         }
 
     }
@@ -1721,10 +1714,10 @@ namespace GameCore
         }
 
         private void ThreadedTreeSearch(Stopwatch timer, MonteCarloNode MonteCarlo)
-        {
-            for (int i = 0; i < 10000 && timer.Elapsed.TotalSeconds < 4; ++i)
+        {            
+            for (int i = 0; /*i < 10000 &&*/ timer.Elapsed.TotalSeconds < 4; ++i)
             {
-                MonteCarlo.SimulatedGame();
+                MonteCarlo.Backpropagate(MonteCarlo.ExpandOptions(MonteCarlo.SelectNode(MonteCarlo)));
             }
         }
 
@@ -1751,28 +1744,10 @@ namespace GameCore
 
             timer.Stop();
             //#endif
-            Console.WriteLine("Wins: " + TreeSearch.GetWins());
+            Console.WriteLine("Wins: " + TreeSearch.GetScore());
             Console.WriteLine("Visits: " + TreeSearch.GetVisits());
             List<MonteCarloNode> childrenToChoose = TreeSearch.GetChildrenNodes();
-            childrenToChoose.Sort(delegate (MonteCarloNode lValue, MonteCarloNode rValue)
-            {
-                if (rValue == null)
-                {
-                    return 1;
-                }
-                else if (lValue.GetVisits() > rValue.GetVisits())
-                {
-                    return 1;
-                }
-                else if (lValue.GetVisits() < rValue.GetVisits())
-                {
-                    return -1;
-                }
-                else
-                {
-                    return 0;
-                }
-            });
+            childrenToChoose.Sort();
             return childrenToChoose[childrenToChoose.Count - 1].GetMove();
         }
 
