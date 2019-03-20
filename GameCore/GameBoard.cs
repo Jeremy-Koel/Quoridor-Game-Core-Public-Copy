@@ -242,6 +242,11 @@ namespace GameCore
             }
         }
 
+        public void SetPlayerTurn(PlayerEnum player)
+        {
+            whoseTurn = player;
+        }
+
         private void ChangeTurn()
         {
             if (whoseTurn == PlayerEnum.ONE)
