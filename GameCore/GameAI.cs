@@ -26,7 +26,7 @@ namespace GameCore
 
 
         private static double historyInfluence = 1.15;
-        private GameBoard.PlayerEnum monteCarloPlayerEnum;
+        private static GameBoard.PlayerEnum monteCarloPlayerEnum;
         private static string MonteCarloPlayer;
         private static Random randomPercentileChance;
         private static List<BitArray> board;
@@ -1034,33 +1034,7 @@ namespace GameCore
 
         private string RandomMove()
         {
-            return randomPercentileChance.Next(1, 100) >= 51 ? FindPlayerMove() : (turn == 0 ? wallsRemaining[0] : wallsRemaining[1]) > 0 ? BoardUtil.GetRandomWallPlacementMove() : FindPlayerMove();
-        }
-
-        private string FindBlockingWall()
-        {
-            List<string> blockWalls = PlaceBlockingWall();
-            if (blockWalls.Count > 0)
-            {
-                return blockWalls[randomPercentileChance.Next(0, 4)];
-            }
-            else
-            {
-                return FindWall();
-            }
-        }
-
-        private List<string> PlaceBlockingWall()
-        {
-            List<string> blockingWalls = new List<string>();
-
-            blockingWalls.Add(Convert.ToChar(97 + playerLocations[turn == 0 ? 1 : 0].Col / 2 + (playerLocations[turn == 0 ? 1 : 0].Col != 0 ? -1 : 0)).ToString() + (9 - (playerLocations[turn == 0 ? 1 : 0].Row / 2) - (turn == 0 ? 1 : 0)).ToString() + "h");
-            blockingWalls.Add(Convert.ToChar(97 + playerLocations[turn == 0 ? 1 : 0].Col / 2 + (playerLocations[turn == 0 ? 1 : 0].Col != 0 ? -1 : 0)).ToString() + (9 - (playerLocations[turn == 0 ? 1 : 0].Row / 2) - (turn == 0 ? 1 : 0)).ToString() + "v");
-
-            blockingWalls.Add(Convert.ToChar(97 + playerLocations[turn == 0 ? 1 : 0].Col / 2).ToString() + (9 - (playerLocations[turn == 0 ? 1 : 0].Row / 2) - (turn == 0 ? 1 : 0)).ToString() + "h");
-            blockingWalls.Add(Convert.ToChar(97 + playerLocations[turn == 0 ? 1 : 0].Col / 2).ToString() + (9 - (playerLocations[turn == 0 ? 1 : 0].Row / 2) - (turn == 0 ? 1 : 0)).ToString() + "v");
-
-            return blockingWalls;
+            return randomPercentileChance.Next(1, 100) >= 37 ? FindPlayerMove() : (turn == 0 ? wallsRemaining[0] : wallsRemaining[1]) > 0 ? BoardUtil.GetRandomWallPlacementMove() : FindPlayerMove();
         }
 
         private string FindPlayerMove()
@@ -1470,14 +1444,14 @@ namespace GameCore
         /// <returns></returns>
         public MonteCarloNode SelectNode(MonteCarloNode root)
         {
-            if (children.Count != 0 && (randomPercentileChance.Next(1, 100) >= 51))
+            if (root.children.Count != 0 && (randomPercentileChance.Next(1, 100) >= 51))
             {
-                return root.SelectNode(SelectionAlgorithm());
+                return root.SelectNode(root.SelectionAlgorithm());
 
             }
             else
             {
-                return this;
+                return root;
             }
 
         }
@@ -1504,15 +1478,15 @@ namespace GameCore
         public MonteCarloNode ExpandOptions(MonteCarloNode root)
         {
             string move;
-            move = RandomMove();
-            while (!InsertChild(move))
+            move = root.RandomMove();
+            while (!root.InsertChild(move))
             {
 
-                move = RandomMove();
+                move = root.RandomMove();
 
             }
 
-            return children[FindMove(move)];
+            return root.children[root.FindMove(move)];
         }
 
         private double Evaluate(MonteCarloNode child)
@@ -1627,58 +1601,7 @@ namespace GameCore
         /// On a losing endstate the function returns false and true on a victory.
         /// </summary>
         /// <returns>Whether or not the function reached a victorious endstate</returns>
-        //public bool SimulatedGame()
-        //{
-        //    ++timesVisited;
-        //    bool mctsVictory = false;
-
-        //    if (depthCheck > 25)
-        //    {
-        //        gameOver = true;
-        //    }
-
-        //    if (!gameOver)
-        //    {
-        //        int nextNodeIndex = SelectNode();
-
-        //        if (nextNodeIndex < 0)
-        //        {
-        //            nextNodeIndex = SelectNode(ExpandOptions());
-        //            lock (childrenAccess)
-        //            {
-        //                children.Sort(delegate (MonteCarloNode lValue, MonteCarloNode rValue)
-        //                {
-        //                    if (lValue.wins == rValue.wins) return 0;
-        //                    else return lValue.wins.CompareTo(rValue.wins);
-        //                });
-        //            }
-        //        }
-        //        if (children[nextNodeIndex].SimulatedGame())
-        //        {
-        //            mctsVictory = true;
-        //            ++wins;
-        //        }
-        //    }
-        //    else
-        //    {
-        //        if (parent.turn.ToString() == MonteCarloPlayer)
-        //        {
-        //            mctsVictory = true;
-        //            moveTotals[thisMove] = new Tuple<double, double>(moveTotals[thisMove].Item1 + 1, moveTotals[thisMove].Item2);
-        //            ++wins;
-        //        }
-        //    }
-        //    lock (childrenAccess)
-        //    {
-        //        children.Sort(delegate (MonteCarloNode lValue, MonteCarloNode rValue)
-        //        {
-        //            if (lValue.wins == rValue.wins) return 0;
-        //            else return lValue.wins.CompareTo(rValue.wins);
-        //        });
-        //    }
-        //    return mctsVictory;
-        //}
-
+        
         public void Backpropagate(MonteCarloNode newlyAddedNode)
         {
             lock (childrenAccess)
@@ -1715,7 +1638,7 @@ namespace GameCore
 
         private void ThreadedTreeSearch(Stopwatch timer, MonteCarloNode MonteCarlo)
         {            
-            for (int i = 0; /*i < 10000 &&*/ timer.Elapsed.TotalSeconds < 4; ++i)
+            for (int i = 0; /*i < 10000 &&*/ timer.Elapsed.TotalSeconds < 2; ++i)
             {
                 MonteCarlo.Backpropagate(MonteCarlo.ExpandOptions(MonteCarlo.SelectNode(MonteCarlo)));
             }
@@ -1728,7 +1651,7 @@ namespace GameCore
 
             List<Thread> simulatedGames = new List<Thread>();
 
-            for (int i = 0; i < 4; ++i)
+            for (int i = 0; i < 1; ++i)
             {
                 Thread simulatedGameThread = new Thread(() => ThreadedTreeSearch(timer, TreeSearch)) { IsBackground = true };
                 simulatedGameThread.Name = String.Format("SimulatedGameThread{0}", i + 1);
@@ -1744,7 +1667,7 @@ namespace GameCore
 
             timer.Stop();
             //#endif
-            Console.WriteLine("Wins: " + TreeSearch.GetScore());
+            Console.WriteLine("Score: " + TreeSearch.GetScore());
             Console.WriteLine("Visits: " + TreeSearch.GetVisits());
             List<MonteCarloNode> childrenToChoose = TreeSearch.GetChildrenNodes();
             childrenToChoose.Sort();
