@@ -101,6 +101,18 @@ namespace GameCore
             return wallCount;
         }
 
+        public List<string> GetPossibleMoves()
+        {
+            if (whoseTurn == PlayerEnum.ONE)
+            {
+                return possibleMoves[0];
+            }
+            else
+            {
+                return possibleMoves[1];
+            }
+        }
+
         public PlayerCoordinate GetPlayerCoordinate(int player)
         {
             if (player == 1)
