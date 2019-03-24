@@ -1038,55 +1038,17 @@ namespace GameCore
         {
             string move = null;
 
-            //List<string> blockingWalls = PlaceBlockingWall();
+            move = possibleMoves[0].Item1;
 
-            //if (randomPercentileChance.Next(1, 100) <= 11 || (playerLocations[turn == 0 ? 0 : 1].Row / 2) + (turn == 0 ? -1 : 1) == (turn == 0 ? 0 : 8) || (turn == 0 ? playerLocations[1].Row / 2 < 4 : playerLocations[0].Row / 2 > 4))
-            //{
-            //    move = possibleMoves[0].Item1;
+            for (int i = 1; childrensMoves.Contains(move) && i < possibleMoves.Count; ++i)
+            {
+                move = possibleMoves[i].Item1;
+            }
 
-            //    for (int i = 1; childrensMoves.Contains(move) && i < possibleMoves.Count; ++i)
-            //    {
-            //        move = possibleMoves[i].Item1;
-            //    }
-
-            //    if (childrensMoves.Contains(move))
-            //    {
-            //        move = possibleMoves[randomPercentileChance.Next(0, possibleMoves.Count)].Item1;
-            //    }
-            //}
-            //else if (wallsRemaining[turn == 0 ? 0 : 1] != 0 && possibleVerticalWalls.Count > 0)
-            //{
-            //    return FindBlockingWall();
-            //}
-            //else
-            //{
-                move = possibleMoves[0].Item1;
-
-                for (int i = 1; childrensMoves.Contains(move) && i < possibleMoves.Count; ++i)
-                {
-                    move = possibleMoves[i].Item1;
-                }
-
-                if (childrensMoves.Contains(move))
-                {
-                    move = possibleMoves[randomPercentileChance.Next(0, possibleMoves.Count)].Item1;
-                }
-            //}
-
-            //if (String.IsNullOrEmpty(move))
-            ////{
-            //    move = possibleMoves[0].Item1;
-
-            //    for (int i = 1; childrensMoves.Contains(move) && i < possibleMoves.Count; ++i)
-            //    {
-            //        move = possibleMoves[i].Item1;
-            //    }
-
-            //    if (childrensMoves.Contains(move))
-            //    {
-            //        move = possibleMoves[randomPercentileChance.Next(0, possibleMoves.Count)].Item1;
-            //    }
-            //}
+            if (childrensMoves.Contains(move))
+            {
+                move = possibleMoves[randomPercentileChance.Next(0, possibleMoves.Count)].Item1;
+            }
 
             return move;
         }
