@@ -182,7 +182,7 @@ namespace GameCore
             return timesVisited;
         }
 
-        private int shortestPathfinder(string move)
+        private int ShortestPathfinder(string move)
         {
             PlayerCoordinate start;
             string startString;
@@ -211,6 +211,8 @@ namespace GameCore
             startString = Convert.ToChar(97 + start.Col / 2) + (9 - (start.Row) / 2).ToString();
 
             PriorityQueue<MoveEvaluation> possiblePaths = new PriorityQueue<MoveEvaluation>();
+            HashSet<string> exhaustedPaths = new HashSet<string>();
+            exhaustedPaths.Add(startString);
 
             for (int i = 0; i < 4; ++i)
             {
@@ -218,33 +220,33 @@ namespace GameCore
                 switch (i)
                 {
                     case 0:
-                        if (startString[1] + 1 < '9' && !board[start.Row + 1].Get(start.Col))
+                        if (startString[1] + 1 < '9' && !board[start.Row - 1].Get(start.Col))
                         {
-                            path = startString[0].ToString() + (startString[1] + 1).ToString();
+                            path = startString[0] + Convert.ToChar(startString[1] + 1).ToString();
                         }
                         break;
                     case 1:
                         if (startString[0] + 1 < 'i' && !board[start.Row].Get(start.Col + 1))
                         {
-                            path = (startString[0] + 1).ToString() + startString[1].ToString();
+                            path = Convert.ToChar(startString[0] + 1).ToString() + startString[1];
                         }
                         break;
                     case 2:
-                        if (startString[1] - 1 >= '1' && !board[start.Row - 1].Get(start.Col))
+                        if (startString[1] - 1 >= '1' && !board[start.Row + 1].Get(start.Col))
                         {
-                            path = startString[0].ToString() + (startString[1] - 1).ToString();
+                            path = startString[0] + Convert.ToChar(startString[1] - 1).ToString();
                         }
                         break;
                     case 3:
                         if (startString[0] - 1 >= 'a' && !board[start.Row].Get(start.Col - 1))
                         {
-                            path = startString[0].ToString() + (startString[1] + 1).ToString();
+                            path = Convert.ToChar(startString[0] - 1).ToString() + startString[1];
                         }
                         break;
                 }
                 if (path != null) 
                 {
-                    possiblePaths.Enqueue(new MoveEvaluation(path, HeuristicCostEstimate(new PlayerCoordinate(path), new PlayerCoordinate(path[0].ToString() + goalRow.ToString())), 1));
+                    possiblePaths.Enqueue(new MoveEvaluation(path, HeuristicCostEstimate(new PlayerCoordinate(path), new PlayerCoordinate(path[0].ToString() + goalRow.ToString())), 2));
                 }
             }
 
@@ -256,6 +258,7 @@ namespace GameCore
                 nextMove = possiblePaths.Dequeue();
                 PlayerCoordinate current = new PlayerCoordinate(nextMove.Move);
                 string currentString = Convert.ToChar(97 + current.Col / 2) + (9 - (current.Row) / 2).ToString();
+                exhaustedPaths.Add(currentString);
 
                 if (current.Row == goalRowForBoard)
                 {
@@ -268,32 +271,32 @@ namespace GameCore
                     switch (i)
                     {
                         case 0:
-                            if (currentString[1] + 1 < '9' && !board[current.Row + 1].Get(current.Col))
+                            if (currentString[1] + 1 < '9' && !board[current.Row - 1].Get(current.Col))
                             {
-                                path = currentString[0].ToString() + (currentString[1] + 1).ToString();
+                                path = currentString[0] + Convert.ToChar(currentString[1] + 1).ToString();
                             }
                             break;
                         case 1:
                             if (currentString[0] + 1 < 'i' && !board[current.Row].Get(current.Col + 1))
                             {
-                                path = (currentString[0] + 1).ToString() + currentString[1].ToString();
+                                path = Convert.ToChar(currentString[0] + 1).ToString() + currentString[1];
                             }
                             break;
                         case 2:
-                            if (currentString[1] - 1 >= '1' && !board[current.Row - 1].Get(current.Col))
+                            if (currentString[1] - 1 >= '1' && !board[current.Row + 1].Get(current.Col))
                             {
-                                path = currentString[0].ToString() + (currentString[1] - 1).ToString();
+                                path = currentString[0] + Convert.ToChar(currentString[1] - 1).ToString();
                             }
                             break;
                         case 3:
                             if (currentString[0] - 1 >= 'a' && !board[current.Row].Get(current.Col - 1))
                             {
-                                path = currentString[0].ToString() + (currentString[1] + 1).ToString();
+                                path = Convert.ToChar(currentString[0] - 1).ToString() + currentString[1];
                             }
                             break;
                     }
-                    if (path != null)
-                    { 
+                    if (path != null && !exhaustedPaths.Contains(path))
+                    {
                         possiblePaths.Enqueue(new MoveEvaluation(path, HeuristicCostEstimate(new PlayerCoordinate(path), new PlayerCoordinate(path[0].ToString() + goalRow.ToString())), nextMove.DistanceFromStart + 1));
                     }
                 }
@@ -326,24 +329,7 @@ namespace GameCore
 
         public int CompareTo(MonteCarloNode carloNode)
         {
-            // A null value means that this object is greater.
-            if (carloNode == null)
-            {
-                return 1;
-            }
-            else if (GetVisits() > carloNode.GetVisits())
-            {
-                return 1;
-            }
-            else if (GetVisits() < carloNode.GetVisits())
-            {
-                return -1;
-            }
-            else
-            {
-                return 0;
-            }
-
+            return timesVisited.CompareTo(carloNode.timesVisited);
         }
 
         public MonteCarloNode(PlayerCoordinate playerOne, PlayerCoordinate playerTwo, int playerOneTotalWalls, int playerTwoTotalWalls, List<WallCoordinate> wallCoordinates, GameBoard.PlayerEnum currentTurn)
@@ -974,7 +960,7 @@ namespace GameCore
                 SetPlayerMoveValues(wallCoordinate, mid);
             }
 
-            double possibleMinimumHeuristic = shortestPathfinder(start.Col.ToString() + start.Row.ToString());
+            double possibleMinimumHeuristic = ShortestPathfinder(Convert.ToChar(97 + start.Col / 2) + (9 - (start.Row) / 2).ToString());
 
             if (wallCoordinate != null)
             {
@@ -1839,7 +1825,7 @@ namespace GameCore
 
         private void ThreadedTreeSearchEasy(Stopwatch timer, MonteCarloNode MonteCarlo)
         {            
-            for (int i = 0; /*i < 10000 &&*/ timer.Elapsed.TotalSeconds < 1; ++i)
+            for (/*int i = 0*/; /*i < 10000 &&*/ timer.Elapsed.TotalSeconds < 1; /*++i*/)
             {
                 MonteCarlo.Backpropagate(MonteCarlo.ExpandOptions(MonteCarlo.SelectNode(MonteCarlo)));
             }
@@ -1847,7 +1833,7 @@ namespace GameCore
 
         private void ThreadedTreeSearchHard(Stopwatch timer, MonteCarloNode MonteCarlo)
         {
-            for (int i = 0; /*i < 10000 &&*/ timer.Elapsed.TotalSeconds < 5; ++i)
+            for (/*int i = 0*/; /*i < 10000 &&*/ timer.Elapsed.TotalSeconds < 5; /*++i*/)
             {
                 MonteCarlo.Backpropagate(MonteCarlo.ExpandOptions(MonteCarlo.SelectNode(MonteCarlo)));
             }
