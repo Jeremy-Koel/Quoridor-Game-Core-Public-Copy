@@ -378,11 +378,14 @@ namespace GameCore
             {
                 return false;
             }
-            if (possibleWalls.Contains(wallString)/*IsValidWallPlacement(wallCoordinate)*/ && CanPlayersReachGoal(wallCoordinate))
+            if (possibleWalls.Contains(wallString) && CanPlayersReachGoal(wallCoordinate))
             {
                 walls.Add(wallCoordinate);
                 board[wallCoordinate.StartRow, wallCoordinate.StartCol] = board[wallCoordinate.EndRow, wallCoordinate.EndCol] = WALL;
+
                 possibleWalls.Remove(wallString);
+                RemoveImpossibleWalls(possibleWalls, wallCoordinate);
+
                 if (player == PlayerEnum.ONE)
                 {
                     player1walls--;
@@ -391,14 +394,52 @@ namespace GameCore
                 {
                     player2walls--;
                 }
-                // Mark that this player has taken their turn 
+                
                 possibleMoves[whoseTurn == 0 ? 0 : 1] = PossibleMovesFromPosition();
+                // Mark that this player has taken their turn 
                 ChangeTurn();
                 possibleMoves[whoseTurn == 0 ? 0 : 1] = PossibleMovesFromPosition();
                 return true;
             }
 
             return false;
+        }
+
+        // Remove walls made impossible by this move 
+        private void RemoveImpossibleWalls(List<string> moves, WallCoordinate wallCoordinate)
+        {
+            int row, col;
+            string str;
+            if (wallCoordinate.Orientation == WallCoordinate.WallOrientation.Horizontal)
+            {
+                if (wallCoordinate.StartCol != 0)
+                {
+                    col = wallCoordinate.StartCol - 1;
+                    str = Convert.ToChar(97 + col / 2) + (9 - (wallCoordinate.StartRow + 1) / 2).ToString();
+                    moves.Remove(str);
+                }
+                if (wallCoordinate.StartCol != 14)
+                {
+                    col = wallCoordinate.StartCol + 2;
+                    str = Convert.ToChar(97 + col / 2) + (9 - (wallCoordinate.StartRow + 1) / 2).ToString();
+                    moves.Remove(str);
+                }
+            }
+            else
+            {
+                if (wallCoordinate.StartRow != 0)
+                {
+                    row = wallCoordinate.StartRow - 1;
+                    str = Convert.ToChar(97 + (wallCoordinate.StartCol - 1) / 2) + (9 - row / 2).ToString();
+                    moves.Remove(str);
+                }
+                if (wallCoordinate.StartRow != 14)
+                {
+                    row = wallCoordinate.StartRow + 2;
+                    str = Convert.ToChar(97 + (wallCoordinate.StartCol - 1) / 2) + (9 - row / 2).ToString();
+                    moves.Remove(str);
+                }
+            }
         }
 
         private void PossibleHorizontalDiagonalJumps(List<string> validMoves, int direction)
