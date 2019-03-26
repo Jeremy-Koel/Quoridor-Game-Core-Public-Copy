@@ -191,7 +191,6 @@ namespace GameCore
 
             if (move.Length != 2)
             {
-
                 WallCoordinate wallCoordinate = new WallCoordinate(move);
 
                 board[wallCoordinate.StartRow].Set(wallCoordinate.StartCol, true);
@@ -965,7 +964,13 @@ namespace GameCore
 
             if (wallCoordinate != null)
             {
+                board[wallCoordinate.StartRow].Set(wallCoordinate.StartCol, true);
+
                 Tuple<int, int> mid = FindMidpoint(new PlayerCoordinate(wallCoordinate.StartRow, wallCoordinate.StartCol), new PlayerCoordinate(wallCoordinate.EndRow, wallCoordinate.EndCol));
+                board[mid.Item1].Set(mid.Item2, true);
+
+                board[wallCoordinate.EndRow].Set(wallCoordinate.EndCol, true);
+
                 SetPlayerMoveValues(wallCoordinate, mid);
             }
 
@@ -973,7 +978,13 @@ namespace GameCore
 
             if (wallCoordinate != null)
             {
+                board[wallCoordinate.StartRow].Set(wallCoordinate.StartCol, false);
+
                 Tuple<int, int> mid = FindMidpoint(new PlayerCoordinate(wallCoordinate.StartRow, wallCoordinate.StartCol), new PlayerCoordinate(wallCoordinate.EndRow, wallCoordinate.EndCol));
+                board[mid.Item1].Set(mid.Item2, false);
+
+                board[wallCoordinate.EndRow].Set(wallCoordinate.EndCol, false);
+
                 ResetPlayerMoveValues(wallCoordinate, mid);
             }
 
@@ -1849,25 +1860,22 @@ namespace GameCore
 
             List<Thread> simulatedGames = new List<Thread>();
 
-            if (isHardAI)
+            for (int i = 0; i < 4; ++i)
             {
-                for (int i = 0; i < 4; ++i)
+                Thread simulatedGameThread;
+
+                if (isHardAI)
                 {
-                    Thread simulatedGameThread = new Thread(() => ThreadedTreeSearchHard(timer, TreeSearch)) { IsBackground = true };
-                    simulatedGameThread.Name = String.Format("SimulatedGameThread{0}", i + 1);
-                    simulatedGameThread.Start();
-                    simulatedGames.Add(simulatedGameThread);
+                    simulatedGameThread = new Thread(() => ThreadedTreeSearchHard(timer, TreeSearch)) { IsBackground = true };
                 }
-            }
-            else
-            {
-                for (int i = 0; i < 4; ++i)
+                else
                 {
-                    Thread simulatedGameThread = new Thread(() => ThreadedTreeSearchEasy(timer, TreeSearch)) { IsBackground = true };
-                    simulatedGameThread.Name = String.Format("SimulatedGameThread{0}", i + 1);
-                    simulatedGameThread.Start();
-                    simulatedGames.Add(simulatedGameThread);
+                    simulatedGameThread = new Thread(() => ThreadedTreeSearchEasy(timer, TreeSearch)) { IsBackground = true };
                 }
+
+                simulatedGameThread.Name = String.Format("SimulatedGameThread{0}", i + 1);
+                simulatedGameThread.Start();
+                simulatedGames.Add(simulatedGameThread);
             }
 
 
