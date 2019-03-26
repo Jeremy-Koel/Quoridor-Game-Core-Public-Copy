@@ -232,7 +232,7 @@ namespace GameCore
                     shortestPath = nextMove.DistanceFromStart;
                 }
 
-                for (int i = 0; i < 12; ++i)
+                for (int i = 0; i < 4; ++i)
                 {
                     string path = "a1"; // Temporary Value
                     if (true)  // Implement check to see if current move is contained within my possible moves List
