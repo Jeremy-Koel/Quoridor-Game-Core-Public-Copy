@@ -185,6 +185,7 @@ namespace GameCore
         private int shortestPathfinder(string move)
         {
             PlayerCoordinate start;
+            string startString;
             int goalRow = turn == 0 ? 9 : 1;
             int goalRowForBoard = turn == 0 ? 0 : 16;
 
@@ -208,12 +209,41 @@ namespace GameCore
                 start = new PlayerCoordinate(move);
             }
 
+            startString = Convert.ToChar(97 + start.Col / 2) + (9 - (start.Row) / 2).ToString();
+
             PriorityQueue<MoveEvaluation> possiblePaths = new PriorityQueue<MoveEvaluation>();
 
-            for (int i = 0; i < 12; ++i)
+            for (int i = 0; i < 4; ++i)
             {
-                string path = "a1"; // Temporary Value
-                if (true)  // Implement check to see if current move is contained within my possible moves List
+                string path = null;
+                switch (i)
+                {
+                    case 0:
+                        if (startString[1] + 1 < '9' && !board[start.Row + 1].Get(start.Col))
+                        {
+                            path = startString[0].ToString() + (startString[1] + 1).ToString();
+                        }
+                        break;
+                    case 1:
+                        if (startString[0] + 1 < 'i' && !board[start.Row].Get(start.Col + 1))
+                        {
+                            path = (startString[0] + 1).ToString() + startString[1].ToString();
+                        }
+                        break;
+                    case 2:
+                        if (startString[1] - 1 >= '1' && !board[start.Row - 1].Get(start.Col))
+                        {
+                            path = startString[0].ToString() + (startString[1] - 1).ToString();
+                        }
+                        break;
+                    case 3:
+                        if (startString[0] - 1 >= 'a' && !board[start.Row].Get(start.Col - 1))
+                        {
+                            path = startString[0].ToString() + (startString[1] + 1).ToString();
+                        }
+                        break;
+                }
+                if (path != null) 
                 {
                     possiblePaths.Enqueue(new MoveEvaluation(path, HeuristicCostEstimate(new PlayerCoordinate(path), new PlayerCoordinate(path[0].ToString() + goalRow.ToString())), 1));
                 }
@@ -226,6 +256,7 @@ namespace GameCore
             {
                 nextMove = possiblePaths.Dequeue();
                 PlayerCoordinate current = new PlayerCoordinate(nextMove.Move);
+                string currentString = Convert.ToChar(97 + current.Col / 2) + (9 - (current.Row) / 2).ToString();
 
                 if (current.Row == goalRowForBoard)
                 {
@@ -234,9 +265,36 @@ namespace GameCore
 
                 for (int i = 0; i < 4; ++i)
                 {
-                    string path = "a1"; // Temporary Value
-                    if (true)  // Implement check to see if current move is contained within my possible moves List
+                    string path = null;
+                    switch (i)
                     {
+                        case 0:
+                            if (currentString[1] + 1 < '9' && !board[current.Row + 1].Get(current.Col))
+                            {
+                                path = currentString[0].ToString() + (currentString[1] + 1).ToString();
+                            }
+                            break;
+                        case 1:
+                            if (currentString[0] + 1 < 'i' && !board[current.Row].Get(current.Col + 1))
+                            {
+                                path = (currentString[0] + 1).ToString() + currentString[1].ToString();
+                            }
+                            break;
+                        case 2:
+                            if (currentString[1] - 1 >= '1' && !board[current.Row - 1].Get(current.Col))
+                            {
+                                path = currentString[0].ToString() + (currentString[1] - 1).ToString();
+                            }
+                            break;
+                        case 3:
+                            if (currentString[0] - 1 >= 'a' && !board[current.Row].Get(current.Col - 1))
+                            {
+                                path = currentString[0].ToString() + (currentString[1] + 1).ToString();
+                            }
+                            break;
+                    }
+                    if (path != null)
+                    { 
                         possiblePaths.Enqueue(new MoveEvaluation(path, HeuristicCostEstimate(new PlayerCoordinate(path), new PlayerCoordinate(path[0].ToString() + goalRow.ToString())), nextMove.DistanceFromStart + 1));
                     }
                 }
@@ -911,7 +969,7 @@ namespace GameCore
                 SetPlayerMoveValues(wallCoordinate, mid);
             }
 
-            double possibleMinimumHeuristic = HeuristicCostEstimate(start, new PlayerCoordinate(EndRow, start.Col));
+            double possibleMinimumHeuristic = shortestPathfinder(start.Col.ToString() + start.Row.ToString());
 
             if (wallCoordinate != null)
             {
@@ -1755,20 +1813,30 @@ namespace GameCore
     public class MonteCarlo
     {
         MonteCarloNode TreeSearch;
+        bool isHardAI;
         /// <summary>
         /// The MonteCarlo class is initialized with a GameBoard instance and can calculate a move given a GameBoard
         /// </summary>
         /// <param name="boardState">The current GameBoard to calculate a move from</param>
-        public MonteCarlo(GameBoard boardState)
+        public MonteCarlo(GameBoard boardState, bool isHard)
         {
+            isHardAI = isHard;
             TreeSearch = new MonteCarloNode(boardState.GetPlayerCoordinate(GameBoard.PlayerEnum.ONE), boardState.GetPlayerCoordinate(GameBoard.PlayerEnum.TWO),
-                                                            boardState.GetPlayerWallCount(GameBoard.PlayerEnum.ONE), boardState.GetPlayerWallCount(GameBoard.PlayerEnum.TWO),
-                                                            boardState.GetWalls(), boardState.GetWhoseTurn() == 1 ? GameBoard.PlayerEnum.ONE : GameBoard.PlayerEnum.TWO);
+                                                              boardState.GetPlayerWallCount(GameBoard.PlayerEnum.ONE), boardState.GetPlayerWallCount(GameBoard.PlayerEnum.TWO),
+                                                              boardState.GetWalls(), boardState.GetWhoseTurn() == 1 ? GameBoard.PlayerEnum.ONE : GameBoard.PlayerEnum.TWO);
         }
 
-        private void ThreadedTreeSearch(Stopwatch timer, MonteCarloNode MonteCarlo)
+        private void ThreadedTreeSearchEasy(Stopwatch timer, MonteCarloNode MonteCarlo)
         {            
-            for (int i = 0; /*i < 10000 &&*/ timer.Elapsed.TotalSeconds < 2; ++i)
+            for (int i = 0; /*i < 10000 &&*/ timer.Elapsed.TotalSeconds < 1; ++i)
+            {
+                MonteCarlo.Backpropagate(MonteCarlo.ExpandOptions(MonteCarlo.SelectNode(MonteCarlo)));
+            }
+        }
+
+        private void ThreadedTreeSearchHard(Stopwatch timer, MonteCarloNode MonteCarlo)
+        {
+            for (int i = 0; /*i < 10000 &&*/ timer.Elapsed.TotalSeconds < 5; ++i)
             {
                 MonteCarlo.Backpropagate(MonteCarlo.ExpandOptions(MonteCarlo.SelectNode(MonteCarlo)));
             }
@@ -1781,12 +1849,25 @@ namespace GameCore
 
             List<Thread> simulatedGames = new List<Thread>();
 
-            for (int i = 0; i < 1; ++i)
+            if (isHardAI)
             {
-                Thread simulatedGameThread = new Thread(() => ThreadedTreeSearch(timer, TreeSearch)) { IsBackground = true };
-                simulatedGameThread.Name = String.Format("SimulatedGameThread{0}", i + 1);
-                simulatedGameThread.Start();
-                simulatedGames.Add(simulatedGameThread);
+                for (int i = 0; i < 4; ++i)
+                {
+                    Thread simulatedGameThread = new Thread(() => ThreadedTreeSearchHard(timer, TreeSearch)) { IsBackground = true };
+                    simulatedGameThread.Name = String.Format("SimulatedGameThread{0}", i + 1);
+                    simulatedGameThread.Start();
+                    simulatedGames.Add(simulatedGameThread);
+                }
+            }
+            else
+            {
+                for (int i = 0; i < 4; ++i)
+                {
+                    Thread simulatedGameThread = new Thread(() => ThreadedTreeSearchEasy(timer, TreeSearch)) { IsBackground = true };
+                    simulatedGameThread.Name = String.Format("SimulatedGameThread{0}", i + 1);
+                    simulatedGameThread.Start();
+                    simulatedGames.Add(simulatedGameThread);
+                }
             }
 
 
