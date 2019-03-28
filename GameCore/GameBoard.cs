@@ -417,41 +417,29 @@ namespace GameCore
                 moves.Remove(wallCoordinate.StandardNotationString.Substring(0, 2) + 'v');
 
                 // Remove overlapping horizontal wall starting one column to the left 
-                if (wallCoordinate.StartCol != 0)
-                {
-                    int nLeftCol = Convert.ToChar(wallCoordinate.StandardNotationString.Substring(0, 1)) - 1;
-                    char cLeftCol = Convert.ToChar(nLeftCol);
-                    moves.Remove(cLeftCol + wallCoordinate.StandardNotationString.Substring(1));
-                }
+                int nLeftCol = Convert.ToChar(wallCoordinate.StandardNotationString.Substring(0, 1)) - 1;
+                char cLeftCol = Convert.ToChar(nLeftCol);
+                moves.Remove(cLeftCol + wallCoordinate.StandardNotationString.Substring(1));
 
                 // Remove overlapping horizontal wall starting one column to the right
-                if (wallCoordinate.StartCol != 14)
-                {
-                    int nLeftCol = Convert.ToChar(wallCoordinate.StandardNotationString.Substring(0, 1)) + 1;
-                    char cLeftCol = Convert.ToChar(nLeftCol);
-                    moves.Remove(cLeftCol + wallCoordinate.StandardNotationString.Substring(1));
-                }
+                int nRightCol = Convert.ToChar(wallCoordinate.StandardNotationString.Substring(0, 1)) + 1;
+                char cRightCol = Convert.ToChar(nRightCol);
+                moves.Remove(cRightCol + wallCoordinate.StandardNotationString.Substring(1));
             }
             else
             {
                 // Remove bisecting wall location 
                 moves.Remove(wallCoordinate.StandardNotationString.Substring(0, 2) + 'h');
 
-                // Remove overlapping vertical wall starting one row up 
-                if (wallCoordinate.StartRow != 0)
-                {
-                    int nUpRow = Convert.ToChar(wallCoordinate.StandardNotationString.Substring(1, 1)) - 1;
-                    char cUpRow = Convert.ToChar(nUpRow);
-                    moves.Remove(wallCoordinate.StandardNotationString.Substring(0, 1) + cUpRow + wallCoordinate.StandardNotationString.Substring(2, 1));
-                }
+                // Remove overlapping vertical wall starting one row down 
+                int nDownRow = Convert.ToChar(wallCoordinate.StandardNotationString.Substring(1, 1)) - 1;
+                char cDownRow = Convert.ToChar(nDownRow);
+                moves.Remove(wallCoordinate.StandardNotationString.Substring(0, 1) + cDownRow + wallCoordinate.StandardNotationString.Substring(2, 1));
 
-                // Remove overlapping veritcal wall starting one row down 
-                if (wallCoordinate.StartRow != 14)
-                {
-                    int nUpRow = Convert.ToChar(wallCoordinate.StandardNotationString.Substring(1, 1)) + 1;
-                    char cUpRow = Convert.ToChar(nUpRow);
-                    moves.Remove(wallCoordinate.StandardNotationString.Substring(0, 1) + cUpRow + wallCoordinate.StandardNotationString.Substring(2, 1));
-                }
+                // Remove overlapping veritcal wall starting one row up 
+                int nUpRow = Convert.ToChar(wallCoordinate.StandardNotationString.Substring(1, 1)) + 1;
+                char cUpRow = Convert.ToChar(nUpRow);
+                moves.Remove(wallCoordinate.StandardNotationString.Substring(0, 1) + cUpRow + wallCoordinate.StandardNotationString.Substring(2, 1));
             }
         }
 
