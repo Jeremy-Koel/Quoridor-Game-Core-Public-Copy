@@ -195,11 +195,13 @@ namespace GameCore
                 }
             }
 
+            // Build list of possible walls 
             for (int r = 0; r < 8; ++r)
             {
                 for (int c = 0; c < 8; ++c)
                 {
-                    possibleWalls.Add((Convert.ToChar('a' + c)).ToString() + (Convert.ToChar('1' + r)).ToString());
+                    possibleWalls.Add((Convert.ToChar('a' + c)).ToString() + (Convert.ToChar('1' + r)) + 'h'.ToString());
+                    possibleWalls.Add((Convert.ToChar('a' + c)).ToString() + (Convert.ToChar('1' + r)) + 'v'.ToString());
                 }
             }
 
@@ -355,15 +357,16 @@ namespace GameCore
 
         public bool PlaceWall(PlayerEnum player, WallCoordinate wallCoordinate)
         {
-            string wallString;
-            if (wallCoordinate.Orientation == WallCoordinate.WallOrientation.Horizontal)
-            {
-                wallString = Convert.ToChar(97 + wallCoordinate.StartCol / 2) + (9 - (wallCoordinate.StartRow + 1) / 2).ToString();
-            }
-            else
-            {
-                wallString = Convert.ToChar(97 + (wallCoordinate.StartCol - 1) / 2) + (9 - wallCoordinate.StartRow / 2).ToString();
-            }
+            //string wallString;
+            //if (wallCoordinate.Orientation == WallCoordinate.WallOrientation.Horizontal)
+            //{
+                
+            //    wallString = Convert.ToChar(97 + wallCoordinate.StartCol / 2) + (9 - (wallCoordinate.StartRow + 1) / 2).ToString();
+            //}
+            //else
+            //{
+            //    wallString = Convert.ToChar(97 + (wallCoordinate.StartCol - 1) / 2) + (9 - wallCoordinate.StartRow / 2).ToString();
+            //}
 
 
             if (gameOver || whoseTurn != player)
@@ -378,13 +381,13 @@ namespace GameCore
             {
                 return false;
             }
-            if (possibleWalls.Contains(wallString) && CanPlayersReachGoal(wallCoordinate))
+            if (possibleWalls.Contains(wallCoordinate.StandardNotationString) && CanPlayersReachGoal(wallCoordinate))
             {
                 walls.Add(wallCoordinate);
                 board[wallCoordinate.StartRow, wallCoordinate.StartCol] = board[wallCoordinate.EndRow, wallCoordinate.EndCol] = WALL;
 
-                possibleWalls.Remove(wallString);
-                RemoveImpossibleWalls(possibleWalls, wallCoordinate);
+                possibleWalls.Remove(wallCoordinate.StandardNotationString);
+                RemoveOverlappingPossibleWalls(possibleWalls, wallCoordinate);
 
                 if (player == PlayerEnum.ONE)
                 {
@@ -406,38 +409,48 @@ namespace GameCore
         }
 
         // Remove walls made impossible by this move 
-        private void RemoveImpossibleWalls(List<string> moves, WallCoordinate wallCoordinate)
+        private void RemoveOverlappingPossibleWalls(List<string> moves, WallCoordinate wallCoordinate)
         {
-            int row, col;
-            string str;
             if (wallCoordinate.Orientation == WallCoordinate.WallOrientation.Horizontal)
             {
+                // Remove bisecting wall location 
+                moves.Remove(wallCoordinate.StandardNotationString.Substring(0, 2) + 'v');
+
+                // Remove overlapping horizontal wall starting one column to the left 
                 if (wallCoordinate.StartCol != 0)
                 {
-                    col = wallCoordinate.StartCol - 1;
-                    str = Convert.ToChar(97 + col / 2) + (9 - (wallCoordinate.StartRow + 1) / 2).ToString();
-                    moves.Remove(str);
+                    int nLeftCol = Convert.ToChar(wallCoordinate.StandardNotationString.Substring(0, 1)) - 1;
+                    char cLeftCol = Convert.ToChar(nLeftCol);
+                    moves.Remove(cLeftCol + wallCoordinate.StandardNotationString.Substring(1));
                 }
+
+                // Remove overlapping horizontal wall starting one column to the right
                 if (wallCoordinate.StartCol != 14)
                 {
-                    col = wallCoordinate.StartCol + 2;
-                    str = Convert.ToChar(97 + col / 2) + (9 - (wallCoordinate.StartRow + 1) / 2).ToString();
-                    moves.Remove(str);
+                    int nLeftCol = Convert.ToChar(wallCoordinate.StandardNotationString.Substring(0, 1)) + 1;
+                    char cLeftCol = Convert.ToChar(nLeftCol);
+                    moves.Remove(cLeftCol + wallCoordinate.StandardNotationString.Substring(1));
                 }
             }
             else
             {
+                // Remove bisecting wall location 
+                moves.Remove(wallCoordinate.StandardNotationString.Substring(0, 2) + 'h');
+
+                // Remove overlapping vertical wall starting one row up 
                 if (wallCoordinate.StartRow != 0)
                 {
-                    row = wallCoordinate.StartRow - 1;
-                    str = Convert.ToChar(97 + (wallCoordinate.StartCol - 1) / 2) + (9 - row / 2).ToString();
-                    moves.Remove(str);
+                    int nUpRow = Convert.ToChar(wallCoordinate.StandardNotationString.Substring(1, 1)) - 1;
+                    char cUpRow = Convert.ToChar(nUpRow);
+                    moves.Remove(wallCoordinate.StandardNotationString.Substring(0, 1) + cUpRow + wallCoordinate.StandardNotationString.Substring(2, 1));
                 }
+
+                // Remove overlapping veritcal wall starting one row down 
                 if (wallCoordinate.StartRow != 14)
                 {
-                    row = wallCoordinate.StartRow + 2;
-                    str = Convert.ToChar(97 + (wallCoordinate.StartCol - 1) / 2) + (9 - row / 2).ToString();
-                    moves.Remove(str);
+                    int nUpRow = Convert.ToChar(wallCoordinate.StandardNotationString.Substring(1, 1)) + 1;
+                    char cUpRow = Convert.ToChar(nUpRow);
+                    moves.Remove(wallCoordinate.StandardNotationString.Substring(0, 1) + cUpRow + wallCoordinate.StandardNotationString.Substring(2, 1));
                 }
             }
         }
