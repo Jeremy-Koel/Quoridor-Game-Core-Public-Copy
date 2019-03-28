@@ -145,6 +145,7 @@ namespace GameCore
         private List<Tuple<string, double>> possibleBlocks;
         private List<string> possibleHorizontalWalls;
         private List<string> possibleVerticalWalls;
+        private List<string> illegalWalls;
         private List<string> lastPlayerMove;
         private List<string> childrensMoves;
         private MonteCarloNode parent;
@@ -336,6 +337,7 @@ namespace GameCore
         {
             board = new List<BitArray>();
             //moveTotals = new Dictionary<string, Tuple<double, double>>();
+            illegalWalls = new List<string>();
             possibleMoveValues = new int[9, 9];
 
             for (int r = 0; r < 9; r++)
@@ -396,7 +398,7 @@ namespace GameCore
             parent = null;
         }
 
-        private MonteCarloNode(string move, List<PlayerCoordinate> players, List<int> wallCounts, List<WallCoordinate> wallCoordinates, WallCoordinate newWallCoordinate, GameBoard.PlayerEnum currentTurn, int depth, MonteCarloNode childParent)
+        private MonteCarloNode(string move, List<PlayerCoordinate> players, List<int> wallCounts, List<string> availableWalls, List<string> illegalWallPlacements, List<WallCoordinate> wallCoordinates, WallCoordinate newWallCoordinate, GameBoard.PlayerEnum currentTurn, int depth, MonteCarloNode childParent)
         {
 
             turn = currentTurn;
@@ -415,21 +417,25 @@ namespace GameCore
 
             walls = new List<WallCoordinate>(wallCoordinates);
 
+            illegalWalls = new List<string>(illegalWallPlacements);
 
             children = new List<MonteCarloNode>();
             childrensMoves = new List<string>();
 
-            possibleHorizontalWalls = possibleVerticalWalls = new List<string>();
-
-            for (int characterIndex = 0; characterIndex < 9; characterIndex++)
-            {
-                for (int numberIndex = 1; numberIndex < 10; numberIndex++)
-                {
-                    possibleVerticalWalls.Add(Convert.ToChar(97 + characterIndex).ToString() + numberIndex.ToString());
-                }
-            }
-
+            possibleHorizontalWalls = possibleVerticalWalls = availableWalls;
+            
             possibleHorizontalWalls.Remove(move.Substring(0, 2));
+
+            if (move[2] == 'v')
+            {
+                illegalWalls.Add(move[0] + Convert.ToChar(move[1] + 1).ToString() + move[2]);
+                illegalWalls.Add(move[0] + Convert.ToChar(move[1] - 1).ToString() + move[2]);
+            }
+            else
+            {
+                illegalWalls.Add(Convert.ToChar(move[0] + 1).ToString() + move[1] + move[2]);
+                illegalWalls.Add(Convert.ToChar(move[0] - 1).ToString() + move[1] + move[2]);
+            }
 
             walls.Add(newWallCoordinate);
             if (currentTurn == GameBoard.PlayerEnum.ONE)
@@ -468,7 +474,7 @@ namespace GameCore
             return indexOfMove;
         }
 
-        private MonteCarloNode(string move, int depth, List<string> availableWalls, MonteCarloNode childParent)
+        private MonteCarloNode(string move, int depth, List<string> availableWalls, List<string> illegalWallPlacements, MonteCarloNode childParent)
         {
             parent = childParent;
             board = childParent.GetBoard();
@@ -495,6 +501,7 @@ namespace GameCore
 
             wallsRemaining = new List<int>(childParent.wallsRemaining);
 
+            illegalWalls = new List<string>(illegalWallPlacements);
             walls = new List<WallCoordinate>(childParent.walls);
             possibleHorizontalWalls = possibleVerticalWalls = availableWalls;
 
@@ -539,7 +546,6 @@ namespace GameCore
                 }
             }
         }
-
 
         private void PossibleHorizontalDiagonalJumps(List<Tuple<string, double>> validMoves, int direction)
         {
@@ -648,8 +654,7 @@ namespace GameCore
                 PossibleVerticalDiagonalJumps(validMoves, direction);
             }
         }
-
-
+        
         private List<Tuple<string, double>> PossibleMovesFromPosition()
         {
             List<Tuple<string, double>> validMoves = new List<Tuple<string, double>>();
@@ -892,22 +897,6 @@ namespace GameCore
             return false;
         }
 
-        private bool IsValidWallPlacement(WallCoordinate wall)
-        {
-            bool onBoard = IsMoveInBounds(wall.StartRow, wall.StartCol)
-                         && IsMoveInBounds(wall.EndRow, wall.EndCol);
-            if (!onBoard)
-            {
-                return false;
-            }
-
-            bool onWallSpace = IsOddSpace(wall.StartRow, wall.StartCol, wall.Orientation)
-                            && IsOddSpace(wall.EndRow, wall.EndCol, wall.Orientation);
-            bool isEmpty = IsEmptyWallSpace(wall);
-            return onWallSpace
-                && isEmpty;
-        }
-
         private bool CanPlayersReachGoal(WallCoordinate wallCoordinate)
         {
             lock (boardAccess)
@@ -999,46 +988,6 @@ namespace GameCore
             return lowestCostNode;
         }
 
-        private double DistanceBetween(PlayerCoordinate currentPath, PlayerCoordinate neighbor)
-        {
-            double distance;
-            if (ValidPlayerMove(currentPath, neighbor))
-            {
-                distance = 1;
-            }
-            else
-            {
-                distance = double.PositiveInfinity;
-            }
-            return distance;
-        }
-            
-
-        private bool ValidPlayerMove(PlayerCoordinate start, PlayerCoordinate destination)
-        {
-            if (gameOver
-                || !IsMoveInBounds(destination.Row, destination.Col))
-            {
-                return false;
-            }
-
-            bool onPlayerSpace = IsMoveOnOpenSpace(turn, destination);
-            bool blocked = IsMoveBlocked(start, destination);
-            bool canReach = IsDestinationAdjacent(start, destination);
-            if (!canReach)
-            {
-                //#if DEBUG
-                //                return false;
-                //#else
-                canReach = IsValidJump(turn, start, destination);
-                //#endif
-            }
-
-            return onPlayerSpace
-                && !blocked
-                && canReach;
-        }
-
         private bool ValidWallMove(string move)
         {
             bool validityOfWallPlacement = false;
@@ -1102,51 +1051,7 @@ namespace GameCore
             }
             return retValue;
         }
-
-        private bool IsDestinationAdjacent(PlayerCoordinate start, PlayerCoordinate destination)
-        {
-            bool verticalMove = (Math.Abs(destination.Row - start.Row) == 2) && (Math.Abs(destination.Col - start.Col) == 0);
-            bool horizontalMove = (Math.Abs(destination.Col - start.Col) == 2) && (Math.Abs(destination.Row - start.Row) == 0);
-            return verticalMove ^ horizontalMove; // Only north south east west are considered adjacent 
-        }
-
-        private bool IsMoveBlocked(PlayerCoordinate start, PlayerCoordinate destination)
-        {
-            bool blocked = false;
-
-            lock (boardAccess)
-            {
-                Populate();
-
-                if (start.Row == destination.Row)
-                {
-                    if (start.Col < destination.Col)
-                    {
-                        blocked = (board[start.Row].Get(start.Col + 1) == true) || (board[destination.Row].Get(destination.Col - 1) == true);
-                    }
-                    else
-                    {
-                        blocked = (board[start.Row].Get(start.Col - 1) == true) || (board[destination.Row].Get(destination.Col + 1) == true);
-                    }
-                }
-                else if (start.Col == destination.Col)
-                {
-                    if (start.Row < destination.Row)
-                    {
-                        blocked = (board[start.Row + 1].Get(start.Col) == true) || (board[destination.Row - 1].Get(destination.Col) == true);
-                    }
-                    else
-                    {
-                        blocked = (board[start.Row - 1].Get(start.Col) == true) || (board[destination.Row + 1].Get(destination.Col) == true);
-                    }
-                }
-
-                Unpopulate();
-            }
-
-            return blocked;
-        }
-
+                         
         private bool IsMoveInBounds(int row, int col)
         {
             return row >= 0
@@ -1171,84 +1076,7 @@ namespace GameCore
             }
 
             return onPlayerSpace && isSpaceEmpty;
-        }
-
-        private bool IsValidJump(GameBoard.PlayerEnum turn, PlayerCoordinate start, PlayerCoordinate destination)
-        { // Jumping over? 
-            lock (boardAccess)
-            {
-                Populate();
-                Tuple<int, int> midpoint = FindMidpoint(start, destination);
-                int midRow = midpoint.Item1;
-                int midCol = midpoint.Item2;
-                int opponentRow, opponentCol;
-                if (turn == GameBoard.PlayerEnum.ONE)
-                {
-                    opponentRow = playerLocations[1].Row;
-                    opponentCol = playerLocations[1].Col;
-                }
-                else
-                {
-                    opponentRow = playerLocations[0].Row;
-                    opponentCol = playerLocations[0].Col;
-                }
-                bool overJump = midRow == opponentRow
-                    && midCol == opponentCol
-                    && (Math.Abs(destination.Row - start.Row) == 4 || Math.Abs(destination.Col - start.Col) == 4);
-
-                // Diagonal jump? 
-                bool diagonalJump = false;
-                PlayerCoordinate opponent;
-                if (turn == GameBoard.PlayerEnum.ONE)
-                {
-                    opponent = new PlayerCoordinate(playerLocations[1].Row, playerLocations[1].Col);
-                }
-                else
-                {
-                    opponent = new PlayerCoordinate(playerLocations[0].Row, playerLocations[0].Col);
-                }
-
-                if (start.Row != destination.Row && start.Col != destination.Col)
-                {
-                    int targetOppRow, targetOppoCol;
-                    if (destination.Row == start.Row - 2 && destination.Col == start.Col + 2) // NE
-                    {
-                        targetOppRow = start.Row - 2;
-                        targetOppoCol = start.Col + 2;
-                        diagonalJump =
-                            ((opponent.Row == targetOppRow && opponent.Col == start.Col) || (opponent.Row == start.Row && opponent.Col == targetOppoCol))
-                            && ((board[start.Row - 3 < 0 ? 0 : start.Row - 3].Get(start.Col) == true || board[start.Row].Get(start.Col + 3 > 16 ? 16 : start.Col + 3) == true) || (start.Row - 3 == -1 || start.Col + 3 == 17));
-                    }
-                    else if (destination.Row == start.Row - 2 && destination.Col == start.Col - 2) // NW
-                    {
-                        targetOppRow = start.Row - 2;
-                        targetOppoCol = start.Col - 2;
-                        diagonalJump =
-                            ((opponent.Row == targetOppRow && opponent.Col == start.Col) || (opponent.Row == start.Row && opponent.Col == targetOppoCol))
-                            && ((board[start.Row - 3 < 0 ? 0 : start.Row - 3].Get(start.Col) == true || board[start.Row].Get(start.Col - 3 < 0 ? 0 : start.Col - 3) == true) || (start.Row - 3 == -1 || start.Col - 3 == -1));
-                    }
-                    else if (destination.Row == start.Row + 2 && destination.Col == start.Col - 2) // SW
-                    {
-                        targetOppRow = start.Row + 2;
-                        targetOppoCol = start.Col - 2;
-                        diagonalJump =
-                            ((opponent.Row == targetOppRow && opponent.Col == start.Col) || (opponent.Row == start.Row && opponent.Col == targetOppoCol))
-                            && ((board[start.Row + 3 > 16 ? 16 : start.Row + 3].Get(start.Col) == true || board[start.Row].Get(start.Col - 3 < 0 ? 0 : start.Col - 3) == true) || (start.Row + 3 == 17 || start.Col - 3 == -1));
-                    }
-                    else if (destination.Row == start.Row + 2 && destination.Col == start.Col + 2) // SE 
-                    {
-                        targetOppRow = start.Row + 2;
-                        targetOppoCol = start.Col + 2;
-                        diagonalJump =
-                            ((opponent.Row == targetOppRow && opponent.Col == start.Col) || (opponent.Row == start.Row && opponent.Col == targetOppoCol))
-                            && ((board[start.Row + 3 > 16 ? 16 : start.Row + 3].Get(start.Col) == true || board[start.Row].Get(start.Col + 3 > 16 ? 16 : start.Col + 3) == true) || (start.Row + 3 == 17 || start.Col + 3 == 17));
-                    }
-                }
-                Unpopulate();
-                return overJump || diagonalJump;
-            }
-
-        }
+        }             
 
         private Tuple<int, int> FindMidpoint(PlayerCoordinate start, PlayerCoordinate destination)
         {
@@ -1257,7 +1085,7 @@ namespace GameCore
 
         private string RandomMove()
         {
-            return randomPercentileChance.Next(1, 100) >= 51 ? FindPlayerMove() : (turn == 0 ? wallsRemaining[0] : wallsRemaining[1]) > 0 ? BoardUtil.GetRandomWallPlacementMove() : FindPlayerMove();
+            return randomPercentileChance.Next(0, 100) >= 50 ? FindPlayerMove() : (turn == 0 ? wallsRemaining[0] : wallsRemaining[1]) > 0 ? FindWall() : FindPlayerMove();
         }
 
         private string FindPlayerMove()
@@ -1285,22 +1113,46 @@ namespace GameCore
             {
                 lock (boardAccess)
                 {
-                    Populate();
                     string wallMove = null;
                     PlayerCoordinate opponent = turn == 0 ? playerLocations[1] : playerLocations[0];
+                    List<string> wallsToChooseFrom;
 
-                    switch (randomPercentileChance.Next(0, 2))
+                    if (randomPercentileChance.Next(0, 100) >= 50)
                     {
-                        case 0:
-                            wallMove = possibleVerticalWalls[randomPercentileChance.Next(0, possibleVerticalWalls.Count)] + "v";
-                            break;
-                        case 1:
-                            wallMove = possibleHorizontalWalls[randomPercentileChance.Next(0, possibleHorizontalWalls.Count)] + "h";
-                            break;
+                        wallsToChooseFrom = possibleHorizontalWalls;
+                    }
+                    else
+                    {
+                        wallsToChooseFrom = GetBlockingWalls(BoardUtil.PlayerCoordinateToString(opponent));
                     }
 
-                    Unpopulate();
-                    return wallMove;
+                    if (wallsToChooseFrom.Count > 0)
+                    {
+                        int indexOfMove = randomPercentileChance.Next(0, wallsToChooseFrom.Count);
+                        switch (randomPercentileChance.Next(0, 2))
+                        {
+                            case 0:
+                                wallMove = wallsToChooseFrom[indexOfMove] + "v";
+                                if (illegalWalls.Contains(wallMove))
+                                {
+                                    wallMove = wallsToChooseFrom[indexOfMove] + "h";
+                                }
+                                break;
+                            case 1:
+                                wallMove = wallsToChooseFrom[indexOfMove] + "h";
+                                if (illegalWalls.Contains(wallMove))
+                                {
+                                    wallMove = wallsToChooseFrom[indexOfMove] + "v";
+                                }
+                                break;
+                        }
+
+                        return wallMove;
+                    }
+                    else
+                    {
+                        return FindPlayerMove();
+                    }
                 }
 
             }
@@ -1308,6 +1160,22 @@ namespace GameCore
             {
                 return FindPlayerMove();
             }
+        }
+
+        private List<string> GetBlockingWalls(string opponent)
+        {
+            List<string> blockingWalls = new List<string>();
+            for (char col = Convert.ToChar(opponent[0] - 1); col < opponent[0] + 2; col++)
+            {
+                for (char row = Convert.ToChar(opponent[1] - 1); row < opponent[0] + 2; row++)
+                {
+                    if (possibleHorizontalWalls.Contains(col.ToString() + row.ToString()))
+                    {
+                        blockingWalls.Add(col.ToString() + row.ToString());
+                    }
+                }
+            }
+            return blockingWalls;
         }
 
         private Tuple<bool, string> GetValidJumpMove(List<PlayerCoordinate> players)
@@ -1729,7 +1597,7 @@ namespace GameCore
                             {
                                 if (!childrensMoves.Contains(move))
                                 {
-                                    children.Add(new MonteCarloNode(move, playerLocations, wallsRemaining, walls, new WallCoordinate(move), turn, depthCheck + 1, this));
+                                    children.Add(new MonteCarloNode(move, playerLocations, wallsRemaining, possibleHorizontalWalls, illegalWalls, walls, new WallCoordinate(move), turn, depthCheck + 1, this));
 
                                     //if (moveTotals.ContainsKey(move))
                                     //{
@@ -1755,7 +1623,7 @@ namespace GameCore
                         {
                             if (!childrensMoves.Contains(move))
                             {
-                                children.Add(new MonteCarloNode(move, depthCheck + 1, possibleHorizontalWalls, this));
+                                children.Add(new MonteCarloNode(move, depthCheck + 1, possibleHorizontalWalls, illegalWalls, this));
 
                                 //if (moveTotals.ContainsKey(move))
                                 //{
@@ -1815,7 +1683,7 @@ namespace GameCore
         /// The MonteCarlo class is initialized with a GameBoard instance and can calculate a move given a GameBoard
         /// </summary>
         /// <param name="boardState">The current GameBoard to calculate a move from</param>
-        public MonteCarlo(GameBoard boardState, bool isHard)
+        public MonteCarlo(GameBoard boardState, bool isHard = false)
         {
             isHardAI = isHard;
             TreeSearch = new MonteCarloNode(boardState.GetPlayerCoordinate(GameBoard.PlayerEnum.ONE), boardState.GetPlayerCoordinate(GameBoard.PlayerEnum.TWO),
@@ -1825,7 +1693,7 @@ namespace GameCore
 
         private void ThreadedTreeSearchEasy(Stopwatch timer, MonteCarloNode MonteCarlo)
         {            
-            for (/*int i = 0*/; /*i < 10000 &&*/ timer.Elapsed.TotalSeconds < 1; /*++i*/)
+            for (/*int i = 0*/; /*i < 10000 &&*/ timer.Elapsed.TotalSeconds < 3; /*++i*/)
             {
                 MonteCarlo.Backpropagate(MonteCarlo.ExpandOptions(MonteCarlo.SelectNode(MonteCarlo)));
             }
@@ -1833,7 +1701,7 @@ namespace GameCore
 
         private void ThreadedTreeSearchHard(Stopwatch timer, MonteCarloNode MonteCarlo)
         {
-            for (/*int i = 0*/; /*i < 10000 &&*/ timer.Elapsed.TotalSeconds < 2; /*++i*/)
+            for (/*int i = 0*/; /*i < 10000 &&*/ timer.Elapsed.TotalSeconds < 5; /*++i*/)
             {
                 MonteCarlo.Backpropagate(MonteCarlo.ExpandOptions(MonteCarlo.SelectNode(MonteCarlo)));
             }
@@ -1846,7 +1714,7 @@ namespace GameCore
 
             List<Thread> simulatedGames = new List<Thread>();
 
-            for (int i = 0; i < 4; ++i)
+            for (int i = 0; i < 8; ++i)
             {
                 Thread simulatedGameThread;
 
@@ -1872,7 +1740,7 @@ namespace GameCore
 
             timer.Stop();
             //#endif
-            Console.WriteLine("Score: " + TreeSearch.GetScore());
+            Console.WriteLine("Wins: " + TreeSearch.GetWins());
             Console.WriteLine("Visits: " + TreeSearch.GetVisits());
             List<MonteCarloNode> childrenToChoose = TreeSearch.GetChildrenNodes();
             childrenToChoose.Sort();

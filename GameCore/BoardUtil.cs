@@ -70,9 +70,7 @@ namespace GameCore
             return playerColTranslationMap[c];
         }
 
-
-
-        private string PlayerCoordinateToString(PlayerCoordinate location)
+        public static string PlayerCoordinateToString(PlayerCoordinate location)
         {
             return Convert.ToChar(97 + (location.Col / 2)).ToString() + (9 - (location.Row / 2));
         }
