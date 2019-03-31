@@ -137,7 +137,7 @@ namespace GameCore
         private static Random randomPercentileChance;
         private static List<BitArray> board;
         private static int[,] possibleMoveValues;
-        private static Dictionary<string, Tuple<double, double>> moveTotals;
+        private static List<Dictionary<string, Tuple<double, double>>> moveTotals;
 
         private List<MonteCarloNode> children;
         private List<WallCoordinate> walls;
@@ -338,7 +338,9 @@ namespace GameCore
             board = new List<BitArray>();
             //moveTotals = new Dictionary<string, Tuple<double, double>>();
             illegalWalls = new List<string>();
-            moveTotals = new Dictionary<string, Tuple<double, double>>();
+            moveTotals = new List<Dictionary<string, Tuple<double, double>>>();
+            moveTotals.Add(new Dictionary<string, Tuple<double, double>>());
+            moveTotals.Add(new Dictionary<string, Tuple<double, double>>());
             possibleMoveValues = new int[9, 9];
 
             for (int r = 0; r < 9; r++)
@@ -399,7 +401,7 @@ namespace GameCore
             parent = null;
         }
 
-        private MonteCarloNode(string move, Dictionary<string, Tuple<double, double>> totals, List<PlayerCoordinate> players, List<int> wallCounts, List<string> availableWalls, List<string> illegalWallPlacements, List<WallCoordinate> wallCoordinates, WallCoordinate newWallCoordinate, GameBoard.PlayerEnum currentTurn, int depth, MonteCarloNode childParent)
+        private MonteCarloNode(string move, List<Dictionary<string, Tuple<double, double>>> totals, List<PlayerCoordinate> players, List<int> wallCounts, List<string> availableWalls, List<string> illegalWallPlacements, List<WallCoordinate> wallCoordinates, WallCoordinate newWallCoordinate, GameBoard.PlayerEnum currentTurn, int depth, MonteCarloNode childParent)
         {
 
             turn = currentTurn;
@@ -407,7 +409,7 @@ namespace GameCore
             board = childParent.GetBoard();
             thisMove = move;
             depthCheck = depth;
-            moveTotals = new Dictionary<string, Tuple<double, double>>(totals);
+            moveTotals = new List<Dictionary<string, Tuple<double, double>>>(totals);
             wins = 0;
             timesVisited = 0;
 
@@ -476,13 +478,13 @@ namespace GameCore
             return indexOfMove;
         }
 
-        private MonteCarloNode(string move, Dictionary<string, Tuple<double, double>> totals, int depth, List<string> availableWalls, List<string> illegalWallPlacements, MonteCarloNode childParent)
+        private MonteCarloNode(string move, List<Dictionary<string, Tuple<double, double>>> totals, int depth, List<string> availableWalls, List<string> illegalWallPlacements, MonteCarloNode childParent)
         {
             parent = childParent;
             board = childParent.GetBoard();
             thisMove = move;
             depthCheck = depth;
-            moveTotals = new Dictionary<string, Tuple<double, double>>(totals);
+            moveTotals = new List<Dictionary<string, Tuple<double, double>>>(totals);
             wins = 0;
             timesVisited = 0;
 
@@ -756,7 +758,6 @@ namespace GameCore
             return indexOfMove;
         }
 
-
         public List<MonteCarloNode> GetChildrenNodes()
         {
             return children;
@@ -966,7 +967,7 @@ namespace GameCore
                 ResetPlayerMoveValues(wallCoordinate, mid);
             }
 
-            return possibleMinimumHeuristic + possibleMoveValues[start.Row / 2, start.Col / 2] + 1;
+            return possibleMinimumHeuristic + possibleMoveValues[start.Row / 2, start.Col / 2];
         }
 
         private double HeuristicCostEstimate(PlayerCoordinate start, PlayerCoordinate goal)
@@ -1573,14 +1574,15 @@ namespace GameCore
 
         private double GetMoveTotalsRatio(string move)
         {
-            if (!moveTotals.ContainsKey(move))
+            int index = turn == 0 ? 0 : 1;
+            if (!moveTotals[index].ContainsKey(move))
             {
-                moveTotals.Add(move, new Tuple<double, double>(0, 1));
-                return moveTotals[move].Item1 / moveTotals[move].Item2;
+                moveTotals[index].Add(move, new Tuple<double, double>(0, 1));
+                return moveTotals[index][move].Item1 / moveTotals[index][move].Item2;
             }
             else
             {
-                return moveTotals[move].Item1 / moveTotals[move].Item2;
+                return moveTotals[index][move].Item1 / moveTotals[index][move].Item2;
             }
 
         }
@@ -1676,8 +1678,9 @@ namespace GameCore
                 MonteCarloNode node = newlyAddedNode;
                 node.timesVisited++;
                 double result = Evaluate(newlyAddedNode);
+                int index = newlyAddedNode.turn == 0 ? 1 : 0;
                 node.SetScore(result);
-                moveTotals[newlyAddedNode.thisMove] = new Tuple<double, double>(moveTotals[newlyAddedNode.thisMove].Item1 + result, moveTotals[newlyAddedNode.thisMove].Item2 + 1);
+                moveTotals[index][newlyAddedNode.thisMove] = new Tuple<double, double>(moveTotals[index][newlyAddedNode.thisMove].Item1 + result, moveTotals[index][newlyAddedNode.thisMove].Item2 + 1);
                 node = node.parent;
 
                 while (node != null)
