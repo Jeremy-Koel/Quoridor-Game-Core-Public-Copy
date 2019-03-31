@@ -909,15 +909,15 @@ namespace GameCore
                 board[wallCoordinate.StartRow].Set(wallCoordinate.StartCol, true);
                 board[wallCoordinate.EndRow].Set(wallCoordinate.EndCol, true);
 
-                bool canPlayerOneReachGoal = BoardUtil.CanReachGoalBitArray(board, 0, playerLocations[0].Row, playerLocations[0].Col);
-                bool canPlayerTwoReachGoal = BoardUtil.CanReachGoalBitArray(board, 16, playerLocations[1].Row, playerLocations[1].Col);
+                int canPlayerOneReachGoal = ShortestPathfinder(BoardUtil.PlayerCoordinateToString(playerLocations[0]));
+                int canPlayerTwoReachGoal = ShortestPathfinder(BoardUtil.PlayerCoordinateToString(playerLocations[1]));
 
                 board[wallCoordinate.StartRow].Set(wallCoordinate.StartCol, false);
                 board[wallCoordinate.EndRow].Set(wallCoordinate.EndCol, false);
 
                 Unpopulate();
 
-                return canPlayerOneReachGoal && canPlayerTwoReachGoal;
+                return canPlayerOneReachGoal > 0 && canPlayerTwoReachGoal > 0;
             }
 
         }
