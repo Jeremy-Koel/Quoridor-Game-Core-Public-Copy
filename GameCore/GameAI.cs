@@ -128,10 +128,10 @@ namespace GameCore
         private static readonly object boardAccess = new object();
         private readonly object childrenAccess = new object();
         private readonly object childrenMovesAccess = new object();
-        private static double explorationFactor = 1.0 / Math.Sqrt(2.0);
+        private static readonly double explorationFactor = 1.0 / Math.Sqrt(2.0);
 
 
-        private static double historyInfluence = 1.15;
+        private static readonly double historyInfluence = 1;
         private static GameBoard.PlayerEnum monteCarloPlayerEnum;
         private static string MonteCarloPlayer;
         private static Random randomPercentileChance;
@@ -338,6 +338,7 @@ namespace GameCore
             board = new List<BitArray>();
             //moveTotals = new Dictionary<string, Tuple<double, double>>();
             illegalWalls = new List<string>();
+            moveTotals = new Dictionary<string, Tuple<double, double>>();
             possibleMoveValues = new int[9, 9];
 
             for (int r = 0; r < 9; r++)
@@ -398,7 +399,7 @@ namespace GameCore
             parent = null;
         }
 
-        private MonteCarloNode(string move, List<PlayerCoordinate> players, List<int> wallCounts, List<string> availableWalls, List<string> illegalWallPlacements, List<WallCoordinate> wallCoordinates, WallCoordinate newWallCoordinate, GameBoard.PlayerEnum currentTurn, int depth, MonteCarloNode childParent)
+        private MonteCarloNode(string move, Dictionary<string, Tuple<double, double>> totals, List<PlayerCoordinate> players, List<int> wallCounts, List<string> availableWalls, List<string> illegalWallPlacements, List<WallCoordinate> wallCoordinates, WallCoordinate newWallCoordinate, GameBoard.PlayerEnum currentTurn, int depth, MonteCarloNode childParent)
         {
 
             turn = currentTurn;
@@ -406,6 +407,7 @@ namespace GameCore
             board = childParent.GetBoard();
             thisMove = move;
             depthCheck = depth;
+            moveTotals = new Dictionary<string, Tuple<double, double>>(totals);
             wins = 0;
             timesVisited = 0;
 
@@ -474,12 +476,13 @@ namespace GameCore
             return indexOfMove;
         }
 
-        private MonteCarloNode(string move, int depth, List<string> availableWalls, List<string> illegalWallPlacements, MonteCarloNode childParent)
+        private MonteCarloNode(string move, Dictionary<string, Tuple<double, double>> totals, int depth, List<string> availableWalls, List<string> illegalWallPlacements, MonteCarloNode childParent)
         {
             parent = childParent;
             board = childParent.GetBoard();
             thisMove = move;
             depthCheck = depth;
+            moveTotals = new Dictionary<string, Tuple<double, double>>(totals);
             wins = 0;
             timesVisited = 0;
 
@@ -1085,7 +1088,7 @@ namespace GameCore
 
         private string RandomMove()
         {
-            return randomPercentileChance.Next(0, 100) >= 50 ? FindPlayerMove() : (turn == 0 ? wallsRemaining[0] : wallsRemaining[1]) > 0 ? FindWall() : FindPlayerMove();
+            return randomPercentileChance.Next(0, 100) >= 10 + (10 * (turn == 0 ? (playerLocations[1].Row / 2) : (8 - playerLocations[0].Row / 2 + 1))) ? FindPlayerMove() : (turn == 0 ? wallsRemaining[0] : wallsRemaining[1]) > 0 ? FindWall() : FindPlayerMove();
         }
 
         private string FindPlayerMove()
@@ -1114,12 +1117,13 @@ namespace GameCore
                 lock (boardAccess)
                 {
                     string wallMove = null;
+                    bool choseBlock = false;
                     PlayerCoordinate opponent = turn == 0 ? playerLocations[1] : playerLocations[0];
                     List<string> wallsToChooseFrom;
 
                     if (randomPercentileChance.Next(0, 100) >= 50)
                     {
-                        wallsToChooseFrom = possibleHorizontalWalls;
+                        wallsToChooseFrom = GetBlockingWalls(BoardUtil.PlayerCoordinateToString(opponent));
                     }
                     else
                     {
@@ -1139,8 +1143,9 @@ namespace GameCore
                                 }
                                 break;
                             case 1:
-                                wallMove = wallsToChooseFrom[indexOfMove] + "h";
-                                if (illegalWalls.Contains(wallMove))
+                                string wallMoveSquare = wallsToChooseFrom[indexOfMove];
+                                wallMove = wallMoveSquare + "h";
+                                if (illegalWalls.Contains(wallMove) || (choseBlock ? (turn == 0 ? wallMoveSquare[1] >= wallMove[1] : wallMoveSquare[1] <= wallMove[1]) : false ) )
                                 {
                                     wallMove = wallsToChooseFrom[indexOfMove] + "v";
                                 }
@@ -1165,9 +1170,9 @@ namespace GameCore
         private List<string> GetBlockingWalls(string opponent)
         {
             List<string> blockingWalls = new List<string>();
-            for (char col = Convert.ToChar(opponent[0] - 1); col < opponent[0] + 2; col++)
+            for (char col = Convert.ToChar(opponent[0] - 1); col < opponent[0] + 1; col++)
             {
-                for (char row = Convert.ToChar(opponent[1] - 1); row < opponent[0] + 2; row++)
+                for (char row = Convert.ToChar(opponent[1] - 1); row < opponent[1] + 1; row++)
                 {
                     if (possibleHorizontalWalls.Contains(col.ToString() + row.ToString()))
                     {
@@ -1517,7 +1522,7 @@ namespace GameCore
         {
             lock (childrenAccess)
             {
-                children.Sort();
+                children = children.OrderBy(o => o.GetVisits()).ToList();
 
                 return children[children.Count - 1];
             }
@@ -1559,15 +1564,24 @@ namespace GameCore
 
             }
 
-            //if (!moveTotals.ContainsKey(child.thisMove))
-            //{
-            //    moveTotals.Add(child.thisMove, new Tuple<double, double>(0, 1));
-            //}
+            return StateValue(opponent, player) / child.timesVisited + explorationFactor
+                            * Math.Sqrt(Math.Log(timesVisited) / child.GetVisits()) +
+                            GetMoveTotalsRatio(move) *
+                            (historyInfluence / (child.GetVisits() - child.GetWins() + 1));
+            
+        }
 
-            return StateValue(opponent, player) + explorationFactor
-                             * Math.Sqrt(Math.Log(timesVisited) / child.GetVisits());
-                            //(moveTotals[child.GetMove()].Item1 / moveTotals[child.GetMove()].Item2)
-                            //* (historyInfluence / (child.GetVisits() - child.GetWins() + 1));
+        private double GetMoveTotalsRatio(string move)
+        {
+            if (!moveTotals.ContainsKey(move))
+            {
+                moveTotals.Add(move, new Tuple<double, double>(0, 1));
+                return moveTotals[move].Item1 / moveTotals[move].Item2;
+            }
+            else
+            {
+                return moveTotals[move].Item1 / moveTotals[move].Item2;
+            }
 
         }
 
@@ -1597,7 +1611,7 @@ namespace GameCore
                             {
                                 if (!childrensMoves.Contains(move))
                                 {
-                                    children.Add(new MonteCarloNode(move, playerLocations, wallsRemaining, possibleHorizontalWalls, illegalWalls, walls, new WallCoordinate(move), turn, depthCheck + 1, this));
+                                    children.Add(new MonteCarloNode(move, moveTotals, playerLocations, wallsRemaining, possibleHorizontalWalls, illegalWalls, walls, new WallCoordinate(move), turn, depthCheck + 1, this));
 
                                     //if (moveTotals.ContainsKey(move))
                                     //{
@@ -1623,7 +1637,7 @@ namespace GameCore
                         {
                             if (!childrensMoves.Contains(move))
                             {
-                                children.Add(new MonteCarloNode(move, depthCheck + 1, possibleHorizontalWalls, illegalWalls, this));
+                                children.Add(new MonteCarloNode(move, moveTotals, depthCheck + 1, possibleHorizontalWalls, illegalWalls, this));
 
                                 //if (moveTotals.ContainsKey(move))
                                 //{
@@ -1663,6 +1677,7 @@ namespace GameCore
                 node.timesVisited++;
                 double result = Evaluate(newlyAddedNode);
                 node.SetScore(result);
+                moveTotals[newlyAddedNode.thisMove] = new Tuple<double, double>(moveTotals[newlyAddedNode.thisMove].Item1 + result, moveTotals[newlyAddedNode.thisMove].Item2 + 1);
                 node = node.parent;
 
                 while (node != null)
@@ -1701,7 +1716,7 @@ namespace GameCore
 
         private void ThreadedTreeSearchHard(Stopwatch timer, MonteCarloNode MonteCarlo)
         {
-            for (/*int i = 0*/; /*i < 10000 &&*/ timer.Elapsed.TotalSeconds < 5; /*++i*/)
+            for (/*int i = 0*/; /*i < 1000000*/ /*&&*/ timer.Elapsed.TotalSeconds < 5;/* ++i*/)
             {
                 MonteCarlo.Backpropagate(MonteCarlo.ExpandOptions(MonteCarlo.SelectNode(MonteCarlo)));
             }
@@ -1742,7 +1757,8 @@ namespace GameCore
             //#endif
             Console.WriteLine("Wins: " + TreeSearch.GetWins());
             Console.WriteLine("Visits: " + TreeSearch.GetVisits());
-            List<MonteCarloNode> childrenToChoose = TreeSearch.GetChildrenNodes();
+            List<MonteCarloNode> childrenToChoose = TreeSearch.GetChildrenNodes().OrderBy(o => o.GetVisits()).ToList();
+
             childrenToChoose.Sort();
             return childrenToChoose[childrenToChoose.Count - 1].GetMove();
         }
