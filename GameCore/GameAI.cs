@@ -138,6 +138,7 @@ namespace GameCore
         private static List<BitArray> board;
         private static int[,] possibleMoveValues;
         private static List<Dictionary<string, Tuple<double, double>>> moveTotals;
+        private static Dictionary<string, MonteCarloNode> visitedNodes;
 
         private List<MonteCarloNode> children;
         private List<WallCoordinate> walls;
@@ -256,53 +257,55 @@ namespace GameCore
 
             do
             {
-                nextMove = possiblePaths.Dequeue();
-                PlayerCoordinate current = new PlayerCoordinate(nextMove.Move);
-                string currentString = Convert.ToChar(97 + current.Col / 2) + (9 - (current.Row) / 2).ToString();
-                exhaustedPaths.Add(currentString);
-
-                if (current.Row == goalRowForBoard)
+                if (possiblePaths.Count() > 0)
                 {
-                    shortestPath = nextMove.DistanceFromStart;
-                }
+                    nextMove = possiblePaths.Dequeue();
+                    PlayerCoordinate current = new PlayerCoordinate(nextMove.Move);
+                    string currentString = Convert.ToChar(97 + current.Col / 2) + (9 - (current.Row) / 2).ToString();
+                    exhaustedPaths.Add(currentString);
 
-                for (int i = 0; i < 4; ++i)
-                {
-                    string path = null;
-                    switch (i)
+                    if (current.Row == goalRowForBoard)
                     {
-                        case 0:
-                            if (currentString[1] + 1 < '9' && !board[current.Row - 1].Get(current.Col))
-                            {
-                                path = currentString[0] + Convert.ToChar(currentString[1] + 1).ToString();
-                            }
-                            break;
-                        case 1:
-                            if (currentString[0] + 1 < 'i' && !board[current.Row].Get(current.Col + 1))
-                            {
-                                path = Convert.ToChar(currentString[0] + 1).ToString() + currentString[1];
-                            }
-                            break;
-                        case 2:
-                            if (currentString[1] - 1 >= '1' && !board[current.Row + 1].Get(current.Col))
-                            {
-                                path = currentString[0] + Convert.ToChar(currentString[1] - 1).ToString();
-                            }
-                            break;
-                        case 3:
-                            if (currentString[0] - 1 >= 'a' && !board[current.Row].Get(current.Col - 1))
-                            {
-                                path = Convert.ToChar(currentString[0] - 1).ToString() + currentString[1];
-                            }
-                            break;
+                        shortestPath = nextMove.DistanceFromStart;
                     }
-                    if (path != null && !exhaustedPaths.Contains(path))
+
+                    for (int i = 0; i < 4; ++i)
                     {
-                        possiblePaths.Enqueue(new MoveEvaluation(path, HeuristicCostEstimate(new PlayerCoordinate(path), new PlayerCoordinate(path[0].ToString() + goalRow.ToString())), nextMove.DistanceFromStart + 1));
+                        string path = null;
+                        switch (i)
+                        {
+                            case 0:
+                                if (currentString[1] + 1 < '9' && !board[current.Row - 1].Get(current.Col))
+                                {
+                                    path = currentString[0] + Convert.ToChar(currentString[1] + 1).ToString();
+                                }
+                                break;
+                            case 1:
+                                if (currentString[0] + 1 < 'i' && !board[current.Row].Get(current.Col + 1))
+                                {
+                                    path = Convert.ToChar(currentString[0] + 1).ToString() + currentString[1];
+                                }
+                                break;
+                            case 2:
+                                if (currentString[1] - 1 >= '1' && !board[current.Row + 1].Get(current.Col))
+                                {
+                                    path = currentString[0] + Convert.ToChar(currentString[1] - 1).ToString();
+                                }
+                                break;
+                            case 3:
+                                if (currentString[0] - 1 >= 'a' && !board[current.Row].Get(current.Col - 1))
+                                {
+                                    path = Convert.ToChar(currentString[0] - 1).ToString() + currentString[1];
+                                }
+                                break;
+                        }
+                        if (path != null && !exhaustedPaths.Contains(path))
+                        {
+                            possiblePaths.Enqueue(new MoveEvaluation(path, HeuristicCostEstimate(new PlayerCoordinate(path), new PlayerCoordinate(path[0].ToString() + goalRow.ToString())), nextMove.DistanceFromStart + 1));
+                        }
                     }
                 }
-
-            } while (possiblePaths.Count() != 0 && shortestPath == 0);
+            } while (possiblePaths.Count() > 0 && shortestPath == 0);
 
             return shortestPath;
 
@@ -1088,7 +1091,7 @@ namespace GameCore
 
         private string RandomMove()
         {
-            return randomPercentileChance.Next(0, 100) >= 10 + (10 * (turn == 0 ? (playerLocations[1].Row / 2) : (8 - playerLocations[0].Row / 2 + 1))) ? FindPlayerMove() : (turn == 0 ? wallsRemaining[0] : wallsRemaining[1]) > 0 ? FindWall() : FindPlayerMove();
+            return randomPercentileChance.Next(0, 100) >= 37 ? FindPlayerMove() : (turn == 0 ? wallsRemaining[0] : wallsRemaining[1]) > 0 ? FindWall() : FindPlayerMove();
         }
 
         private string FindPlayerMove()
@@ -1602,26 +1605,56 @@ namespace GameCore
 
             if (!childrensMoves.Contains(move))
             {
-                if (move.Length != 2)
+                if (!visitedNodes.Contains(move))
                 {
-                    if (ValidWallMove(move))
+                    if (move.Length != 2)
                     {
-                        if (PlaceWall(turn == 0 ? GameBoard.PlayerEnum.ONE : GameBoard.PlayerEnum.TWO, new WallCoordinate(move)))
+                        if (ValidWallMove(move))
+                        {
+                            if (PlaceWall(turn == 0 ? GameBoard.PlayerEnum.ONE : GameBoard.PlayerEnum.TWO, new WallCoordinate(move)))
+                            {
+                                lock (childrenAccess)
+                                {
+                                    if (!childrensMoves.Contains(move))
+                                    {
+                                        MonteCarloNode newNode = new MonteCarloNode(move, moveTotals, playerLocations, wallsRemaining, possibleHorizontalWalls, illegalWalls, walls, new WallCoordinate(move), turn, depthCheck + 1, this);
+                                        children.Add(new MonteCarloNode(move, moveTotals, playerLocations, wallsRemaining, possibleHorizontalWalls, illegalWalls, walls, new WallCoordinate(move), turn, depthCheck + 1, this));
+
+                                        //if (moveTotals.ContainsKey(move))
+                                        //{
+                                        //    moveTotals[move] = new Tuple<double, double>(moveTotals[move].Item1, moveTotals[move].Item2 + 1);
+                                        //}
+                                        visitedNodes.Add(newNode.IdString(), newNode);
+                                        childrensMoves.Add(move);
+                                        //#if DEBUG
+                                        //                            Console.WriteLine(move + ' ' + (turn == 0 ? GameBoard.PlayerEnum.ONE : GameBoard.PlayerEnum.TWO).ToString());
+                                        //#endif
+                                    }
+                                    successfulInsert = true;
+                                }
+                            }
+                        }
+                    }
+                    else
+                    {
+                        PlayerCoordinate moveToInsert = new PlayerCoordinate(move);
+                        if (!(moveToInsert.Row == (turn == 0 ? playerLocations[0] : playerLocations[1]).Row && moveToInsert.Col == (turn == 0 ? playerLocations[0] : playerLocations[1]).Col))
                         {
                             lock (childrenAccess)
                             {
                                 if (!childrensMoves.Contains(move))
                                 {
-                                    children.Add(new MonteCarloNode(move, moveTotals, playerLocations, wallsRemaining, possibleHorizontalWalls, illegalWalls, walls, new WallCoordinate(move), turn, depthCheck + 1, this));
+                                    MonteCarloNode newNode = new MonteCarloNode(move, moveTotals, depthCheck + 1, possibleHorizontalWalls, illegalWalls, this);
+                                    children.Add(newNode);
 
                                     //if (moveTotals.ContainsKey(move))
                                     //{
                                     //    moveTotals[move] = new Tuple<double, double>(moveTotals[move].Item1, moveTotals[move].Item2 + 1);
                                     //}
-
+                                    visitedNodes.Add(newNode.IdString(), newNode);
                                     childrensMoves.Add(move);
                                     //#if DEBUG
-                                    //                            Console.WriteLine(move + ' ' + (turn == 0 ? GameBoard.PlayerEnum.ONE : GameBoard.PlayerEnum.TWO).ToString());
+                                    //                                Console.WriteLine(move + ' ' + (turn == 0 ? GameBoard.PlayerEnum.ONE : GameBoard.PlayerEnum.TWO).ToString());
                                     //#endif
                                 }
                                 successfulInsert = true;
@@ -1631,28 +1664,7 @@ namespace GameCore
                 }
                 else
                 {
-                    PlayerCoordinate moveToInsert = new PlayerCoordinate(move);
-                    if (!(moveToInsert.Row == (turn == 0 ? playerLocations[0] : playerLocations[1]).Row && moveToInsert.Col == (turn == 0 ? playerLocations[0] : playerLocations[1]).Col))
-                    {
-                        lock (childrenAccess)
-                        {
-                            if (!childrensMoves.Contains(move))
-                            {
-                                children.Add(new MonteCarloNode(move, moveTotals, depthCheck + 1, possibleHorizontalWalls, illegalWalls, this));
-
-                                //if (moveTotals.ContainsKey(move))
-                                //{
-                                //    moveTotals[move] = new Tuple<double, double>(moveTotals[move].Item1, moveTotals[move].Item2 + 1);
-                                //}
-
-                                childrensMoves.Add(move);
-                                //#if DEBUG
-                                //                                Console.WriteLine(move + ' ' + (turn == 0 ? GameBoard.PlayerEnum.ONE : GameBoard.PlayerEnum.TWO).ToString());
-                                //#endif
-                            }
-                            successfulInsert = true;
-                        }
-                    }
+                    children.Add(visitedNodes[move]);
                 }
             }
             else
@@ -1718,9 +1730,13 @@ namespace GameCore
 
         private void ThreadedTreeSearchHard(Stopwatch timer, MonteCarloNode MonteCarlo)
         {
-            for (/*int i = 0*/; /*i < 1000000*/ /*&&*/ timer.Elapsed.TotalSeconds < 5;/* ++i*/)
+            for (int i = 0; i < 10000 /*&&*/ /*timer.Elapsed.TotalSeconds < 5*/; ++i)
             {
                 MonteCarlo.Backpropagate(MonteCarlo.ExpandOptions(MonteCarlo.SelectNode(MonteCarlo)));
+                if (i == 5000)
+                {
+                    Console.WriteLine("BOO!");
+                }
             }
         }
 
