@@ -1630,7 +1630,7 @@ namespace GameCore
         /// The MonteCarlo class is initialized with a GameBoard instance and can calculate a move given a GameBoard
         /// </summary>
         /// <param name="boardState">The current GameBoard to calculate a move from</param>
-        public MonteCarlo(GameBoard boardState, bool isHard)
+        public MonteCarlo(GameBoard boardState, bool isHard = false)
         {
             isHardAI = isHard;
             TreeSearch = new MonteCarloNode(boardState.GetPlayerCoordinate(GameBoard.PlayerEnum.ONE), boardState.GetPlayerCoordinate(GameBoard.PlayerEnum.TWO),
