@@ -34,13 +34,11 @@ namespace GameCore
                 Orientation = WallOrientation.Horizontal;
             }
 
-            StandardNotationString = str.Substring(0, 2);
+            StandardNotationString = str;
             PlayerCoordinate referenceCoordinate = new PlayerCoordinate(StandardNotationString);
             
-
             if (Orientation == WallOrientation.Vertical)
             {
-                StandardNotationString += 'v';
                 StartRow = referenceCoordinate.Row;
                 StartCol = referenceCoordinate.Col + 1;
                 EndRow = StartRow - 2;
@@ -48,7 +46,6 @@ namespace GameCore
             }
             else
             {
-                StandardNotationString += 'h';
                 StartRow = referenceCoordinate.Row - 1;
                 StartCol = referenceCoordinate.Col;
                 EndRow = StartRow;
@@ -72,6 +69,8 @@ namespace GameCore
             {
                 Orientation = WallOrientation.Vertical;
             }
+
+            StandardNotationString = x.ToString() + y.ToString() + c;
 
             PlayerCoordinate referenceCoordinate = new PlayerCoordinate(x, y);
 
