@@ -336,7 +336,6 @@ namespace GameCore
         public MonteCarloNode(PlayerCoordinate playerOne, PlayerCoordinate playerTwo, int playerOneTotalWalls, int playerTwoTotalWalls, List<WallCoordinate> wallCoordinates, GameBoard.PlayerEnum currentTurn)
         {
             board = new List<BitArray>();
-            //moveTotals = new Dictionary<string, Tuple<double, double>>();
             illegalWalls = new List<string>();
             moveTotals = new List<Dictionary<string, Tuple<double, double>>>();
             moveTotals.Add(new Dictionary<string, Tuple<double, double>>());
@@ -1565,9 +1564,9 @@ namespace GameCore
 
             }
 
-            return StateValue(opponent, player) / child.timesVisited + explorationFactor
+            return child.StateValue(opponent, player) / child.timesVisited + explorationFactor
                             * Math.Sqrt(Math.Log(timesVisited) / child.GetVisits()) +
-                            GetMoveTotalsRatio(move) *
+                            child.GetMoveTotalsRatio(move) *
                             (historyInfluence / (child.GetVisits() - child.GetWins() + 1));
             
         }
@@ -1678,9 +1677,9 @@ namespace GameCore
                 MonteCarloNode node = newlyAddedNode;
                 node.timesVisited++;
                 double result = Evaluate(newlyAddedNode);
-                int index = newlyAddedNode.turn == 0 ? 1 : 0;
+                int index = newlyAddedNode.turn == 0 ? 0 : 1;
                 node.SetScore(result);
-                moveTotals[index][newlyAddedNode.thisMove] = new Tuple<double, double>(moveTotals[index][newlyAddedNode.thisMove].Item1 + result, moveTotals[index][newlyAddedNode.thisMove].Item2 + 1);
+                moveTotals[index][node.thisMove] = new Tuple<double, double>(moveTotals[index][node.thisMove].Item1 + result, moveTotals[index][node.thisMove].Item2 + 1);
                 node = node.parent;
 
                 while (node != null)
@@ -1711,7 +1710,7 @@ namespace GameCore
 
         private void ThreadedTreeSearchEasy(Stopwatch timer, MonteCarloNode MonteCarlo)
         {            
-            for (/*int i = 0*/; /*i < 10000 &&*/ timer.Elapsed.TotalSeconds < 3; /*++i*/)
+            for (/*int i = 0*/; /*i < 10000*/ /*&&*/ timer.Elapsed.TotalSeconds < 3; /*++i*/)
             {
                 MonteCarlo.Backpropagate(MonteCarlo.ExpandOptions(MonteCarlo.SelectNode(MonteCarlo)));
             }
