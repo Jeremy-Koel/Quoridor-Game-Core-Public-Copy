@@ -19,6 +19,8 @@ namespace GameCore
         private List<WallCoordinate> walls;
         private List<List<string>> possibleMoves;
         private List<string> possibleWalls;
+        private List<string> lastMove;
+        private List<string> lastStart;
         private int player1walls = 10;
         private int player2walls = 10;
         private char[,] board;
@@ -26,8 +28,7 @@ namespace GameCore
         private bool playerOneWin;
         private bool playerTwoWin;
         private PlayerEnum whoseTurn;
-
-
+        
         public enum PlayerEnum
         {
             ONE, TWO
@@ -171,6 +172,14 @@ namespace GameCore
             gameOver = false;
             playerOneWin = false;
             playerTwoWin = false;
+
+            lastMove = new List<string>();
+            lastMove.Add(playerOneStart);
+            lastMove.Add(playerTwoStart);
+
+            lastStart = new List<string>();
+            lastStart.Add(playerOneStart);
+            lastStart.Add(playerTwoStart);
 
             possibleWalls = new List<string>();
             playerOneLocation = new PlayerCoordinate(playerOneStart);
@@ -326,6 +335,10 @@ namespace GameCore
                     case PlayerEnum.ONE:
                         playerOneLocation.Row = destinationCoordinate.Row;
                         playerOneLocation.Col = destinationCoordinate.Col;
+
+                        lastStart[0] = lastMove[0];
+                        lastMove[0] = BoardUtil.PlayerCoordinateToString(playerOneLocation);
+
                         possibleMoves[whoseTurn == 0 ? 0 : 1] = PossibleMovesFromPosition();
                         whoseTurn = PlayerEnum.TWO;
                         possibleMoves[whoseTurn == 0 ? 0 : 1] = PossibleMovesFromPosition();
@@ -333,6 +346,10 @@ namespace GameCore
                     case PlayerEnum.TWO:
                         playerTwoLocation.Row = destinationCoordinate.Row;
                         playerTwoLocation.Col = destinationCoordinate.Col;
+
+                        lastStart[1] = lastMove[1];
+                        lastMove[1] = BoardUtil.PlayerCoordinateToString(playerTwoLocation);
+
                         possibleMoves[whoseTurn == 0 ? 0 : 1] = PossibleMovesFromPosition();
                         whoseTurn = PlayerEnum.ONE;
                         possibleMoves[whoseTurn == 0 ? 0 : 1] = PossibleMovesFromPosition();
@@ -860,5 +877,9 @@ namespace GameCore
             return new Tuple<int, int>((start.Row + destination.Row) / 2, (start.Col + destination.Col) / 2);
         }
 
+        public List<string> GetLastStart()
+        {
+            return lastStart;
+        }
     }
 }
