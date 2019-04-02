@@ -1660,14 +1660,14 @@ namespace GameCore
                                         //    moveTotals[move] = new Tuple<double, double>(moveTotals[move].Item1, moveTotals[move].Item2 + 1);
                                         //}
                                         visitedNodes.Add(newNode.IdString(), newNode);
-                                        childrensMoves.Add(move);
                                         //#if DEBUGEE
                                         //                            Console.WriteLine(move + ' ' + (turn == 0 ? GameBoard.PlayerEnum.ONE : GameBoard.PlayerEnum.TWO).ToString());
                                         //#endif
                                     }
                                     else
                                     {
-                                        children.Add(visitedNodes[move]);
+                                        children.Add(visitedNodes[newNode.IdString()]);
+                                        childrensMoves.Add(move);
                                     }
                                 }
                                 successfulInsert = true;
@@ -1701,7 +1701,8 @@ namespace GameCore
                                 }
                                 else
                                 {
-                                    children.Add(visitedNodes[move]);
+                                    children.Add(visitedNodes[newNode.IdString()]);
+                                    childrensMoves.Add(move);
                                 }
                             }
                             successfulInsert = true;
@@ -1733,6 +1734,8 @@ namespace GameCore
             {
                 returnString += wallStrings[i];
             }
+
+            returnString += wallsRemaining[0].ToString() + '-' + wallsRemaining[1].ToString();
 
             return returnString;
         }
