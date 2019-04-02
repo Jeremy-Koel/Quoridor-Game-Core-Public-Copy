@@ -429,7 +429,7 @@ namespace GameCore
             children = new List<MonteCarloNode>();
             childrensMoves = new List<string>();
 
-            possibleHorizontalWalls = possibleVerticalWalls = availableWalls;
+            possibleHorizontalWalls = possibleVerticalWalls = new List<string>(availableWalls);
             
             possibleHorizontalWalls.Remove(move.Substring(0, 2));
 
@@ -511,7 +511,7 @@ namespace GameCore
 
             illegalWalls = new List<string>(illegalWallPlacements);
             walls = new List<WallCoordinate>(childParent.walls);
-            possibleHorizontalWalls = possibleVerticalWalls = availableWalls;
+            possibleHorizontalWalls = possibleVerticalWalls = new List<string>(availableWalls);
 
             children = new List<MonteCarloNode>();
             childrensMoves = new List<string>();
