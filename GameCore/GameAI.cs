@@ -336,7 +336,7 @@ namespace GameCore
             return timesVisited.CompareTo(carloNode.timesVisited);
         }
 
-        public MonteCarloNode(PlayerCoordinate playerOne, PlayerCoordinate playerTwo, int playerOneTotalWalls, int playerTwoTotalWalls, List<WallCoordinate> wallCoordinates, GameBoard.PlayerEnum currentTurn)
+        public MonteCarloNode(PlayerCoordinate playerOne, PlayerCoordinate playerTwo, int playerOneTotalWalls, int playerTwoTotalWalls, List<WallCoordinate> wallCoordinates, GameBoard.PlayerEnum currentTurn, List<string> lastStarts)
         {
             board = new List<BitArray>();
             illegalWalls = new List<string>();
@@ -366,8 +366,8 @@ namespace GameCore
             }
 
             lastPlayerMove = new List<string>();
-            lastPlayerMove.Add(Convert.ToChar(97 + playerOne.Col / 2).ToString() + (9 - (playerOne.Row / 2)).ToString());
-            lastPlayerMove.Add(Convert.ToChar(97 + playerTwo.Col / 2).ToString() + (9 - (playerTwo.Row / 2)).ToString());
+            lastPlayerMove.Add(lastStarts[0]);
+            lastPlayerMove.Add(lastStarts[1]);
 
             playerLocations = new List<PlayerCoordinate>();
             playerLocations.Add(new PlayerCoordinate(playerOne.Row, playerOne.Col));
@@ -1808,7 +1808,7 @@ namespace GameCore
             isHardAI = isHard;
             TreeSearch = new MonteCarloNode(boardState.GetPlayerCoordinate(GameBoard.PlayerEnum.ONE), boardState.GetPlayerCoordinate(GameBoard.PlayerEnum.TWO),
                                                               boardState.GetPlayerWallCount(GameBoard.PlayerEnum.ONE), boardState.GetPlayerWallCount(GameBoard.PlayerEnum.TWO),
-                                                              boardState.GetWalls(), boardState.GetWhoseTurn() == 1 ? GameBoard.PlayerEnum.ONE : GameBoard.PlayerEnum.TWO);
+                                                              boardState.GetWalls(), boardState.GetWhoseTurn() == 1 ? GameBoard.PlayerEnum.ONE : GameBoard.PlayerEnum.TWO, boardState.GetLastStart());
         }
 
         private void ThreadedTreeSearchEasy(Stopwatch timer, MonteCarloNode MonteCarlo)
