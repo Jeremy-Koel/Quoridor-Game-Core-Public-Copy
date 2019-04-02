@@ -340,6 +340,7 @@ namespace GameCore
         {
             board = new List<BitArray>();
             illegalWalls = new List<string>();
+            visitedNodes = new Dictionary<string, MonteCarloNode>();
             moveTotals = new List<Dictionary<string, Tuple<double, double>>>();
             moveTotals.Add(new Dictionary<string, Tuple<double, double>>());
             moveTotals.Add(new Dictionary<string, Tuple<double, double>>());
@@ -1503,11 +1504,32 @@ namespace GameCore
         /// SelectNode selects a node at random given a nodes children. If there are no nodes available the function returns -1 otherwise it returns the index of the selcted node.
         /// </summary>
         /// <returns></returns>
-        public MonteCarloNode SelectNode(MonteCarloNode root)
+        public MonteCarloNode SelectNode(MonteCarloNode root, List<Tuple<string, MonteCarloNode>> path)
         {
             if (root.children.Count != 0 && (randomPercentileChance.Next(1, 100) >= 51))
             {
-                return root.SelectNode(root.SelectionAlgorithm());
+                MonteCarloNode nextNode = SelectionAlgorithm(root.children);
+                if (path.Count > 0 && ExistsWithin(nextNode, path))
+                {                
+                    List<MonteCarloNode> listOfChildren = new List<MonteCarloNode>(root.children);
+                    listOfChildren.Remove(nextNode);
+                    nextNode = SelectionAlgorithm(listOfChildren);
+
+                    while (path.Count > 0 && ExistsWithin(nextNode, path))
+                    {
+                        listOfChildren = new List<MonteCarloNode>(listOfChildren);
+                        listOfChildren.Remove(nextNode);
+                        nextNode = SelectionAlgorithm(listOfChildren);
+                    }
+
+                    if (path.Count > 0 && ExistsWithin(nextNode, path))
+                    {
+                        return root;
+                    }
+
+                }
+                path.Add(new Tuple<string, MonteCarloNode>(nextNode.thisMove, nextNode));
+                return root.SelectNode(nextNode, path);
 
             }
             else
@@ -1517,11 +1539,24 @@ namespace GameCore
 
         }
 
+        private bool ExistsWithin(MonteCarloNode nextNode, List<Tuple<string, MonteCarloNode>> path)
+        {
+            bool existsWithin = false;
+            for (int i = 0; i < path.Count && !existsWithin; i++)
+            {
+                if (nextNode.thisMove == path[i].Item1 && nextNode.IdString() == path[i].Item2.IdString())
+                {
+                    existsWithin = true;
+                }
+            }
+            return existsWithin;
+        }
+
         /// <summary>
         /// The SelectionAlgorithm calculates a score for each move based on the knowledge currently in the tree.
         /// </summary>
         /// <returns></returns>
-        private MonteCarloNode SelectionAlgorithm()
+        private MonteCarloNode SelectionAlgorithm(List<MonteCarloNode> children)
         {
             lock (childrenAccess)
             {
@@ -1605,7 +1640,7 @@ namespace GameCore
 
             if (!childrensMoves.Contains(move))
             {
-                if (!visitedNodes.Contains(move))
+                if (!visitedNodes.ContainsKey(move))
                 {
                     if (move.Length != 2)
                     {
@@ -1626,7 +1661,7 @@ namespace GameCore
                                         //}
                                         visitedNodes.Add(newNode.IdString(), newNode);
                                         childrensMoves.Add(move);
-                                        //#if DEBUG
+                                        //#if DEBUGEE
                                         //                            Console.WriteLine(move + ' ' + (turn == 0 ? GameBoard.PlayerEnum.ONE : GameBoard.PlayerEnum.TWO).ToString());
                                         //#endif
                                     }
@@ -1675,23 +1710,68 @@ namespace GameCore
             return successfulInsert;
         }
 
+        private string IdString()
+        {
+            List<string> wallStrings = new List<string>();
+            string returnString = BoardUtil.PlayerCoordinateToString(playerLocations[0]) + BoardUtil.PlayerCoordinateToString(playerLocations[1]);
+
+            for (int i = 0; i < walls.Count; ++i)
+            {
+                wallStrings.Add(walls[i].StandardNotationString);
+            }
+
+            wallStrings = wallStrings.OrderByDescending(i => i).ToList();
+
+            for (int i = 0; i < walls.Count; ++i)
+            {
+                returnString += wallStrings[i];
+            }
+
+            return returnString;
+        }
+
         //Simulation & Backpropagation Phase Code
         /// <summary>
         /// SimulatedGame evaluates a game from a node and plays a series of moves until it reaches an endstate when it recursively backpropagates and updates the previous nodes. 
         /// On a losing endstate the function returns false and true on a victory.
         /// </summary>
         /// <returns>Whether or not the function reached a victorious endstate</returns>
-        
-        public void Backpropagate(MonteCarloNode newlyAddedNode)
+
+        public void Backpropagate(MonteCarloNode newlyAddedNode, List<Tuple<string, MonteCarloNode>> path, int pathIndex = -1, double result = 0)
         {
             lock (childrenAccess)
             {
                 MonteCarloNode node = newlyAddedNode;
+
+                if (pathIndex == -1)
+                {
+                    pathIndex = path.Count - 1;
+                }
+                else
+                {
+                    --pathIndex;
+                }
+
                 node.timesVisited++;
-                double result = Evaluate(newlyAddedNode);
+
+                if (result == 0)
+                {
+                    result = Evaluate(newlyAddedNode);
+                    node.SetScore(result);
+                }
+                else
+                {
+                    node.SetScore(score + result);
+                }
+
                 int index = newlyAddedNode.turn == 0 ? 0 : 1;
-                node.SetScore(result);
                 moveTotals[index][node.thisMove] = new Tuple<double, double>(moveTotals[index][node.thisMove].Item1 + result, moveTotals[index][node.thisMove].Item2 + 1);
+
+                if (pathIndex >= 0 && node.parent.thisMove != path[pathIndex].Item1)
+                {
+                    Backpropagate(path[pathIndex].Item2, path, pathIndex, result);
+                }
+
                 node = node.parent;
 
                 while (node != null)
@@ -1724,7 +1804,8 @@ namespace GameCore
         {            
             for (/*int i = 0*/; /*i < 10000*/ /*&&*/ timer.Elapsed.TotalSeconds < 2; /*++i*/)
             {
-                MonteCarlo.Backpropagate(MonteCarlo.ExpandOptions(MonteCarlo.SelectNode(MonteCarlo)));
+                List<Tuple<string, MonteCarloNode>> path = new List<Tuple<string, MonteCarloNode>>();
+                MonteCarlo.Backpropagate(MonteCarlo.ExpandOptions(MonteCarlo.SelectNode(MonteCarlo, path)), path);
             }
         }
 
@@ -1732,7 +1813,8 @@ namespace GameCore
         {
             for (int i = 0; i < 10000 /*&&*/ /*timer.Elapsed.TotalSeconds < 5*/; ++i)
             {
-                MonteCarlo.Backpropagate(MonteCarlo.ExpandOptions(MonteCarlo.SelectNode(MonteCarlo)));
+                List<Tuple<string, MonteCarloNode>> path = new List<Tuple<string, MonteCarloNode>>();
+                MonteCarlo.Backpropagate(MonteCarlo.ExpandOptions(MonteCarlo.SelectNode(MonteCarlo, path)), path);
                 if (i == 5000)
                 {
                     Console.WriteLine("BOO!");
@@ -1773,7 +1855,7 @@ namespace GameCore
 
             timer.Stop();
             //#endif
-            Console.WriteLine("Wins: " + TreeSearch.GetWins());
+            Console.WriteLine("Score: " + TreeSearch.GetScore());
             Console.WriteLine("Visits: " + TreeSearch.GetVisits());
             List<MonteCarloNode> childrenToChoose = TreeSearch.GetChildrenNodes().OrderBy(o => o.GetVisits()).ToList();
 

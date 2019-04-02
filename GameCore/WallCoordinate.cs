@@ -35,7 +35,7 @@ namespace GameCore
             }
 
             StandardNotationString = str;
-            PlayerCoordinate referenceCoordinate = new PlayerCoordinate(StandardNotationString);
+            PlayerCoordinate referenceCoordinate = new PlayerCoordinate(StandardNotationString.Substring(0,2));
             
             if (Orientation == WallOrientation.Vertical)
             {
