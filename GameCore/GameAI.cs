@@ -1560,9 +1560,9 @@ namespace GameCore
         {
             lock (childrenAccess)
             {
-                children = children.OrderBy(o => o.GetVisits()).ToList();
+                List<MonteCarloNode> newList = children.OrderBy(o => o.GetVisits()).ToList();
 
-                return children[children.Count - 1];
+                return newList[newList.Count - 1];
             }
         }
 
@@ -1660,6 +1660,7 @@ namespace GameCore
                                         //    moveTotals[move] = new Tuple<double, double>(moveTotals[move].Item1, moveTotals[move].Item2 + 1);
                                         //}
                                         visitedNodes.Add(newNode.IdString(), newNode);
+                                        childrensMoves.Add(move);
                                         //#if DEBUGEE
                                         //                            Console.WriteLine(move + ' ' + (turn == 0 ? GameBoard.PlayerEnum.ONE : GameBoard.PlayerEnum.TWO).ToString());
                                         //#endif
