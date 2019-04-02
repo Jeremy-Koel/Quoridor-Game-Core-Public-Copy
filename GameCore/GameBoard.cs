@@ -333,11 +333,10 @@ namespace GameCore
                 switch (player)
                 {
                     case PlayerEnum.ONE:
-                        lastStart[0] = BoardUtil.PlayerCoordinateToString(playerOneLocation);
-
                         playerOneLocation.Row = destinationCoordinate.Row;
                         playerOneLocation.Col = destinationCoordinate.Col;
 
+                        lastStart[0] = lastMove[0];
                         lastMove[0] = BoardUtil.PlayerCoordinateToString(playerOneLocation);
 
                         possibleMoves[whoseTurn == 0 ? 0 : 1] = PossibleMovesFromPosition();
@@ -345,11 +344,10 @@ namespace GameCore
                         possibleMoves[whoseTurn == 0 ? 0 : 1] = PossibleMovesFromPosition();
                         break;
                     case PlayerEnum.TWO:
-                        lastStart[1] = BoardUtil.PlayerCoordinateToString(playerTwoLocation);
-
                         playerTwoLocation.Row = destinationCoordinate.Row;
                         playerTwoLocation.Col = destinationCoordinate.Col;
 
+                        lastStart[1] = lastMove[1];
                         lastMove[1] = BoardUtil.PlayerCoordinateToString(playerTwoLocation);
 
                         possibleMoves[whoseTurn == 0 ? 0 : 1] = PossibleMovesFromPosition();
