@@ -1640,19 +1640,19 @@ namespace GameCore
 
             if (!childrensMoves.Contains(move))
             {
-                if (!visitedNodes.ContainsKey(move))
+                if (move.Length != 2)
                 {
-                    if (move.Length != 2)
+                    if (ValidWallMove(move))
                     {
-                        if (ValidWallMove(move))
+                        if (PlaceWall(turn == 0 ? GameBoard.PlayerEnum.ONE : GameBoard.PlayerEnum.TWO, new WallCoordinate(move)))
                         {
-                            if (PlaceWall(turn == 0 ? GameBoard.PlayerEnum.ONE : GameBoard.PlayerEnum.TWO, new WallCoordinate(move)))
+                            lock (childrenAccess)
                             {
-                                lock (childrenAccess)
+                                if (!childrensMoves.Contains(move))
                                 {
-                                    if (!childrensMoves.Contains(move))
+                                    MonteCarloNode newNode = new MonteCarloNode(move, moveTotals, playerLocations, wallsRemaining, possibleHorizontalWalls, illegalWalls, walls, new WallCoordinate(move), turn, depthCheck + 1, this);
+                                    if (!visitedNodes.ContainsKey(newNode.IdString()))
                                     {
-                                        MonteCarloNode newNode = new MonteCarloNode(move, moveTotals, playerLocations, wallsRemaining, possibleHorizontalWalls, illegalWalls, walls, new WallCoordinate(move), turn, depthCheck + 1, this);
                                         children.Add(new MonteCarloNode(move, moveTotals, playerLocations, wallsRemaining, possibleHorizontalWalls, illegalWalls, walls, new WallCoordinate(move), turn, depthCheck + 1, this));
 
                                         //if (moveTotals.ContainsKey(move))
@@ -1665,21 +1665,28 @@ namespace GameCore
                                         //                            Console.WriteLine(move + ' ' + (turn == 0 ? GameBoard.PlayerEnum.ONE : GameBoard.PlayerEnum.TWO).ToString());
                                         //#endif
                                     }
-                                    successfulInsert = true;
+                                    else
+                                    {
+                                        children.Add(visitedNodes[move]);
+                                    }
                                 }
+                                successfulInsert = true;
                             }
                         }
                     }
-                    else
+                }
+                else
+                {
+                    PlayerCoordinate moveToInsert = new PlayerCoordinate(move);
+                    if (!(moveToInsert.Row == (turn == 0 ? playerLocations[0] : playerLocations[1]).Row && moveToInsert.Col == (turn == 0 ? playerLocations[0] : playerLocations[1]).Col))
                     {
-                        PlayerCoordinate moveToInsert = new PlayerCoordinate(move);
-                        if (!(moveToInsert.Row == (turn == 0 ? playerLocations[0] : playerLocations[1]).Row && moveToInsert.Col == (turn == 0 ? playerLocations[0] : playerLocations[1]).Col))
+                        lock (childrenAccess)
                         {
-                            lock (childrenAccess)
+                            if (!childrensMoves.Contains(move))
                             {
-                                if (!childrensMoves.Contains(move))
+                                MonteCarloNode newNode = new MonteCarloNode(move, moveTotals, depthCheck + 1, possibleHorizontalWalls, illegalWalls, this);
+                                if (!visitedNodes.ContainsKey(newNode.IdString()))
                                 {
-                                    MonteCarloNode newNode = new MonteCarloNode(move, moveTotals, depthCheck + 1, possibleHorizontalWalls, illegalWalls, this);
                                     children.Add(newNode);
 
                                     //if (moveTotals.ContainsKey(move))
@@ -1692,14 +1699,14 @@ namespace GameCore
                                     //                                Console.WriteLine(move + ' ' + (turn == 0 ? GameBoard.PlayerEnum.ONE : GameBoard.PlayerEnum.TWO).ToString());
                                     //#endif
                                 }
-                                successfulInsert = true;
+                                else
+                                {
+                                    children.Add(visitedNodes[move]);
+                                }
                             }
+                            successfulInsert = true;
                         }
                     }
-                }
-                else
-                {
-                    children.Add(visitedNodes[move]);
                 }
             }
             else
