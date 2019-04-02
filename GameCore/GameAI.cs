@@ -399,6 +399,7 @@ namespace GameCore
             timesVisited = 1;
             turn = currentTurn;
             possibleMoves = PossibleMovesFromPosition();
+            possibleBlocks = GetBlockingWalls(BoardUtil.PlayerCoordinateToString(playerLocations[turn == 0 ? 1 : 0]));
 
             gameOver = false;
             parent = null;
@@ -463,6 +464,11 @@ namespace GameCore
             if (possibleMoves.Count != 1 && (parent != null ? locationOfPreviousMove != -1 : false))
             {
                 possibleMoves.RemoveAt(locationOfPreviousMove);
+            }
+
+            if (wallsRemaining[turn == 0 ? 0 : 1] > 0)
+            {
+                possibleBlocks = GetBlockingWalls(BoardUtil.PlayerCoordinateToString(playerLocations[turn == 0 ? 1 : 0]));
             }
         }
 
@@ -551,6 +557,11 @@ namespace GameCore
                 if (possibleMoves.Count != 1 && locationOfPreviousMove != -1)
                 {
                     possibleMoves.RemoveAt(locationOfPreviousMove);
+                }
+
+                if (wallsRemaining[turn == 0 ? 0 : 1] > 0)
+                {
+                    possibleBlocks = GetBlockingWalls(BoardUtil.PlayerCoordinateToString(playerLocations[turn == 0 ? 1 : 0]));
                 }
             }
         }
@@ -1116,62 +1127,52 @@ namespace GameCore
 
         private string FindWall()
         {
-            if (possibleVerticalWalls.Count > 0)
+            lock (boardAccess)
             {
-                lock (boardAccess)
+                if (possibleVerticalWalls.Count > 0)
                 {
                     string wallMove = null;
-                    bool choseBlock = false;
                     PlayerCoordinate opponent = turn == 0 ? playerLocations[1] : playerLocations[0];
-                    List<string> wallsToChooseFrom;
 
                     if (randomPercentileChance.Next(0, 100) >= 50)
                     {
-                        wallsToChooseFrom = GetBlockingWalls(BoardUtil.PlayerCoordinateToString(opponent));
-                    }
-                    else
-                    {
-                        wallsToChooseFrom = GetBlockingWalls(BoardUtil.PlayerCoordinateToString(opponent));
-                    }
+                        wallMove = possibleBlocks[0].Item1;
 
-                    if (wallsToChooseFrom.Count > 0)
-                    {
-                        int indexOfMove = randomPercentileChance.Next(0, wallsToChooseFrom.Count);
-                        switch (randomPercentileChance.Next(0, 2))
+                        for (int i = 1; childrensMoves.Contains(wallMove) && i < possibleMoves.Count; ++i)
                         {
-                            case 0:
-                                wallMove = wallsToChooseFrom[indexOfMove] + "v";
-                                if (illegalWalls.Contains(wallMove))
-                                {
-                                    wallMove = wallsToChooseFrom[indexOfMove] + "h";
-                                }
-                                break;
-                            case 1:
-                                string wallMoveSquare = wallsToChooseFrom[indexOfMove];
-                                wallMove = wallMoveSquare + "h";
-                                if (illegalWalls.Contains(wallMove) || (choseBlock ? (turn == 0 ? wallMoveSquare[1] >= wallMove[1] : wallMoveSquare[1] <= wallMove[1]) : false ) )
-                                {
-                                    wallMove = wallsToChooseFrom[indexOfMove] + "v";
-                                }
-                                break;
+                            wallMove = possibleMoves[i].Item1;
                         }
 
-                        return wallMove;
+                        if (childrensMoves.Contains(wallMove))
+                        {
+                            wallMove = possibleMoves[randomPercentileChance.Next(0, possibleMoves.Count)].Item1;
+                        }
                     }
                     else
                     {
-                        return FindPlayerMove();
-                    }
-                }
+                        wallMove = possibleBlocks[0].Item1;
 
+                        for (int i = 1; childrensMoves.Contains(wallMove) && i < possibleMoves.Count; ++i)
+                        {
+                            wallMove = possibleMoves[i].Item1;
+                        }
+
+                        if (childrensMoves.Contains(wallMove))
+                        {
+                            wallMove = possibleMoves[randomPercentileChance.Next(0, possibleMoves.Count)].Item1;
+                        }
+                    }
+                    return wallMove;
+                }
+                else
+                {
+                    return FindPlayerMove();
+                }
             }
-            else
-            {
-                return FindPlayerMove();
-            }
+
         }
 
-        private List<string> GetBlockingWalls(string opponent)
+        private List<Tuple<string, double>> GetBlockingWalls(string opponent)
         {
             List<string> blockingWalls = new List<string>();
             for (char col = Convert.ToChar(opponent[0] - 1); col < opponent[0] + 1; col++)
@@ -1184,7 +1185,32 @@ namespace GameCore
                     }
                 }
             }
-            return blockingWalls;
+
+            List<Tuple<string, double>> validBlocks = new List<Tuple<string, double>>();
+
+            foreach (string placement in blockingWalls)
+            {
+                string horizontalPlacement = placement + "h";
+                string verticalPlacement = placement + "v";
+
+                if (!illegalWalls.Contains(horizontalPlacement))
+                {
+                    validBlocks.Add(new Tuple<string, double>(horizontalPlacement, MinimumHeuristicEstimate(horizontalPlacement, turn == 0 ? 9 : 1)));
+                }
+                if (!illegalWalls.Contains(verticalPlacement))
+                {
+                    validBlocks.Add(new Tuple<string, double>(verticalPlacement, MinimumHeuristicEstimate(horizontalPlacement, turn == 0 ? 9 : 1)));
+                }
+
+            }
+
+            validBlocks.Sort(delegate (Tuple<string, double> lValue, Tuple<string, double> rValue)
+            {
+                if (lValue.Item2 == rValue.Item2) return 0;
+                else return lValue.Item2.CompareTo(rValue.Item2);
+            });
+
+            return validBlocks;
         }
 
         private Tuple<bool, string> GetValidJumpMove(List<PlayerCoordinate> players)
