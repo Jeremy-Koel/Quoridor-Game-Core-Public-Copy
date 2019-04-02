@@ -1092,7 +1092,7 @@ namespace GameCore
 
         private string RandomMove()
         {
-            return randomPercentileChance.Next(0, 100) >= 37 ? FindPlayerMove() : (turn == 0 ? wallsRemaining[0] : wallsRemaining[1]) > 0 ? FindWall() : FindPlayerMove();
+            return randomPercentileChance.Next(0, 100) >= 10 + (10 * (turn == 0 ? (playerLocations[1].Row / 2) : (8 - playerLocations[0].Row / 2))) ? FindPlayerMove() : (turn == 0 ? wallsRemaining[0] : wallsRemaining[1]) > 0 ? FindWall() : FindPlayerMove();
         }
 
         private string FindPlayerMove()
