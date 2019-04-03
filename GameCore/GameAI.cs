@@ -1162,7 +1162,7 @@ namespace GameCore
                         {
                             wallMove = possibleBlocks[0].Item1;
 
-                            for (int i = 1; childrensMoves.Contains(wallMove) && i < possibleMoves.Count; ++i)
+                            for (int i = 1; childrensMoves.Contains(wallMove) && i < possibleBlocks.Count; ++i)
                             {
                                 wallMove = possibleBlocks[i].Item1;
                             }
@@ -1184,7 +1184,7 @@ namespace GameCore
                         {
                             wallMove = possibleBlocks[0].Item1;
 
-                            for (int i = 1; childrensMoves.Contains(wallMove) && i < possibleMoves.Count; ++i)
+                            for (int i = 1; childrensMoves.Contains(wallMove) && i < possibleBlocks.Count; ++i)
                             {
                                 wallMove = possibleBlocks[i].Item1;
                             }
@@ -1227,7 +1227,7 @@ namespace GameCore
                 string horizontalPlacement = placement + "h";
                 string verticalPlacement = placement + "v";
 
-                if (!illegalWalls.Contains(horizontalPlacement))
+                if (!illegalWalls.Contains(horizontalPlacement) && placement[0] == opponent[0] && placement[1] != Convert.ToChar(opponent[1] - 1))
                 {
                     validBlocks.Add(new Tuple<string, double>(horizontalPlacement, MinimumHeuristicEstimate(horizontalPlacement, turn == 0 ? 9 : 1)));
                 }
@@ -1627,16 +1627,24 @@ namespace GameCore
         /// </summary>
         public MonteCarloNode ExpandOptions(MonteCarloNode root)
         {
-            string move;
-            move = root.RandomMove();
-            while (!root.InsertChild(move))
+            if (!root.gameOver)
             {
-
+                string move;
                 move = root.RandomMove();
+                while (!root.InsertChild(move))
+                {
 
+                    move = root.RandomMove();
+
+                }
+
+
+                return root.children[root.FindMove(move)];
             }
-
-            return root.children[root.FindMove(move)];
+            else
+            {
+                return root;
+            }
         }
 
         private double Evaluate(MonteCarloNode child)
@@ -1876,7 +1884,7 @@ namespace GameCore
 
         private void ThreadedTreeSearchHard(Stopwatch timer, MonteCarloNode MonteCarlo)
         {
-            for (/*int i = 0*/; /*i < 10000*/ /*&&*/ timer.Elapsed.TotalSeconds < 5;/* ++i*/)
+            for (/*int i = 0*/; /*i < 10000*/ /*&&*/ timer.Elapsed.TotalSeconds < 4;/* ++i*/)
             {
                 List<Tuple<string, MonteCarloNode>> path = new List<Tuple<string, MonteCarloNode>>();
                 MonteCarlo.Backpropagate(MonteCarlo.ExpandOptions(MonteCarlo.SelectNode(MonteCarlo, path)), path);
