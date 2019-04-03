@@ -187,12 +187,12 @@ namespace GameCore
             return timesVisited;
         }
 
-        private int ShortestPathfinder(string move)
+        private int ShortestPathfinder(string move, GameBoard.PlayerEnum turnForPath)
         {
             PlayerCoordinate start;
             string startString;
-            int goalRow = turn == 0 ? 9 : 1;
-            int goalRowForBoard = turn == 0 ? 0 : 16;
+            int goalRow = turnForPath == 0 ? 9 : 1;
+            int goalRowForBoard = turnForPath == 0 ? 0 : 16;
 
             if (move.Length != 2)
             {
@@ -206,7 +206,7 @@ namespace GameCore
                 board[wallCoordinate.EndRow].Set(wallCoordinate.EndCol, true);
 
                 //SetPlayerMoveValues(wallCoordinate, mid);
-                start = new PlayerCoordinate(playerLocations[turn == 0 ? 0 : 1].Row, playerLocations[turn == 0 ? 0 : 1].Col);
+                start = new PlayerCoordinate(playerLocations[turnForPath == 0 ? 0 : 1].Row, playerLocations[turnForPath == 0 ? 0 : 1].Col);
             }
             else
             {
@@ -510,10 +510,6 @@ namespace GameCore
             if (possibleMoves.Count != 1 && (parent != null ? locationOfPreviousMove != -1 : false))
             {
                 possibleMoves.RemoveAt(locationOfPreviousMove);
-                if (possibleMoves.Count == 0)
-                {
-                    Console.WriteLine("BOO");
-                }
             }
 
             if (wallsRemaining[turn == 0 ? 0 : 1] > 0)
@@ -620,10 +616,6 @@ namespace GameCore
                 if (possibleMoves.Count != 1 && locationOfPreviousMove != -1)
                 {
                     possibleMoves.RemoveAt(locationOfPreviousMove);
-                    if (possibleMoves.Count == 0)
-                    {
-                        Console.WriteLine("BOO");
-                    }
                 }
 
                 if (wallsRemaining[turn == 0 ? 0 : 1] > 0)
@@ -820,10 +812,6 @@ namespace GameCore
                     else return lValue.Item2.CompareTo(rValue.Item2);
                 });
 
-                if (validMoves.Count == 0)
-                {
-                    Console.WriteLine("What the FUCK is this!?");
-                }
                 return validMoves;
             }
         }
@@ -995,8 +983,8 @@ namespace GameCore
                 board[wallCoordinate.StartRow].Set(wallCoordinate.StartCol, true);
                 board[wallCoordinate.EndRow].Set(wallCoordinate.EndCol, true);
 
-                int canPlayerOneReachGoal = ShortestPathfinder(BoardUtil.PlayerCoordinateToString(playerLocations[0]));
-                int canPlayerTwoReachGoal = ShortestPathfinder(BoardUtil.PlayerCoordinateToString(playerLocations[1]));
+                int canPlayerOneReachGoal = ShortestPathfinder(BoardUtil.PlayerCoordinateToString(playerLocations[0]), GameBoard.PlayerEnum.ONE);
+                int canPlayerTwoReachGoal = ShortestPathfinder(BoardUtil.PlayerCoordinateToString(playerLocations[1]), GameBoard.PlayerEnum.TWO);
 
                 board[wallCoordinate.StartRow].Set(wallCoordinate.StartCol, false);
                 board[wallCoordinate.EndRow].Set(wallCoordinate.EndCol, false);
@@ -1045,11 +1033,11 @@ namespace GameCore
 
             if (locationToStart.Length > 2)
             {
-                possibleMinimumHeuristic = ShortestPathfinder(BoardUtil.PlayerCoordinateToString(opponent)) - ShortestPathfinder(BoardUtil.PlayerCoordinateToString(start));
+                possibleMinimumHeuristic = ShortestPathfinder(BoardUtil.PlayerCoordinateToString(opponent), turn == 0 ? GameBoard.PlayerEnum.TWO : GameBoard.PlayerEnum.ONE) - ShortestPathfinder(BoardUtil.PlayerCoordinateToString(start), turn == 0 ? GameBoard.PlayerEnum.ONE : GameBoard.PlayerEnum.TWO);
             }
             else
             {
-                possibleMinimumHeuristic = ShortestPathfinder(BoardUtil.PlayerCoordinateToString(start));
+                possibleMinimumHeuristic = ShortestPathfinder(BoardUtil.PlayerCoordinateToString(start), turn == 0 ? GameBoard.PlayerEnum.ONE : GameBoard.PlayerEnum.TWO);
             }
 
             if (wallCoordinate != null)
@@ -1604,15 +1592,11 @@ namespace GameCore
             {
                 string move;
                 move = root.RandomMove();
+
                 while (!root.InsertChild(move))
                 {
 
                     move = root.RandomMove();
-
-                    if (move == "d1v")
-                    {
-                        Console.WriteLine("BOO");
-                    }
 
                 }
 
@@ -1916,11 +1900,6 @@ namespace GameCore
 
             childrenToChoose.Sort();
             string move = childrenToChoose[childrenToChoose.Count - 1].GetMove();
-
-            if (move == "g7v")
-            {
-                Console.WriteLine("WHAT THE FUCK!");
-            }
 
             return move;
         }
