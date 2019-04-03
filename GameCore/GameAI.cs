@@ -123,8 +123,7 @@ namespace GameCore
                 return value.CompareTo(moveEvaluation.value);
             }
         }
-
-
+        
         private static readonly object boardAccess = new object();
         private readonly object childrenAccess = new object();
         private readonly object childrenMovesAccess = new object();
@@ -391,6 +390,10 @@ namespace GameCore
 
 
             walls = new List<WallCoordinate>(wallCoordinates);
+
+            walls.Add(new WallCoordinate("c1h"));
+            walls.Add(new WallCoordinate("e1h"));
+            wallsRemaining[0] -= 2;
 
             children = new List<MonteCarloNode>();
             childrensMoves = new List<string>();
@@ -995,7 +998,7 @@ namespace GameCore
                 ResetPlayerMoveValues(wallCoordinate, mid);
             }
 
-            return possibleMinimumHeuristic + possibleMoveValues[start.Row / 2, start.Col / 2];
+            return possibleMinimumHeuristic;
         }
 
         private double HeuristicCostEstimate(PlayerCoordinate start, PlayerCoordinate goal)
@@ -1784,7 +1787,7 @@ namespace GameCore
 
             for (int i = 0; i < walls.Count; ++i)
             {
-                returnString += wallStrings[i];
+                returnString += "-" + wallStrings[i];
             }
 
             returnString += wallsRemaining[0].ToString() + '-' + wallsRemaining[1].ToString();
