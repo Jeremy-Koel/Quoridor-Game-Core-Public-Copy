@@ -369,6 +369,8 @@ namespace GameCore
             lastPlayerMove.Add(lastStarts[0]);
             lastPlayerMove.Add(lastStarts[1]);
 
+            thisMove = lastStarts[turn == 0 ? 0 : 1];
+
             playerLocations = new List<PlayerCoordinate>();
             playerLocations.Add(new PlayerCoordinate(playerOne.Row, playerOne.Col));
             playerLocations.Add(new PlayerCoordinate(playerTwo.Row, playerTwo.Col));
@@ -942,17 +944,20 @@ namespace GameCore
             int EndRow = goal;
 
             PlayerCoordinate start;
+            PlayerCoordinate opponent;
             WallCoordinate wallCoordinate = null;
 
             if (locationToStart.Length > 2)
             {
                 start = playerLocations[turn == 0 ? 0 : 1];
+                opponent = playerLocations[turn == 0 ? 1 : 0];
 
                 wallCoordinate = new WallCoordinate(locationToStart);
             }
             else
             {
                 start = new PlayerCoordinate(locationToStart);
+                opponent = playerLocations[turn == 0 ? 1 : 0];
             }
 
             if (wallCoordinate != null)
@@ -967,7 +972,16 @@ namespace GameCore
                 SetPlayerMoveValues(wallCoordinate, mid);
             }
 
-            double possibleMinimumHeuristic = ShortestPathfinder(Convert.ToChar(97 + start.Col / 2) + (9 - (start.Row) / 2).ToString());
+            double possibleMinimumHeuristic;
+
+            if (locationToStart.Length > 2)
+            {
+                possibleMinimumHeuristic = ShortestPathfinder(BoardUtil.PlayerCoordinateToString(start)) - ShortestPathfinder(BoardUtil.PlayerCoordinateToString(opponent));
+            }
+            else
+            {
+                possibleMinimumHeuristic = ShortestPathfinder(BoardUtil.PlayerCoordinateToString(start));
+            }
 
             if (wallCoordinate != null)
             {
@@ -1136,30 +1150,46 @@ namespace GameCore
 
                     if (randomPercentileChance.Next(0, 100) >= 50)
                     {
-                        wallMove = possibleBlocks[0].Item1;
-
-                        for (int i = 1; childrensMoves.Contains(wallMove) && i < possibleMoves.Count; ++i)
+                        if (possibleBlocks == null)
                         {
-                            wallMove = possibleMoves[i].Item1;
+                            possibleBlocks = GetBlockingWalls(BoardUtil.PlayerCoordinateToString(playerLocations[turn == 0 ? 1 : 0]));
                         }
 
-                        if (childrensMoves.Contains(wallMove))
+                        if (possibleBlocks.Count > 0)
                         {
-                            wallMove = possibleMoves[randomPercentileChance.Next(0, possibleMoves.Count)].Item1;
+                            wallMove = possibleBlocks[0].Item1;
+
+                            for (int i = 1; childrensMoves.Contains(wallMove) && i < possibleMoves.Count; ++i)
+                            {
+                                wallMove = possibleBlocks[i].Item1;
+                            }
+
+                            if (childrensMoves.Contains(wallMove))
+                            {
+                                wallMove = possibleBlocks[randomPercentileChance.Next(0, possibleMoves.Count)].Item1;
+                            }
                         }
                     }
                     else
                     {
-                        wallMove = possibleBlocks[0].Item1;
-
-                        for (int i = 1; childrensMoves.Contains(wallMove) && i < possibleMoves.Count; ++i)
+                        if (possibleBlocks == null)
                         {
-                            wallMove = possibleMoves[i].Item1;
+                            possibleBlocks = GetBlockingWalls(BoardUtil.PlayerCoordinateToString(playerLocations[turn == 0 ? 1 : 0]));
                         }
 
-                        if (childrensMoves.Contains(wallMove))
+                        if (possibleBlocks.Count > 0)
                         {
-                            wallMove = possibleMoves[randomPercentileChance.Next(0, possibleMoves.Count)].Item1;
+                            wallMove = possibleBlocks[0].Item1;
+
+                            for (int i = 1; childrensMoves.Contains(wallMove) && i < possibleMoves.Count; ++i)
+                            {
+                                wallMove = possibleBlocks[i].Item1;
+                            }
+
+                            if (childrensMoves.Contains(wallMove))
+                            {
+                                wallMove = possibleBlocks[randomPercentileChance.Next(0, possibleMoves.Count)].Item1;
+                            }
                         }
                     }
                     return wallMove;
@@ -1174,6 +1204,7 @@ namespace GameCore
 
         private List<Tuple<string, double>> GetBlockingWalls(string opponent)
         {
+            Populate();
             List<string> blockingWalls = new List<string>();
             for (char col = Convert.ToChar(opponent[0] - 1); col < opponent[0] + 1; col++)
             {
@@ -1203,14 +1234,8 @@ namespace GameCore
                 }
 
             }
-
-            validBlocks.Sort(delegate (Tuple<string, double> lValue, Tuple<string, double> rValue)
-            {
-                if (lValue.Item2 == rValue.Item2) return 0;
-                else return lValue.Item2.CompareTo(rValue.Item2);
-            });
-
-            return validBlocks;
+            Unpopulate();
+            return validBlocks.OrderByDescending(vB => vB.Item2).ThenBy(vB => vB.Item1[2]).ToList();
         }
 
         private Tuple<bool, string> GetValidJumpMove(List<PlayerCoordinate> players)
