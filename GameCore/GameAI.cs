@@ -178,6 +178,11 @@ namespace GameCore
             return wins;
         }
 
+        public double GetScoreRatio()
+        {
+            return score / timesVisited;
+        }
+
         public double GetVisits()
         {
             return timesVisited;
@@ -201,7 +206,7 @@ namespace GameCore
 
                 board[wallCoordinate.EndRow].Set(wallCoordinate.EndCol, true);
 
-                SetPlayerMoveValues(wallCoordinate, mid);
+                //SetPlayerMoveValues(wallCoordinate, mid);
                 start = new PlayerCoordinate(playerLocations[turn == 0 ? 0 : 1].Row, playerLocations[turn == 0 ? 0 : 1].Col);
             }
             else
@@ -343,15 +348,6 @@ namespace GameCore
             moveTotals = new List<Dictionary<string, Tuple<double, double>>>();
             moveTotals.Add(new Dictionary<string, Tuple<double, double>>());
             moveTotals.Add(new Dictionary<string, Tuple<double, double>>());
-            possibleMoveValues = new int[9, 9];
-
-            for (int r = 0; r < 9; r++)
-            {
-                for (int c = 0; c < 9; c++)
-                {
-                    possibleMoveValues[r, c] = 0;
-                }
-            }
 
             for (int i = 0; i < TOTAL_ROWS; i++)
             {
@@ -388,9 +384,10 @@ namespace GameCore
             wallsRemaining.Add(playerOneTotalWalls);
             wallsRemaining.Add(playerTwoTotalWalls);
 
-
             walls = new List<WallCoordinate>(wallCoordinates);
-            
+
+            SetIllegalWalls();
+
             children = new List<MonteCarloNode>();
             childrensMoves = new List<string>();
 
@@ -399,13 +396,56 @@ namespace GameCore
             wins = 0;
             timesVisited = 1;
             turn = currentTurn;
-            possibleMoves = PossibleMovesFromPosition();
+            possibleMoves = PossibleMovesFromPosition(turn == 0 ? 0 : 1, turn == 0 ? 1 : 0);
             possibleBlocks = GetBlockingWalls(BoardUtil.PlayerCoordinateToString(playerLocations[turn == 0 ? 1 : 0]));
 
             gameOver = false;
             parent = null;
         }
 
+        private void SetIllegalWalls()
+        {
+            foreach (WallCoordinate wall in walls)
+            {
+                string wallString = wall.StandardNotationString;
+                if (wall.Orientation == WallCoordinate.WallOrientation.Horizontal)
+                {
+                    if (possibleHorizontalWalls.Contains(Convert.ToChar(wallString[0] - 1).ToString() + wallString[1]))
+                    {
+                        illegalWalls.Add(Convert.ToChar(wallString[0] - 1).ToString() + wallString[1] + "h");
+                    }
+                    if (possibleHorizontalWalls.Contains(Convert.ToChar(wallString[0] + 1).ToString() + wallString[1]))
+                    {
+                        illegalWalls.Add(Convert.ToChar(wallString[0] + 2).ToString() + wallString[1] + "h");
+                    }
+                }
+                else
+                {
+                    if (possibleHorizontalWalls.Contains(wallString[0] + Convert.ToChar(wallString[1] - 1).ToString()))
+                    {
+                        illegalWalls.Add(wallString[0] + Convert.ToChar(wallString[1] - 1).ToString() + "v");
+                    }
+                    if (possibleHorizontalWalls.Contains(wallString[0] + Convert.ToChar(wallString[1] + 1).ToString()))
+                    {
+                        illegalWalls.Add(wallString[0] + Convert.ToChar(wallString[1] + 1).ToString() + "v");
+                    }
+                }
+            }
+        }
+        /// <summary>
+        /// MonteCarloNode Constructor to create a node which corresponds to a wall being placed
+        /// </summary>
+        /// <param name="move"></param>
+        /// <param name="totals"></param>
+        /// <param name="players"></param>
+        /// <param name="wallCounts"></param>
+        /// <param name="availableWalls"></param>
+        /// <param name="illegalWallPlacements"></param>
+        /// <param name="wallCoordinates"></param>
+        /// <param name="newWallCoordinate"></param>
+        /// <param name="currentTurn"></param>
+        /// <param name="depth"></param>
+        /// <param name="childParent"></param>
         private MonteCarloNode(string move, List<Dictionary<string, Tuple<double, double>>> totals, List<PlayerCoordinate> players, List<int> wallCounts, List<string> availableWalls, List<string> illegalWallPlacements, List<WallCoordinate> wallCoordinates, WallCoordinate newWallCoordinate, GameBoard.PlayerEnum currentTurn, int depth, MonteCarloNode childParent)
         {
 
@@ -458,13 +498,23 @@ namespace GameCore
             // Mark that this player has taken their turn 
             turn = currentTurn == 0 ? GameBoard.PlayerEnum.TWO : GameBoard.PlayerEnum.ONE;
 
-            possibleMoves = PossibleMovesFromPosition();
+            possibleMoves = PossibleMovesFromPosition(turn == 0 ? 0 : 1, turn == 0 ? 1 : 0);
+
+            if (possibleMoves.Count == 0)
+            {
+                possibleMoves = PossibleMovesFromPosition(turn == 0 ? 0 : 1, turn == 0 ? 1 : 0);
+            }
 
             int locationOfPreviousMove = DoesMoveListContain(possibleMoves, parent.lastPlayerMove[turn == 0 ? 0 : 1]);
+
 
             if (possibleMoves.Count != 1 && (parent != null ? locationOfPreviousMove != -1 : false))
             {
                 possibleMoves.RemoveAt(locationOfPreviousMove);
+                if (possibleMoves.Count == 0)
+                {
+                    Console.WriteLine("BOO");
+                }
             }
 
             if (wallsRemaining[turn == 0 ? 0 : 1] > 0)
@@ -487,7 +537,15 @@ namespace GameCore
 
             return indexOfMove;
         }
-
+        /// <summary>
+        /// MonteCarloNode constructor that corresponds to a move being made
+        /// </summary>
+        /// <param name="move"></param>
+        /// <param name="totals"></param>
+        /// <param name="depth"></param>
+        /// <param name="availableWalls"></param>
+        /// <param name="illegalWallPlacements"></param>
+        /// <param name="childParent"></param>
         private MonteCarloNode(string move, List<Dictionary<string, Tuple<double, double>>> totals, int depth, List<string> availableWalls, List<string> illegalWallPlacements, MonteCarloNode childParent)
         {
             parent = childParent;
@@ -551,13 +609,22 @@ namespace GameCore
 
             if (!gameOver)
             {
-                possibleMoves = PossibleMovesFromPosition();
+                possibleMoves = PossibleMovesFromPosition(turn == 0 ? 0 : 1, turn == 0 ? 1 : 0);
+
+                if (possibleMoves.Count == 0)
+                {
+                    possibleMoves = PossibleMovesFromPosition(turn == 0 ? 0 : 1, turn == 0 ? 1 : 0);
+                }
 
                 int locationOfPreviousMove = DoesMoveListContain(possibleMoves, childParent.lastPlayerMove[turn == 0 ? 0 : 1]);
 
                 if (possibleMoves.Count != 1 && locationOfPreviousMove != -1)
                 {
                     possibleMoves.RemoveAt(locationOfPreviousMove);
+                    if (possibleMoves.Count == 0)
+                    {
+                        Console.WriteLine("BOO");
+                    }
                 }
 
                 if (wallsRemaining[turn == 0 ? 0 : 1] > 0)
@@ -675,12 +742,12 @@ namespace GameCore
             }
         }
         
-        private List<Tuple<string, double>> PossibleMovesFromPosition()
+        private List<Tuple<string, double>> PossibleMovesFromPosition(int playerSpot, int opponentSpot)
         {
             List<Tuple<string, double>> validMoves = new List<Tuple<string, double>>();
 
-            int currentPlayer = turn == 0 ? 0 : 1;
-            int opponent = turn == 0 ? 1 : 0;
+            int currentPlayer = playerSpot;
+            int opponent = opponentSpot;
             lock (boardAccess)
             {
                 Populate();
@@ -754,6 +821,10 @@ namespace GameCore
                     else return lValue.Item2.CompareTo(rValue.Item2);
                 });
 
+                if (validMoves.Count == 0)
+                {
+                    Console.WriteLine("What the FUCK is this!?");
+                }
                 return validMoves;
             }
         }
@@ -968,14 +1039,14 @@ namespace GameCore
 
                 board[wallCoordinate.EndRow].Set(wallCoordinate.EndCol, true);
 
-                SetPlayerMoveValues(wallCoordinate, mid);
+                //SetPlayerMoveValues(wallCoordinate, mid);
             }
 
             double possibleMinimumHeuristic;
 
             if (locationToStart.Length > 2)
             {
-                possibleMinimumHeuristic = ShortestPathfinder(BoardUtil.PlayerCoordinateToString(start)) - ShortestPathfinder(BoardUtil.PlayerCoordinateToString(opponent));
+                possibleMinimumHeuristic = ShortestPathfinder(BoardUtil.PlayerCoordinateToString(opponent)) - ShortestPathfinder(BoardUtil.PlayerCoordinateToString(start));
             }
             else
             {
@@ -991,7 +1062,7 @@ namespace GameCore
 
                 board[wallCoordinate.EndRow].Set(wallCoordinate.EndCol, false);
 
-                ResetPlayerMoveValues(wallCoordinate, mid);
+               //ResetPlayerMoveValues(wallCoordinate, mid);
             }
 
             return possibleMinimumHeuristic;
@@ -1116,26 +1187,63 @@ namespace GameCore
 
         private string RandomMove()
         {
-            return randomPercentileChance.Next(0, 100) >= 50 ? FindPlayerMove() : (turn == 0 ? wallsRemaining[0] : wallsRemaining[1]) > 0 ? FindWall() : FindPlayerMove();
+            return randomPercentileChance.Next(0, 100) >= (turn == 0 ?  playerLocations[1].Row >= 8 ? 50 : 10 + (10 * (turn == 0 ? (playerLocations[1].Row / 2) : (8 - playerLocations[0].Row / 2))) : playerLocations[0].Row <= 8 ? 50 : 10 + (10 * (turn == 0 ? (playerLocations[1].Row / 2) : (8 - playerLocations[0].Row / 2))))  ? FindPlayerMove() : (turn == 0 ? wallsRemaining[0] : wallsRemaining[1]) > 0 ? FindWall() : FindPlayerMove();
         }
 
-        private string FindPlayerMove()
+        private string FindPlayerMove(bool calledFromFindWall = false)
         {
-            string move = null;
-
-            move = possibleMoves[0].Item1;
-
-            for (int i = 1; childrensMoves.Contains(move) && i < possibleMoves.Count; ++i)
+            bool opponentAlmostWinButCanBlock = DoesOpponentHaveEndRowMove() && wallsRemaining[turn == 0 ? 0 : 1] > 0 && AtLeastOneBlockLegal() && !calledFromFindWall;
+            if (!opponentAlmostWinButCanBlock)
             {
-                move = possibleMoves[i].Item1;
+                string move = null;
+
+                move = possibleMoves[0].Item1;
+
+                for (int i = 1; childrensMoves.Contains(move) && i < possibleMoves.Count; ++i)
+                {
+                    move = possibleMoves[i].Item1;
+                }
+
+                if (childrensMoves.Contains(move))
+                {
+                    move = possibleMoves[randomPercentileChance.Next(0, possibleMoves.Count)].Item1;
+                }
+
+                return move;
+            }
+            else
+            {
+                return FindWall();
+            }
+        }
+
+        private bool AtLeastOneBlockLegal()
+        {
+            bool oneBlockLegal = false;
+            foreach (Tuple<string,double> block in possibleBlocks)
+            {
+                if (!illegalWalls.Contains(block.Item1))
+                {
+                    oneBlockLegal = true;
+                }
+            }
+            return oneBlockLegal;
+        }
+
+        private bool DoesOpponentHaveEndRowMove()
+        {
+            bool containsEndRowMove = false;
+            List<Tuple<string, double>> opponentsMoves = PossibleMovesFromPosition(turn == 0 ? 1 : 0, turn == 0 ? 0 : 1);
+
+            for (int i = 0; i < opponentsMoves.Count && !containsEndRowMove; i++)
+            {
+                if (opponentsMoves[i].Item1[1] == (turn == 0 ? '1' : '9'))
+                {
+                    containsEndRowMove = true;
+                }
             }
 
-            if (childrensMoves.Contains(move))
-            {
-                move = possibleMoves[randomPercentileChance.Next(0, possibleMoves.Count)].Item1;
-            }
-
-            return move;
+            return containsEndRowMove;
         }
 
         private string FindWall()
@@ -1158,14 +1266,29 @@ namespace GameCore
                         {
                             wallMove = possibleBlocks[0].Item1;
 
-                            for (int i = 1; childrensMoves.Contains(wallMove) && i < possibleBlocks.Count; ++i)
+                            for (int i = 1; (childrensMoves.Contains(wallMove) || illegalWalls.Contains(wallMove)) && i < possibleBlocks.Count; ++i)
                             {
                                 wallMove = possibleBlocks[i].Item1;
                             }
 
-                            if (childrensMoves.Contains(wallMove))
+                            if (childrensMoves.Contains(wallMove) || illegalWalls.Contains(wallMove))
                             {
-                                wallMove = possibleBlocks[randomPercentileChance.Next(0, possibleMoves.Count)].Item1;
+                                for (int i = 0; i < possibleBlocks.Count && illegalWalls.Contains(wallMove); ++i)
+                                {
+                                    wallMove = possibleBlocks[i].Item1;
+                                }
+                                if (illegalWalls.Contains(wallMove))
+                                {
+                                    return FindPlayerMove(true);
+                                }
+                                else
+                                {
+                                    return wallMove;
+                                }
+                            }
+                            else
+                            {
+                                return wallMove;
                             }
                         }
                     }
@@ -1180,22 +1303,45 @@ namespace GameCore
                         {
                             wallMove = possibleBlocks[0].Item1;
 
-                            for (int i = 1; childrensMoves.Contains(wallMove) && i < possibleBlocks.Count; ++i)
+                            for (int i = 1; (childrensMoves.Contains(wallMove) || illegalWalls.Contains(wallMove)) && i < possibleBlocks.Count; ++i)
                             {
                                 wallMove = possibleBlocks[i].Item1;
                             }
 
-                            if (childrensMoves.Contains(wallMove))
+                            if (childrensMoves.Contains(wallMove) && illegalWalls.Contains(wallMove))
                             {
-                                wallMove = possibleBlocks[randomPercentileChance.Next(0, possibleMoves.Count)].Item1;
+                                for (int i = 0; i < possibleBlocks.Count && illegalWalls.Contains(wallMove); ++i)
+                                {
+                                    wallMove = possibleBlocks[i].Item1;
+                                }
+                                if (illegalWalls.Contains(wallMove))
+                                {
+                                    return FindPlayerMove(true);
+                                }
+                                else
+                                {
+                                    return wallMove;
+                                }
+                            }
+                            else
+                            {
+                                return wallMove;
                             }
                         }
                     }
-                    return wallMove;
+
+                    if (wallMove != null)
+                    {
+                        return wallMove;
+                    }
+                    else
+                    {
+                        return FindPlayerMove(true);
+                    }
                 }
                 else
                 {
-                    return FindPlayerMove();
+                    return FindPlayerMove(true);
                 }
             }
 
@@ -1223,7 +1369,7 @@ namespace GameCore
                 string horizontalPlacement = placement + "h";
                 string verticalPlacement = placement + "v";
 
-                if (!illegalWalls.Contains(horizontalPlacement) && placement[0] == opponent[0] && placement[1] != Convert.ToChar(opponent[1] - 1))
+                if (!illegalWalls.Contains(horizontalPlacement)/* &&  placement[1] != Convert.ToChar(opponent[1] + (turn == 0 ? 1 : -1))*/)
                 {
                     validBlocks.Add(new Tuple<string, double>(horizontalPlacement, MinimumHeuristicEstimate(horizontalPlacement, turn == 0 ? 9 : 1)));
                 }
@@ -1234,7 +1380,7 @@ namespace GameCore
 
             }
             Unpopulate();
-            return validBlocks.OrderByDescending(vB => vB.Item2).ThenBy(vB => vB.Item1[2]).ToList();
+            return validBlocks.OrderBy(vB => vB.Item2).ThenBy(vB => vB.Item1[2]).ToList();
         }
 
         private Tuple<bool, string> GetValidJumpMove(List<PlayerCoordinate> players)
@@ -1343,91 +1489,7 @@ namespace GameCore
             return possibleJump;
 
         }
-
-        private List<Tuple<int, int>> CanGoalReachOpenLocation(Tuple<int, int> goalStart, int[,] possibleMoveValues)
-        {
-            HashSet<Tuple<int, int>> markedSet = new HashSet<Tuple<int, int>>();
-            Queue<Tuple<Tuple<int, int>, List<Tuple<int, int>>>> queue = new Queue<Tuple<Tuple<int, int>, List<Tuple<int, int>>>>();
-
-            Dictionary<Tuple<int, int>, List<Tuple<int, int>>> cameFrom = new Dictionary<Tuple<int, int>, List<Tuple<int, int>>>
-            {
-                { goalStart, new List<Tuple<int, int>>() }
-            };
-
-            markedSet.Add(goalStart);
-            queue.Enqueue(new Tuple<Tuple<int, int>, List<Tuple<int, int>>>(goalStart, cameFrom[goalStart]));
-
-            while (queue.Count > 0)
-            {
-                Tuple<Tuple<int, int>, List<Tuple<int, int>>> current = queue.Dequeue();
-                if (possibleMoveValues[current.Item1.Item1, current.Item1.Item2] == 0 && current.Item1.Item1 != goalStart.Item1)
-                {
-                    if (IsThereAnAdjacentLocationEqualToZero(current.Item1, possibleMoveValues))
-                    {
-                        return current.Item2;
-                    }
-                }
-
-                if ((current.Item1.Item2 * 2) + 1 < GameBoard.TOTAL_COLS
-                    && board[current.Item1.Item1 * 2].Get((current.Item1.Item2 * 2) + 1) != true && current.Item1.Item1 != goalStart.Item1) // Can move East
-                {
-                    Tuple<int, int> neighbor = new Tuple<int, int>(current.Item1.Item1, current.Item1.Item2 + 1);
-                    if (!markedSet.Contains(neighbor))
-                    {
-                        List<Tuple<int, int>> nodesBefore = new List<Tuple<int, int>>(current.Item2);
-                        nodesBefore.Add(current.Item1);
-                        markedSet.Add(neighbor);
-                        queue.Enqueue(new Tuple<Tuple<int, int>, List<Tuple<int, int>>>(neighbor, nodesBefore));
-                    }
-                }
-                if ((current.Item1.Item2 * 2) - 1 >= 0
-                    && board[current.Item1.Item1 * 2].Get((current.Item1.Item2 * 2) - 1) != true && current.Item1.Item1 != goalStart.Item1) // Can move West 
-                {
-                    Tuple<int, int> neighbor = new Tuple<int, int>(current.Item1.Item1, current.Item1.Item2 - 1);
-                    if (!markedSet.Contains(neighbor))
-                    {
-                        List<Tuple<int, int>> nodesBefore = new List<Tuple<int, int>>(current.Item2);
-                        nodesBefore.Add(current.Item1);
-                        markedSet.Add(neighbor);
-                        queue.Enqueue(new Tuple<Tuple<int, int>, List<Tuple<int, int>>>(neighbor, nodesBefore));
-                    }
-                }
-                if ((current.Item1.Item1 * 2) - 1 >= 0
-                    && board[(current.Item1.Item1 * 2) - 1].Get((current.Item1.Item2 * 2)) != true && current.Item1.Item1 - 1 != goalStart.Item1) // Can move North 
-                {
-                    Tuple<int, int> neighbor = new Tuple<int, int>(current.Item1.Item1 - 1, current.Item1.Item2);
-                    if (!markedSet.Contains(neighbor))
-                    {
-                        List<Tuple<int, int>> nodesBefore = new List<Tuple<int, int>>(current.Item2);
-                        nodesBefore.Add(current.Item1);
-                        markedSet.Add(neighbor);
-                        queue.Enqueue(new Tuple<Tuple<int, int>, List<Tuple<int, int>>>(neighbor, nodesBefore));
-                    }
-                }
-                if ((current.Item1.Item1 * 2) + 1 < GameBoard.TOTAL_COLS
-                    && board[(current.Item1.Item1 * 2) + 1].Get((current.Item1.Item2 * 2)) != true && current.Item1.Item1 + 1 != goalStart.Item1) // Can move South 
-                {
-                    Tuple<int, int> neighbor = new Tuple<int, int>(current.Item1.Item1 + 1, current.Item1.Item2);
-                    if (!markedSet.Contains(neighbor))
-                    {
-                        List<Tuple<int, int>> nodesBefore = new List<Tuple<int, int>>(current.Item2);
-                        nodesBefore.Add(current.Item1);
-                        markedSet.Add(neighbor);
-                        queue.Enqueue(new Tuple<Tuple<int, int>, List<Tuple<int, int>>>(neighbor, nodesBefore));
-                    }
-                }
-            }
-            return new List<Tuple<int, int>>();
-        }
-
-        private bool IsThereAnAdjacentLocationEqualToZero(Tuple<int, int> current, int[,] possibleMoveValues)
-        {
-            return (current.Item1 - 1 > -1 && possibleMoveValues[current.Item1 - 1, current.Item2] == 0 && !board[(current.Item1 * 2) - 1].Get((current.Item2 * 2))) ||
-                   (current.Item1 + 1 < 9 && possibleMoveValues[current.Item1 + 1, current.Item2] == 0 && !board[(current.Item1 * 2) + 1].Get((current.Item2 * 2))) ||
-                   (current.Item2 - 1 > -1 && possibleMoveValues[current.Item1, current.Item2 - 1] == 0 && !board[(current.Item1 * 2)].Get((current.Item2 * 2) - 1)) ||
-                   (current.Item2 + 1 < 9 && possibleMoveValues[current.Item1, current.Item2 + 1] == 0 && !board[(current.Item1 * 2)].Get((current.Item2 * 2) + 1));
-        }
-
+        
         private bool PlayersAreAdjacent()
         {
             return (playerLocations[turn == 0 ? 0 : 1].Row == playerLocations[turn == 0 ? 1 : 0].Row && playerLocations[turn == 0 ? 0 : 1].Col + 2 == playerLocations[turn == 0 ? 1 : 0].Col && !board[playerLocations[turn == 0 ? 0 : 1].Row].Get(playerLocations[turn == 0 ? 0 : 1].Col + 1))
@@ -1447,50 +1509,8 @@ namespace GameCore
 
                 board[wallCoordinate.EndRow].Set(wallCoordinate.EndCol, true);
 
-                SetPlayerMoveValues(wallCoordinate, mid);
+                //SetPlayerMoveValues(wallCoordinate, mid);
             }
-        }
-
-        private void SetPlayerMoveValues(WallCoordinate wallCoordinate, Tuple<int, int> mid)
-        {
-            if (wallCoordinate.Orientation == WallCoordinate.WallOrientation.Horizontal)
-            {
-                SetPlayerMoveValuesHorizontal(wallCoordinate, mid);
-            }
-            else
-            {
-                SetPlayerMoveValuesVertical(wallCoordinate, mid);
-            }
-        }
-
-        private void SetPlayerMoveValuesHorizontal(WallCoordinate wallCoordinate, Tuple<int, int> mid)
-        {
-            ++possibleMoveValues[(wallCoordinate.StartRow + 1) / 2, (wallCoordinate.StartCol) / 2];
-            ++possibleMoveValues[(wallCoordinate.StartRow - 1) / 2, (wallCoordinate.StartCol) / 2];
-
-            ++possibleMoveValues[(mid.Item1 + 1) / 2, (mid.Item2 + 1) / 2];
-            ++possibleMoveValues[(mid.Item1 - 1) / 2, (mid.Item2 + 1) / 2];
-
-            ++possibleMoveValues[(mid.Item1 + 1) / 2, (mid.Item2 - 1) / 2];
-            ++possibleMoveValues[(mid.Item1 - 1) / 2, (mid.Item2 - 1) / 2];
-
-            ++possibleMoveValues[(wallCoordinate.EndRow + 1) / 2, (wallCoordinate.EndCol) / 2];
-            ++possibleMoveValues[(wallCoordinate.EndRow - 1) / 2, (wallCoordinate.EndCol) / 2];
-        }
-
-        private void SetPlayerMoveValuesVertical(WallCoordinate wallCoordinate, Tuple<int, int> mid)
-        {
-            ++possibleMoveValues[(wallCoordinate.EndRow) / 2, (wallCoordinate.EndCol + 1) / 2];
-            ++possibleMoveValues[(wallCoordinate.EndRow) / 2, (wallCoordinate.EndCol - 1) / 2];
-
-            ++possibleMoveValues[(mid.Item1 + 1) / 2, (mid.Item2 + 1) / 2];
-            ++possibleMoveValues[(mid.Item1 - 1) / 2, (mid.Item2 + 1) / 2];
-
-            ++possibleMoveValues[(mid.Item1 + 1) / 2, (mid.Item2 - 1) / 2];
-            ++possibleMoveValues[(mid.Item1 - 1) / 2, (mid.Item2 - 1) / 2];
-
-            ++possibleMoveValues[(wallCoordinate.StartRow) / 2, (wallCoordinate.StartCol - 1) / 2];
-            ++possibleMoveValues[(wallCoordinate.StartRow) / 2, (wallCoordinate.StartCol - 1) / 2];
         }
 
         private void Unpopulate()
@@ -1503,50 +1523,8 @@ namespace GameCore
                 board[mid.Item1].Set(mid.Item2, false);
 
                 board[wallCoordinate.EndRow].Set(wallCoordinate.EndCol, false);
-                ResetPlayerMoveValues(wallCoordinate, mid);
+                //ResetPlayerMoveValues(wallCoordinate, mid);
             }
-        }
-
-        private void ResetPlayerMoveValues(WallCoordinate wallCoordinate, Tuple<int, int> mid)
-        {
-            if (wallCoordinate.Orientation == WallCoordinate.WallOrientation.Horizontal)
-            {
-                ResetPlayerMoveValuesHorizontal(wallCoordinate, mid);
-            }
-            else
-            {
-                ResetPlayerMoveValuesVertical(wallCoordinate, mid);
-            }
-        }
-
-        private void ResetPlayerMoveValuesHorizontal(WallCoordinate wallCoordinate, Tuple<int, int> mid)
-        {
-            possibleMoveValues[(wallCoordinate.StartRow + 1) / 2, (wallCoordinate.StartCol) / 2] =
-            possibleMoveValues[(wallCoordinate.StartRow - 1) / 2, (wallCoordinate.StartCol) / 2] =
-
-            possibleMoveValues[(mid.Item1 + 1) / 2, (mid.Item2 + 1) / 2] =
-            possibleMoveValues[(mid.Item1 - 1) / 2, (mid.Item2 + 1) / 2] =
-
-            possibleMoveValues[(mid.Item1 + 1) / 2, (mid.Item2 - 1) / 2] =
-            possibleMoveValues[(mid.Item1 - 1) / 2, (mid.Item2 - 1) / 2] =
-
-            possibleMoveValues[(wallCoordinate.EndRow + 1) / 2, (wallCoordinate.EndCol) / 2] =
-            possibleMoveValues[(wallCoordinate.EndRow - 1) / 2, (wallCoordinate.EndCol) / 2] = 0;
-        }
-
-        private void ResetPlayerMoveValuesVertical(WallCoordinate wallCoordinate, Tuple<int, int> mid)
-        {
-            possibleMoveValues[(wallCoordinate.EndRow) / 2, (wallCoordinate.EndCol + 1) / 2] =
-            possibleMoveValues[(wallCoordinate.EndRow) / 2, (wallCoordinate.EndCol - 1) / 2] =
-
-            possibleMoveValues[(mid.Item1 + 1) / 2, (mid.Item2 + 1) / 2] =
-            possibleMoveValues[(mid.Item1 - 1) / 2, (mid.Item2 + 1) / 2] =
-
-            possibleMoveValues[(mid.Item1 + 1) / 2, (mid.Item2 - 1) / 2] =
-            possibleMoveValues[(mid.Item1 - 1) / 2, (mid.Item2 - 1) / 2] =
-
-            possibleMoveValues[(wallCoordinate.StartRow) / 2, (wallCoordinate.StartCol - 1) / 2] =
-            possibleMoveValues[(wallCoordinate.StartRow) / 2, (wallCoordinate.StartCol - 1) / 2] = 0;
         }
 
         //Selection Phase Code
@@ -1610,7 +1588,7 @@ namespace GameCore
         {
             lock (childrenAccess)
             {
-                List<MonteCarloNode> newList = children.OrderBy(o => o.GetVisits()).ToList();
+                List<MonteCarloNode> newList = children.OrderBy(o => o.GetScore()).ToList();
 
                 return newList[newList.Count - 1];
             }
@@ -1711,7 +1689,7 @@ namespace GameCore
                                     MonteCarloNode newNode = new MonteCarloNode(move, moveTotals, playerLocations, wallsRemaining, possibleHorizontalWalls, illegalWalls, walls, new WallCoordinate(move), turn, depthCheck + 1, this);
                                     if (!visitedNodes.ContainsKey(newNode.IdString()))
                                     {
-                                        children.Add(new MonteCarloNode(move, moveTotals, playerLocations, wallsRemaining, possibleHorizontalWalls, illegalWalls, walls, new WallCoordinate(move), turn, depthCheck + 1, this));
+                                        children.Add(newNode);
 
                                         //if (moveTotals.ContainsKey(move))
                                         //{
@@ -1732,6 +1710,14 @@ namespace GameCore
                                 successfulInsert = true;
                             }
                         }
+                        else if (!illegalWalls.Contains(move))
+                        {
+                            illegalWalls.Add(move);
+                        }
+                    }
+                    else if (!illegalWalls.Contains(move))
+                    {                        
+                        illegalWalls.Add(move);
                     }
                 }
                 else
@@ -1925,7 +1911,14 @@ namespace GameCore
             List<MonteCarloNode> childrenToChoose = TreeSearch.GetChildrenNodes().OrderBy(o => o.GetVisits()).ToList();
 
             childrenToChoose.Sort();
-            return childrenToChoose[childrenToChoose.Count - 1].GetMove();
+            string move = childrenToChoose[childrenToChoose.Count - 1].GetMove();
+
+            if (move == "g7v")
+            {
+                Console.WriteLine("WHAT THE FUCK!");
+            }
+
+            return move;
         }
 
 
