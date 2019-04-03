@@ -135,7 +135,6 @@ namespace GameCore
         private static string MonteCarloPlayer;
         private static Random randomPercentileChance;
         private static List<BitArray> board;
-        private static int[,] possibleMoveValues;
         private static List<Dictionary<string, Tuple<double, double>>> moveTotals;
         private static Dictionary<string, MonteCarloNode> visitedNodes;
 
@@ -1187,7 +1186,7 @@ namespace GameCore
 
         private string RandomMove()
         {
-            return randomPercentileChance.Next(0, 100) >= (turn == 0 ?  playerLocations[1].Row >= 8 ? 50 : 10 + (10 * (turn == 0 ? (playerLocations[1].Row / 2) : (8 - playerLocations[0].Row / 2))) : playerLocations[0].Row <= 8 ? 50 : 10 + (10 * (turn == 0 ? (playerLocations[1].Row / 2) : (8 - playerLocations[0].Row / 2))))  ? FindPlayerMove() : (turn == 0 ? wallsRemaining[0] : wallsRemaining[1]) > 0 ? FindWall() : FindPlayerMove();
+            return randomPercentileChance.Next(0, 100) >= (turn == 0 ?  playerLocations[1].Row >= 8 ? 37 : 10 + (10 * (turn == 0 ? (playerLocations[1].Row / 2) : (8 - playerLocations[0].Row / 2))) : playerLocations[0].Row <= 8 ? 37 : 10 + (10 * (turn == 0 ? (playerLocations[1].Row / 2) : (8 - playerLocations[0].Row / 2))))  ? FindPlayerMove() : (turn == 0 ? wallsRemaining[0] : wallsRemaining[1]) > 0 ? FindWall() : FindPlayerMove();
         }
 
         private string FindPlayerMove(bool calledFromFindWall = false)
@@ -1609,6 +1608,11 @@ namespace GameCore
                 {
 
                     move = root.RandomMove();
+
+                    if (move == "d1v")
+                    {
+                        Console.WriteLine("BOO");
+                    }
 
                 }
 
