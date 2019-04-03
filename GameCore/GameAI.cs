@@ -390,11 +390,7 @@ namespace GameCore
 
 
             walls = new List<WallCoordinate>(wallCoordinates);
-
-            walls.Add(new WallCoordinate("c1h"));
-            walls.Add(new WallCoordinate("e1h"));
-            wallsRemaining[0] -= 2;
-
+            
             children = new List<MonteCarloNode>();
             childrensMoves = new List<string>();
 
