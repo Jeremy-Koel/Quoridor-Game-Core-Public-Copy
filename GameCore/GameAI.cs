@@ -1369,7 +1369,7 @@ namespace GameCore
                 string horizontalPlacement = placement + "h";
                 string verticalPlacement = placement + "v";
 
-                if (!illegalWalls.Contains(horizontalPlacement)/* &&  placement[1] != Convert.ToChar(opponent[1] + (turn == 0 ? 1 : -1))*/)
+                if (!illegalWalls.Contains(horizontalPlacement) && placement[1] != Convert.ToChar(opponent[1] + (turn == 0 ? 1 : -1)))
                 {
                     validBlocks.Add(new Tuple<string, double>(horizontalPlacement, MinimumHeuristicEstimate(horizontalPlacement, turn == 0 ? 9 : 1)));
                 }
