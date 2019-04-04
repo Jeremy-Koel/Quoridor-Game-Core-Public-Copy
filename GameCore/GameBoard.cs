@@ -337,7 +337,15 @@ namespace GameCore
                         playerOneLocation.Col = destinationCoordinate.Col;
 
                         lastStart[0] = lastMove[0];
-                        lastMove[0] = BoardUtil.PlayerCoordinateToString(playerOneLocation);
+
+                        if (BoardUtil.IsMoveAdjacentToPosition(move, playerOneLocation))
+                        {
+                            lastMove[0] = BoardUtil.PlayerCoordinateToString(playerTwoLocation);
+                        }
+                        else
+                        {
+                            lastMove[0] = BoardUtil.PlayerCoordinateToString(playerOneLocation);
+                        }
 
                         possibleMoves[whoseTurn == 0 ? 0 : 1] = PossibleMovesFromPosition();
                         whoseTurn = PlayerEnum.TWO;
@@ -348,7 +356,16 @@ namespace GameCore
                         playerTwoLocation.Col = destinationCoordinate.Col;
 
                         lastStart[1] = lastMove[1];
-                        lastMove[1] = BoardUtil.PlayerCoordinateToString(playerTwoLocation);
+
+                        if (BoardUtil.IsMoveAdjacentToPosition(move, playerTwoLocation))
+                        {
+                            lastMove[1] = BoardUtil.PlayerCoordinateToString(playerOneLocation);
+                        }
+                        else
+                        {
+                            lastMove[1] = BoardUtil.PlayerCoordinateToString(playerTwoLocation);
+                        }
+
 
                         possibleMoves[whoseTurn == 0 ? 0 : 1] = PossibleMovesFromPosition();
                         whoseTurn = PlayerEnum.ONE;

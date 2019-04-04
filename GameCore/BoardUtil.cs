@@ -278,5 +278,28 @@ namespace GameCore
 
         }
 
+        public static bool IsMoveAdjacentToPosition(string move, PlayerCoordinate position)
+        {
+            string positionAsString = PlayerCoordinateToString(position);
+
+            if (Convert.ToChar(positionAsString[1] + 1) == move[1] && positionAsString[0] == move[0])
+            {
+                return true;
+            }
+            if (Convert.ToChar(positionAsString[0] + 1) == move[0] && positionAsString[1] == move[1])
+            {
+                return true;
+            }
+            if (Convert.ToChar(positionAsString[1] - 1) == move[1] && positionAsString[0] == move[0])
+            {
+                return true;
+            }
+            if (Convert.ToChar(positionAsString[0] - 1) == move[0] && positionAsString[1] == move[1])
+            {
+                return true;
+            }
+
+            return false;
+        }
     }
 }

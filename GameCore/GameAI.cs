@@ -399,12 +399,10 @@ namespace GameCore
             int opponentTurn = turn == 0 ? 1 : 0;
             possibleMoves = PossibleMovesFromPosition(myTurn, opponentTurn);
             possibleBlocks = GetBlockingWalls(BoardUtil.PlayerCoordinateToString(playerLocations[opponentTurn]));
-
-
+            
             int locationOfPreviousMove = DoesMoveListContain(possibleMoves, lastPlayerMove[myTurn]);
-
-
-            if (possibleMoves.Count != 1 && (parent != null ? locationOfPreviousMove != -1 : false))
+            
+            if (possibleMoves.Count != 1 && locationOfPreviousMove != -1)
             {
                 possibleMoves.RemoveAt(locationOfPreviousMove);
             }
@@ -572,13 +570,19 @@ namespace GameCore
             lastPlayerMove = new List<string>();
             if (childParent.turn == 0)
             {
-                lastPlayerMove.Add(Convert.ToChar(97 + playerLocations[0].Col / 2).ToString() + (9 - (playerLocations[0].Row / 2)).ToString());
+                if (BoardUtil.IsMoveAdjacentToPosition(move, playerLocations[0]))
+                {
+                    lastPlayerMove.Add(Convert.ToChar(97 + playerLocations[0].Col / 2).ToString() + (9 - (playerLocations[0].Row / 2)).ToString());
+                }
                 lastPlayerMove.Add(childParent.lastPlayerMove[1]);
             }
             else
             {
                 lastPlayerMove.Add(childParent.lastPlayerMove[0]);
-                lastPlayerMove.Add(Convert.ToChar(97 + playerLocations[1].Col / 2).ToString() + (9 - (playerLocations[1].Row / 2)).ToString());
+                if (BoardUtil.IsMoveAdjacentToPosition(move, playerLocations[1]))
+                {
+                    lastPlayerMove.Add(Convert.ToChar(97 + playerLocations[1].Col / 2).ToString() + (9 - (playerLocations[1].Row / 2)).ToString());
+                }
             }
 
             wallsRemaining = new List<int>(childParent.wallsRemaining);
@@ -1211,17 +1215,7 @@ namespace GameCore
                 string move = null;
 
                 move = possibleMoves[0].Item1;
-
-                for (int i = 1; childrensMoves.Contains(move) && i < possibleMoves.Count; ++i)
-                {
-                    move = possibleMoves[i].Item1;
-                }
-
-                if (childrensMoves.Contains(move))
-                {
-                    move = possibleMoves[randomPercentileChance.Next(0, possibleMoves.Count)].Item1;
-                }
-
+                
                 return move;
             }
             else
@@ -1884,7 +1878,7 @@ namespace GameCore
 
         private void ThreadedTreeSearchEasy(Stopwatch timer, MonteCarloNode MonteCarlo)
         {            
-            for (/*int i = 0*/; /*i < 10000*/ /*&&*/ timer.Elapsed.TotalSeconds < 2; /*++i*/)
+            for (/*int i = 0*/; /*i < 10000*/ /*&&*/ timer.Elapsed.TotalSeconds < 2.5; /*++i*/)
             {
                 List<Tuple<string, MonteCarloNode>> path = new List<Tuple<string, MonteCarloNode>>();
                 MonteCarlo.Backpropagate(MonteCarlo.ExpandOptions(MonteCarlo.SelectNode(MonteCarlo, path)), path);
@@ -1893,7 +1887,7 @@ namespace GameCore
 
         private void ThreadedTreeSearchHard(Stopwatch timer, MonteCarloNode MonteCarlo)
         {
-            for (/*int i = 0*/; /*i < 10000*/ /*&&*/ timer.Elapsed.TotalSeconds < 4;/* ++i*/)
+            for (/*int i = 0*/; /*i < 10000*/ /*&&*/ timer.Elapsed.TotalSeconds < 5;/* ++i*/)
             {
                 List<Tuple<string, MonteCarloNode>> path = new List<Tuple<string, MonteCarloNode>>();
                 MonteCarlo.Backpropagate(MonteCarlo.ExpandOptions(MonteCarlo.SelectNode(MonteCarlo, path)), path);
