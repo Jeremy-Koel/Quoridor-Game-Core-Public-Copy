@@ -400,6 +400,15 @@ namespace GameCore
             possibleMoves = PossibleMovesFromPosition(myTurn, opponentTurn);
             possibleBlocks = GetBlockingWalls(BoardUtil.PlayerCoordinateToString(playerLocations[opponentTurn]));
 
+
+            int locationOfPreviousMove = DoesMoveListContain(possibleMoves, lastPlayerMove[myTurn]);
+
+
+            if (possibleMoves.Count != 1 && (parent != null ? locationOfPreviousMove != -1 : false))
+            {
+                possibleMoves.RemoveAt(locationOfPreviousMove);
+            }
+
             gameOver = false;
             parent = null;
         }
