@@ -128,6 +128,7 @@ namespace GameCore
         private readonly object childrenAccess = new object();
         private readonly object childrenMovesAccess = new object();
         private static readonly double explorationFactor = 1.0 / Math.Sqrt(2.0);
+        private static readonly int randomPercentValue = 50;
 
 
         private static readonly double historyInfluence = 1;
@@ -187,12 +188,11 @@ namespace GameCore
             return timesVisited;
         }
 
-        private int ShortestPathfinder(string move, GameBoard.PlayerEnum turnForPath)
+        private int ShortestPathfinder(string move, int goalRow)
         {
             PlayerCoordinate start;
             string startString;
-            int goalRow = turnForPath == 0 ? 9 : 1;
-            int goalRowForBoard = turnForPath == 0 ? 0 : 16;
+            int goalRowForBoard = goalRow == 9 ? 0 : 16;
 
             if (move.Length != 2)
             {
@@ -206,7 +206,7 @@ namespace GameCore
                 board[wallCoordinate.EndRow].Set(wallCoordinate.EndCol, true);
 
                 //SetPlayerMoveValues(wallCoordinate, mid);
-                start = new PlayerCoordinate(playerLocations[turnForPath == 0 ? 0 : 1].Row, playerLocations[turnForPath == 0 ? 0 : 1].Col);
+                start = new PlayerCoordinate(playerLocations[goalRow == 9 ? 0 : 1].Row, playerLocations[goalRow == 9 ? 0 : 1].Col);
             }
             else
             {
@@ -1005,8 +1005,8 @@ namespace GameCore
                 board[wallCoordinate.StartRow].Set(wallCoordinate.StartCol, true);
                 board[wallCoordinate.EndRow].Set(wallCoordinate.EndCol, true);
 
-                int canPlayerOneReachGoal = ShortestPathfinder(BoardUtil.PlayerCoordinateToString(playerLocations[0]), GameBoard.PlayerEnum.ONE);
-                int canPlayerTwoReachGoal = ShortestPathfinder(BoardUtil.PlayerCoordinateToString(playerLocations[1]), GameBoard.PlayerEnum.TWO);
+                int canPlayerOneReachGoal = ShortestPathfinder(BoardUtil.PlayerCoordinateToString(playerLocations[0]), 9);
+                int canPlayerTwoReachGoal = ShortestPathfinder(BoardUtil.PlayerCoordinateToString(playerLocations[1]), 1);
 
                 board[wallCoordinate.StartRow].Set(wallCoordinate.StartCol, false);
                 board[wallCoordinate.EndRow].Set(wallCoordinate.EndCol, false);
@@ -1057,11 +1057,11 @@ namespace GameCore
 
                 if (locationToStart.Length > 2)
                 {
-                    possibleMinimumHeuristic = ShortestPathfinder(BoardUtil.PlayerCoordinateToString(opponent), turn == 0 ? GameBoard.PlayerEnum.TWO : GameBoard.PlayerEnum.ONE) - ShortestPathfinder(BoardUtil.PlayerCoordinateToString(start), turn == 0 ? GameBoard.PlayerEnum.ONE : GameBoard.PlayerEnum.TWO);
+                    possibleMinimumHeuristic = ShortestPathfinder(BoardUtil.PlayerCoordinateToString(opponent), goal);
                 }
                 else
                 {
-                    possibleMinimumHeuristic = ShortestPathfinder(BoardUtil.PlayerCoordinateToString(start), turn == 0 ? GameBoard.PlayerEnum.ONE : GameBoard.PlayerEnum.TWO);
+                    possibleMinimumHeuristic = ShortestPathfinder(BoardUtil.PlayerCoordinateToString(start), goal);
                 }
 
                 if (wallCoordinate != null)
@@ -1200,7 +1200,7 @@ namespace GameCore
         private string RandomMove()
         {
             int value = (turn == 0 ? (playerLocations[1].Row / 2) : (8 - playerLocations[0].Row / 2));
-            return randomPercentileChance.Next(0, 100) >= (turn == 0 ?  playerLocations[1].Row >= 8 ? 37 : 10 + (10 * value) : playerLocations[0].Row <= 8 ? 37 : 10 + (10 * value))  ? FindPlayerMove() : (turn == 0 ? wallsRemaining[0] : wallsRemaining[1]) > 0 ? FindWall() : FindPlayerMove();
+            return randomPercentileChance.Next(0, 100) >= (turn == 0 ?  playerLocations[1].Row >= 8 ? randomPercentValue : 10 + (10 * value) : playerLocations[0].Row <= 8 ? randomPercentValue : 10 + (10 * value))  ? FindPlayerMove() : (turn == 0 ? wallsRemaining[0] : wallsRemaining[1]) > 0 ? FindWall() : FindPlayerMove();
         }
 
         private string FindPlayerMove(bool calledFromFindWall = false)
@@ -1364,6 +1364,9 @@ namespace GameCore
         {
             Populate();
             int goal = turn == 0 ? 9 : 1;
+            int opponentGoal = turn == 0 ? 1 : 9;
+            double opponentEstimate = MinimumHeuristicEstimate(opponent, opponentGoal);
+
             List<string> blockingWalls = new List<string>();
             for (char col = Convert.ToChar(opponent[0] - 1); col < opponent[0] + 1; col++)
             {
@@ -1383,18 +1386,25 @@ namespace GameCore
                 string horizontalPlacement = placement + "h";
                 string verticalPlacement = placement + "v";
 
-                if (!illegalWalls.Contains(horizontalPlacement) && placement[1] != Convert.ToChar(opponent[1] + (turn == 0 ? 1 : -1)))
+                if (!illegalWalls.Contains(horizontalPlacement) && opponentEstimate < MinimumHeuristicEstimate(horizontalPlacement, opponentGoal) /*placement[1] != Convert.ToChar(opponent[1] + (turn == 0 ? 1 : -1))*/)
                 {
                     validBlocks.Add(new Tuple<string, double>(horizontalPlacement, MinimumHeuristicEstimate(horizontalPlacement, goal)));
                 }
-                if (!illegalWalls.Contains(verticalPlacement))
+                if (!illegalWalls.Contains(verticalPlacement) && opponentEstimate < MinimumHeuristicEstimate(verticalPlacement, opponentGoal))
                 {
                     validBlocks.Add(new Tuple<string, double>(verticalPlacement, MinimumHeuristicEstimate(horizontalPlacement, goal)));
                 }
 
             }
             Unpopulate();
-            return validBlocks.OrderBy(vB => vB.Item2).ThenBy(vB => vB.Item1[2]).ToList();
+            if (turn == 0)
+            {
+                return validBlocks.OrderBy(vB => vB.Item2).ThenBy(vB => vB.Item1[2]).ToList();
+            }
+            else
+            {
+                return validBlocks.OrderByDescending(vB => vB.Item2).ThenBy(vB => vB.Item1[2]).ToList();
+            }
         }
 
         private Tuple<bool, string> GetValidJumpMove(List<PlayerCoordinate> players)
