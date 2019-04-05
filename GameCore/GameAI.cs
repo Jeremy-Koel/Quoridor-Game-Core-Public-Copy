@@ -574,14 +574,23 @@ namespace GameCore
                 {
                     lastPlayerMove.Add(Convert.ToChar(97 + playerLocations[0].Col / 2).ToString() + (9 - (playerLocations[0].Row / 2)).ToString());
                 }
+                else
+                {
+                    lastPlayerMove.Add(childParent.lastPlayerMove[0]);
+                }
                 lastPlayerMove.Add(childParent.lastPlayerMove[1]);
             }
             else
             {
                 lastPlayerMove.Add(childParent.lastPlayerMove[0]);
+
                 if (BoardUtil.IsMoveAdjacentToPosition(move, playerLocations[1]))
                 {
                     lastPlayerMove.Add(Convert.ToChar(97 + playerLocations[1].Col / 2).ToString() + (9 - (playerLocations[1].Row / 2)).ToString());
+                }
+                else
+                {
+                    lastPlayerMove.Add(childParent.lastPlayerMove[1]);
                 }
             }
 
