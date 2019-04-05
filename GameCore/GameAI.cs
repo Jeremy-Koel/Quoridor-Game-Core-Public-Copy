@@ -1218,7 +1218,7 @@ namespace GameCore
 
         private string FindPlayerMove(bool calledFromFindWall = false)
         {
-            bool opponentAlmostWinButCanBlock = DoesOpponentHaveEndRowMove() && wallsRemaining[turn == 0 ? 0 : 1] > 0 && AtLeastOneBlockLegal() && !calledFromFindWall;
+            bool opponentAlmostWinButCanBlock = DoesOpponentHaveEndRowMove() && wallsRemaining[turn == 0 ? 0 : 1] > 0 && AtLeastOneBlockLegal() && !calledFromFindWall && !DoIHaveAEndRowMove();
             if (!opponentAlmostWinButCanBlock)
             {
                 string move = null;
@@ -1231,6 +1231,21 @@ namespace GameCore
             {
                 return FindWall();
             }
+        }
+
+        private bool DoIHaveAEndRowMove()
+        {
+            bool containsEndRowMove = false;
+
+            for (int i = 0; i < possibleMoves.Count && !containsEndRowMove; i++)
+            {
+                if (possibleMoves[i].Item1[1] == (turn == 0 ? '9' : '1'))
+                {
+                    containsEndRowMove = true;
+                }
+            }
+
+            return containsEndRowMove;
         }
 
         private bool AtLeastOneBlockLegal()
