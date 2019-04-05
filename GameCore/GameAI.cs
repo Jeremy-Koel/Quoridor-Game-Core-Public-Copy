@@ -251,7 +251,7 @@ namespace GameCore
                 }
                 if (path != null) 
                 {
-                    possiblePaths.Enqueue(new MoveEvaluation(path, HeuristicCostEstimate(new PlayerCoordinate(path), new PlayerCoordinate(path[0].ToString() + goalRow.ToString())), 2));
+                    possiblePaths.Enqueue(new MoveEvaluation(path, HeuristicCostEstimate(new PlayerCoordinate(path), new PlayerCoordinate(path[0].ToString() + goalRow.ToString())) + 2, 2));
                 }
             }
 
@@ -304,7 +304,7 @@ namespace GameCore
                         }
                         if (path != null && !exhaustedPaths.Contains(path))
                         {
-                            possiblePaths.Enqueue(new MoveEvaluation(path, HeuristicCostEstimate(new PlayerCoordinate(path), new PlayerCoordinate(path[0].ToString() + goalRow.ToString())), nextMove.DistanceFromStart + 1));
+                            possiblePaths.Enqueue(new MoveEvaluation(path, HeuristicCostEstimate(new PlayerCoordinate(path), new PlayerCoordinate(path[0].ToString() + goalRow.ToString())) + nextMove.DistanceFromStart + 1, nextMove.DistanceFromStart + 1));
                         }
                     }
                 }
