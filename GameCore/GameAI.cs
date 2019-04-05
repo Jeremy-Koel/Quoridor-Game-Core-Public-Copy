@@ -402,7 +402,7 @@ namespace GameCore
             
             int locationOfPreviousMove = DoesMoveListContain(possibleMoves, lastPlayerMove[myTurn]);
             
-            if (possibleMoves.Count != 1 && locationOfPreviousMove != -1)
+            if (possibleMoves.Count != 1 && locationOfPreviousMove > 0)
             {
                 possibleMoves.RemoveAt(locationOfPreviousMove);
             }
@@ -519,7 +519,7 @@ namespace GameCore
             int locationOfPreviousMove = DoesMoveListContain(possibleMoves, parent.lastPlayerMove[myTurn]);
 
 
-            if (possibleMoves.Count != 1 && (parent != null ? locationOfPreviousMove != -1 : false))
+            if (possibleMoves.Count != 1 && locationOfPreviousMove > 0)
             {
                 possibleMoves.RemoveAt(locationOfPreviousMove);
             }
@@ -643,7 +643,7 @@ namespace GameCore
 
                 int locationOfPreviousMove = DoesMoveListContain(possibleMoves, childParent.lastPlayerMove[myTurn]);
 
-                if (possibleMoves.Count != 1 && locationOfPreviousMove != -1)
+                if (possibleMoves.Count != 1 && locationOfPreviousMove > 0)
                 {
                     possibleMoves.RemoveAt(locationOfPreviousMove);
                 }
