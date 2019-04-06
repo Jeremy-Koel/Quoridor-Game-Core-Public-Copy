@@ -1593,7 +1593,7 @@ namespace GameCore
                 total = AddWallTotalToList(nearbyWalls, total, newWall, goal);
             }
 
-            return new  
+            return new Tuple<double, int>(total / nearbyWalls.Count, )
         }
 
         private double AverageHeuristicEstimateOfNearbyWallsVertical(string wallPlacement, int goal)
