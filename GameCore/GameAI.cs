@@ -101,7 +101,7 @@ namespace GameCore
             } // IsConsistent
         } // PriorityQueue
 
-       private class MoveEvaluation : IComparable<MoveEvaluation>
+        private class MoveEvaluation : IComparable<MoveEvaluation>
         {
             private string move;
             private double value;
@@ -123,7 +123,7 @@ namespace GameCore
                 return value.CompareTo(moveEvaluation.value);
             }
         }
-        
+
         private static readonly object boardAccess = new object();
         private readonly object childrenAccess = new object();
         private readonly object childrenMovesAccess = new object();
@@ -252,7 +252,7 @@ namespace GameCore
                         }
                         break;
                 }
-                if (path != null) 
+                if (path != null)
                 {
                     possiblePaths.Enqueue(new MoveEvaluation(path, HeuristicCostEstimate(new PlayerCoordinate(path), new PlayerCoordinate(path[0].ToString() + goalRow.ToString())) + 2, 2));
                 }
@@ -410,9 +410,9 @@ namespace GameCore
             {
                 possibleWalls = GetBestNonImmediateBlockWalls(BoardUtil.PlayerCoordinateToString(playerLocations[opponentTurn]));
             }
-            
+
             int locationOfPreviousMove = DoesMoveListContain(possibleMoves, lastPlayerMove[myTurn]);
-            
+
             if (possibleMoves.Count != 1 && locationOfPreviousMove != -1)
             {
                 possibleMoves.RemoveAt(locationOfPreviousMove);
@@ -494,7 +494,7 @@ namespace GameCore
             possibleWalls = new List<Tuple<string, double>>();
 
             possibleHorizontalWalls = possibleVerticalWalls = new List<string>(availableWalls);
-            
+
             possibleHorizontalWalls.Remove(move.Substring(0, 2));
 
             if (move[2] == 'v')
@@ -792,7 +792,7 @@ namespace GameCore
                 PossibleVerticalDiagonalJumps(validMoves, goal, direction);
             }
         }
-        
+
         private List<Tuple<string, double>> PossibleMovesFromPosition(int playerSpot, int opponentSpot)
         {
             List<Tuple<string, double>> validMoves = new List<Tuple<string, double>>();
@@ -883,7 +883,7 @@ namespace GameCore
                     }
                 }
 
-                if(indexToStartDeletions != -1)
+                if (indexToStartDeletions != -1)
                 {
                     validMoves.RemoveRange(indexToStartDeletions, validMoves.Count - indexToStartDeletions);
                 }
@@ -1079,20 +1079,17 @@ namespace GameCore
                 int EndRow = goal;
 
                 PlayerCoordinate start;
-                PlayerCoordinate opponent;
                 WallCoordinate wallCoordinate = null;
 
                 if (locationToStart.Length > 2)
                 {
-                    start = playerLocations[turn == 0 ? 0 : 1];
-                    opponent = playerLocations[turn == 0 ? 1 : 0];
+                    start = playerLocations[goal == 1 ? 0 : 1];
 
                     wallCoordinate = new WallCoordinate(locationToStart);
                 }
                 else
                 {
                     start = new PlayerCoordinate(locationToStart);
-                    opponent = playerLocations[turn == 0 ? 1 : 0];
                 }
 
                 if (wallCoordinate != null)
@@ -1109,14 +1106,7 @@ namespace GameCore
 
                 double possibleMinimumHeuristic;
 
-                if (locationToStart.Length > 2)
-                {
-                    possibleMinimumHeuristic = ShortestPathfinder(BoardUtil.PlayerCoordinateToString(opponent), goal);
-                }
-                else
-                {
-                    possibleMinimumHeuristic = ShortestPathfinder(BoardUtil.PlayerCoordinateToString(start), goal);
-                }
+                possibleMinimumHeuristic = ShortestPathfinder(BoardUtil.PlayerCoordinateToString(start), goal);
 
                 if (wallCoordinate != null)
                 {
@@ -1219,7 +1209,7 @@ namespace GameCore
             }
             return retValue;
         }
-                         
+
         private bool IsMoveInBounds(int row, int col)
         {
             return row >= 0
@@ -1244,7 +1234,7 @@ namespace GameCore
             }
 
             return onPlayerSpace && isSpaceEmpty;
-        }             
+        }
 
         private Tuple<int, int> FindMidpoint(PlayerCoordinate start, PlayerCoordinate destination)
         {
@@ -1254,13 +1244,13 @@ namespace GameCore
         private string RandomMove()
         {
             int value = (turn == 0 ? (playerLocations[1].Row / 2) : (8 - playerLocations[0].Row / 2));
-            return randomPercentileChance.Next(0, 100) >= (turn == 0 ?  playerLocations[1].Row >= 8 ? randomPercentValue : 10 + (10 * value) : playerLocations[0].Row <= 8 ? randomPercentValue : 10 + (10 * value))  ? FindPlayerMove() : (turn == 0 ? wallsRemaining[0] : wallsRemaining[1]) > 0 ? FindWall() : FindPlayerMove();
+            return randomPercentileChance.Next(0, 100) >= (turn == 0 ? playerLocations[1].Row >= 8 ? randomPercentValue : 10 + (10 * value) : playerLocations[0].Row <= 8 ? randomPercentValue : 10 + (10 * value)) ? FindPlayerMove() : (turn == 0 ? wallsRemaining[0] : wallsRemaining[1]) > 0 ? FindWall() : FindPlayerMove();
         }
 
         private string FindPlayerMove(bool calledFromFindWall = false)
         {
-            bool opponentAlmostWinButCanBlock = DoesOpponentHaveEndRowMove() && wallsRemaining[turn == 0 ? 0 : 1] > 0 && AtLeastOneBlockLegal() && !calledFromFindWall && !DoIHaveAEndRowMove();
-            if (!opponentAlmostWinButCanBlock)
+            bool canBlockForGain = (DoesOpponentHaveEndRowMove() || CanBlockToIncreasePathByLargeAmount()) && wallsRemaining[turn == 0 ? 0 : 1] > 0 && AtLeastOneBlockLegal() && !calledFromFindWall && !DoIHaveAEndRowMove();
+            if (!canBlockForGain)
             {
                 string move = null;
 
@@ -1285,6 +1275,23 @@ namespace GameCore
             }
         }
 
+        private bool CanBlockToIncreasePathByLargeAmount()
+        {
+            string opponent = BoardUtil.PlayerCoordinateToString(playerLocations[turn == 0 ? 1 : 0]);
+            double opponentPath = MinimumHeuristicEstimate(opponent, turn == 0 ? 9 : 1);
+            bool blockExistsThatBlocksForMoreThanTwo = false;
+
+            foreach (Tuple<string, double> wall in possibleBlocks)
+            {
+                if (MinimumHeuristicEstimate(wall.Item1, turn == 0 ? 9 : 1) - opponentPath > 2)
+                {
+                    blockExistsThatBlocksForMoreThanTwo = true;
+                }
+            }
+
+            return blockExistsThatBlocksForMoreThanTwo;
+        }
+
         private bool DoIHaveAEndRowMove()
         {
             bool containsEndRowMove = false;
@@ -1303,7 +1310,7 @@ namespace GameCore
         private bool AtLeastOneBlockLegal()
         {
             bool oneBlockLegal = false;
-            foreach (Tuple<string,double> block in possibleBlocks)
+            foreach (Tuple<string, double> block in possibleBlocks)
             {
                 if (!illegalWalls.Contains(block.Item1))
                 {
@@ -1348,75 +1355,42 @@ namespace GameCore
                         if (possibleBlocks.Count > 0)
                         {
                             wallMove = possibleBlocks[0].Item1;
-
-                            for (int i = 1; (childrensMoves.Contains(wallMove) || illegalWalls.Contains(wallMove)) && i < possibleBlocks.Count; ++i)
-                            {
-                                wallMove = possibleBlocks[i].Item1;
-                            }
-
-                            if (childrensMoves.Contains(wallMove) || illegalWalls.Contains(wallMove))
-                            {
-                                for (int i = 0; i < possibleBlocks.Count && illegalWalls.Contains(wallMove); ++i)
-                                {
-                                    wallMove = possibleBlocks[i].Item1;
-                                }
-                                if (illegalWalls.Contains(wallMove) && !calledForPreventiveBlock)
-                                {
-                                    return FindPlayerMove(true);
-                                }
-                                else
-                                {
-                                    return wallMove;
-                                }
-                            }
-                            else
-                            {
-                                return wallMove;
-                            }
                         }
                     }
                     else
                     {
-                        //    if (isHardAI)
-                        //    {
-                        //        if (possibleWalls == null)
-                        //        {
-                        //            possibleWalls = GetBestNonImmediateBlockWalls(BoardUtil.PlayerCoordinateToString(playerLocations[turn == 0 ? 1 : 0]));
-                        //        }
+                        if (isHardAI)
+                        {
+                            if (possibleWalls == null)
+                            {
+                                possibleWalls = GetBestNonImmediateBlockWalls(BoardUtil.PlayerCoordinateToString(playerLocations[turn == 0 ? 1 : 0]));
+                            }
 
-                        //        if (possibleBlocks.Count > 0)
-                        //        {
-                        //            wallMove = possibleWalls[0].Item1;
+                            if (possibleWalls.Count > 0)
+                            {
+                                wallMove = possibleWalls[0].Item1;
 
-                        //            for (int i = 1; (childrensMoves.Contains(wallMove) || illegalWalls.Contains(wallMove)) && i < possibleWalls.Count; ++i)
-                        //            {
-                        //                wallMove = possibleWalls[i].Item1;
-                        //            }
+                                for (int i = 1; (childrensMoves.Contains(wallMove) || illegalWalls.Contains(wallMove)) && i < possibleWalls.Count; ++i)
+                                {
+                                    wallMove = possibleWalls[i].Item1;
+                                }
 
-                        //            if (childrensMoves.Contains(wallMove) && illegalWalls.Contains(wallMove))
-                        //            {
-                        //                for (int i = 0; i < possibleWalls.Count && illegalWalls.Contains(wallMove); ++i)
-                        //                {
-                        //                    wallMove = possibleWalls[i].Item1;
-                        //                }
-                        //                if (illegalWalls.Contains(wallMove))
-                        //                {
-                        //                    return FindPlayerMove(true);
-                        //                }
-                        //                else
-                        //                {
-                        //                    return wallMove;
-                        //                }
-                        //            }
-                        //            else
-                        //            {
-                        //                return wallMove;
-                        //            }
-                        //        }
-                        //    }
-                        //    else
-                        //    {
-                        if (possibleBlocks == null)
+                                if (childrensMoves.Contains(wallMove) && illegalWalls.Contains(wallMove))
+                                {
+                                    for (int i = 0; i < possibleWalls.Count && illegalWalls.Contains(wallMove); ++i)
+                                    {
+                                        wallMove = possibleWalls[i].Item1;
+                                    }
+                                    if (illegalWalls.Contains(wallMove))
+                                    {
+                                        wallMove = FindPlayerMove(true);
+                                    }
+                                }
+                            }
+                        }
+                        else
+                        {
+                            if (possibleBlocks == null)
                             {
                                 possibleBlocks = GetBlockingWalls(BoardUtil.PlayerCoordinateToString(playerLocations[turn == 0 ? 1 : 0]));
                             }
@@ -1424,42 +1398,21 @@ namespace GameCore
                             if (possibleBlocks.Count > 0)
                             {
                                 wallMove = possibleBlocks[0].Item1;
-
-                                for (int i = 1; (childrensMoves.Contains(wallMove) || illegalWalls.Contains(wallMove)) && i < possibleBlocks.Count; ++i)
-                                {
-                                    wallMove = possibleBlocks[i].Item1;
-                                }
-
-                                if (childrensMoves.Contains(wallMove) && illegalWalls.Contains(wallMove))
-                                {
-                                    for (int i = 0; i < possibleBlocks.Count && illegalWalls.Contains(wallMove); ++i)
-                                    {
-                                        wallMove = possibleBlocks[i].Item1;
-                                    }
-                                    if (illegalWalls.Contains(wallMove))
-                                    {
-                                        return FindPlayerMove(true);
-                                    }
-                                    else
-                                    {
-                                        return wallMove;
-                                    }
-                                }
-                                else
-                                {
-                                    return wallMove;
-                                }
                             }
-                        //}
+                        }
                     }
 
                     if (wallMove != null)
                     {
                         return wallMove;
                     }
-                    else
+                    else if (!calledForPreventiveBlock)
                     {
                         return FindPlayerMove(true);
+                    }
+                    else
+                    {
+                        return FindWall(true);
                     }
                 }
                 else
@@ -1510,14 +1463,14 @@ namespace GameCore
             }
 
             Unpopulate();
-            if (turn == 0)
-            {
-                return validBlocks.OrderBy(vB => vB.Item2).ThenBy(vB => vB.Item1[2]).ToList();
-            }
-            else
-            {
-                return validBlocks.OrderByDescending(vB => vB.Item2).ThenBy(vB => vB.Item1[2]).ToList();
-            }
+            //if (turn == 0)
+            //{
+            //    return validBlocks.OrderByDescending(vB => vB.Item2).ThenBy(vB => vB.Item1[2]).ToList();
+            //}
+            //else
+            //{
+            return validBlocks.OrderBy(vB => vB.Item2).ThenBy(vB => vB.Item1[2]).ToList();
+            //}
         }
 
 
@@ -1535,13 +1488,29 @@ namespace GameCore
                 string horizontalPlacement = placement + "h";
                 string verticalPlacement = placement + "v";
 
-                if (!illegalWalls.Contains(horizontalPlacement) && !possibleBlocksList.Contains(horizontalPlacement) && opponentEstimate < (MinimumHeuristicEstimate(horizontalPlacement, opponentGoal) + AverageHeuristicEstimateOfNearbyWalls(horizontalPlacement, opponentGoal)) / 2 /*placement[1] != Convert.ToChar(opponent[1] + (turn == 0 ? 1 : -1))*/)
+                if (!illegalWalls.Contains(horizontalPlacement) && !possibleBlocksList.Contains(horizontalPlacement))
                 {
-                    validBlocks.Add(new Tuple<string, double>(horizontalPlacement, MinimumHeuristicEstimate(horizontalPlacement, goal) + AverageHeuristicEstimateOfNearbyWalls(horizontalPlacement, goal)));
+                    Tuple<double, int> heuristicEstimatePlayer = AverageHeuristicEstimateOfNearbyWalls(horizontalPlacement, goal);
+                    Tuple<double, int> heuristicEstimateOpponent = AverageHeuristicEstimateOfNearbyWalls(horizontalPlacement, opponentGoal);
+                    double horizontalHeuristic = (MinimumHeuristicEstimate(horizontalPlacement, goal) + heuristicEstimatePlayer.Item1) / 2;
+                    double opponentHorizontalHeuristic = (MinimumHeuristicEstimate(horizontalPlacement, opponentGoal) + heuristicEstimateOpponent.Item1) / 2;
+
+                    if (opponentEstimate < opponentHorizontalHeuristic && horizontalHeuristic < opponentHorizontalHeuristic)
+                    {
+                        validBlocks.Add(new Tuple<string, double>(horizontalPlacement, opponentHorizontalHeuristic - horizontalHeuristic));
+                    }
                 }
-                if (!illegalWalls.Contains(verticalPlacement) && !possibleBlocksList.Contains(verticalPlacement) && opponentEstimate < (MinimumHeuristicEstimate(verticalPlacement, opponentGoal) + AverageHeuristicEstimateOfNearbyWalls(verticalPlacement, opponentGoal)) / 2)
+                if (!illegalWalls.Contains(verticalPlacement) && !possibleBlocksList.Contains(verticalPlacement))
                 {
-                    validBlocks.Add(new Tuple<string, double>(verticalPlacement, MinimumHeuristicEstimate(horizontalPlacement, goal) + AverageHeuristicEstimateOfNearbyWalls(verticalPlacement, goal)));
+                    Tuple<double, int> heuristicEstimatePlayer = AverageHeuristicEstimateOfNearbyWalls(verticalPlacement, goal);
+                    Tuple<double, int> heuristicEstimateOpponent = AverageHeuristicEstimateOfNearbyWalls(verticalPlacement, opponentGoal);
+                    double verticalHeuristic = (MinimumHeuristicEstimate(verticalPlacement, goal) + heuristicEstimatePlayer.Item1) / 2;
+                    double opponentVerticalHeuristic = (MinimumHeuristicEstimate(verticalPlacement, opponentGoal) + heuristicEstimateOpponent.Item1) / 2;
+
+                    if (opponentEstimate < opponentVerticalHeuristic && verticalHeuristic < opponentVerticalHeuristic)
+                    {
+                        validBlocks.Add(new Tuple<string, double>(verticalPlacement, opponentVerticalHeuristic - verticalHeuristic));
+                    }
                 }
 
             }
@@ -1556,7 +1525,7 @@ namespace GameCore
             }
         }
 
-        private double AverageHeuristicEstimateOfNearbyWalls(string wallPlacement, int goal)
+        private Tuple<double, int> AverageHeuristicEstimateOfNearbyWalls(string wallPlacement, int goal)
         {
             if (wallPlacement[2] == 'h')
             {
@@ -1564,11 +1533,11 @@ namespace GameCore
             }
             else
             {
-               return AverageHeuristicEstimateOfNearbyWallsVertical(wallPlacement, goal);
+                return AverageHeuristicEstimateOfNearbyWallsVertical(wallPlacement, goal);
             }
         }
 
-        private double AverageHeuristicEstimateOfNearbyWallsHorizontal(string wallPlacement, int goal)
+        private Tuple<double, int> AverageHeuristicEstimateOfNearbyWallsHorizontal(string wallPlacement, int goal)
         {
             List<Tuple<string, double>> nearbyWalls = new List<Tuple<string, double>>();
             double total = 0;
@@ -1620,11 +1589,11 @@ namespace GameCore
             }
             if (Convert.ToChar(wallPlacement[1] - 1) >= '1')
             {
-                string newWall = wallPlacement[0] +  Convert.ToChar(wallPlacement[1] - 1).ToString() + 'v';
+                string newWall = wallPlacement[0] + Convert.ToChar(wallPlacement[1] - 1).ToString() + 'v';
                 total = AddWallTotalToList(nearbyWalls, total, newWall, goal);
             }
 
-            return total / nearbyWalls.Count;
+            return new  
         }
 
         private double AverageHeuristicEstimateOfNearbyWallsVertical(string wallPlacement, int goal)
@@ -1807,7 +1776,7 @@ namespace GameCore
             return possibleJump;
 
         }
-        
+
         private bool PlayersAreAdjacent()
         {
             return (playerLocations[turn == 0 ? 0 : 1].Row == playerLocations[turn == 0 ? 1 : 0].Row && playerLocations[turn == 0 ? 0 : 1].Col + 2 == playerLocations[turn == 0 ? 1 : 0].Col && !board[playerLocations[turn == 0 ? 0 : 1].Row].Get(playerLocations[turn == 0 ? 0 : 1].Col + 1))
@@ -1856,7 +1825,7 @@ namespace GameCore
             {
                 MonteCarloNode nextNode = SelectionAlgorithm(root.children);
                 if (path.Count > 0 && ExistsWithin(nextNode, path))
-                {                
+                {
                     List<MonteCarloNode> listOfChildren = new List<MonteCarloNode>(root.children);
                     listOfChildren.Remove(nextNode);
                     nextNode = SelectionAlgorithm(listOfChildren);
@@ -1961,7 +1930,7 @@ namespace GameCore
                             * Math.Sqrt(Math.Log(timesVisited) / child.GetVisits()) +
                             child.GetMoveTotalsRatio(move) *
                             (historyInfluence / (child.GetVisits() - child.GetWins() + 1));
-            
+
         }
 
         private double GetMoveTotalsRatio(string move)
@@ -1983,7 +1952,7 @@ namespace GameCore
         {
             int goalPlayer = turn == 0 ? 9 : 1;
             int goalOpponent = turn == 0 ? 1 : 9;
-            return (Math.Atan(0.5 * (0.9 *((MinimumHeuristicEstimate(player, goalPlayer) - MinimumHeuristicEstimate(opponent, goalOpponent))))) / Math.PI) + 0.5;
+            return (Math.Atan(0.5 * (0.9 * ((MinimumHeuristicEstimate(player, goalPlayer) - MinimumHeuristicEstimate(opponent, goalOpponent))))) / Math.PI) + 0.5;
         }
 
         /// <summary>
@@ -2037,7 +2006,7 @@ namespace GameCore
                         }
                     }
                     else if (!illegalWalls.Contains(move))
-                    {                        
+                    {
                         illegalWalls.Add(move);
                     }
                 }
@@ -2173,12 +2142,12 @@ namespace GameCore
             isHardAI = isHard;
             TreeSearch = new MonteCarloNode(boardState.GetPlayerCoordinate(GameBoard.PlayerEnum.ONE), boardState.GetPlayerCoordinate(GameBoard.PlayerEnum.TWO),
                                                               boardState.GetPlayerWallCount(GameBoard.PlayerEnum.ONE), boardState.GetPlayerWallCount(GameBoard.PlayerEnum.TWO),
-                                                              boardState.GetWalls(), boardState.GetWhoseTurn() == 1 ? GameBoard.PlayerEnum.ONE : GameBoard.PlayerEnum.TWO, 
+                                                              boardState.GetWalls(), boardState.GetWhoseTurn() == 1 ? GameBoard.PlayerEnum.ONE : GameBoard.PlayerEnum.TWO,
                                                               boardState.GetLastStart(), isHardAI);
         }
 
         private void ThreadedTreeSearchEasy(Stopwatch timer, MonteCarloNode MonteCarlo)
-        {            
+        {
             for (/*int i = 0*/; /*i < 10000*/ /*&&*/ timer.Elapsed.TotalSeconds < 2.5; /*++i*/)
             {
                 List<Tuple<string, MonteCarloNode>> path = new List<Tuple<string, MonteCarloNode>>();
@@ -2188,7 +2157,7 @@ namespace GameCore
 
         private void ThreadedTreeSearchHard(Stopwatch timer, MonteCarloNode MonteCarlo)
         {
-            for (/*int i = 0*/; /*i < 10000*/ /*&&*/ timer.Elapsed.TotalSeconds < 5;/* ++i*/)
+            for (/*int i = 0*/; /*i < 10000*/ /*&&*/ timer.Elapsed.TotalSeconds < 4.5;/* ++i*/)
             {
                 List<Tuple<string, MonteCarloNode>> path = new List<Tuple<string, MonteCarloNode>>();
                 MonteCarlo.Backpropagate(MonteCarlo.ExpandOptions(MonteCarlo.SelectNode(MonteCarlo, path)), path);
@@ -2202,7 +2171,7 @@ namespace GameCore
 
             List<Thread> simulatedGames = new List<Thread>();
 
-            for (int i = 0; i < 1; ++i)
+            for (int i = 0; i < 8; ++i)
             {
                 Thread simulatedGameThread;
 
@@ -2232,9 +2201,8 @@ namespace GameCore
             Console.WriteLine("Visits: " + TreeSearch.GetVisits());
             List<MonteCarloNode> childrenToChoose = TreeSearch.GetChildrenNodes().OrderBy(o => o.GetVisits()).ToList();
 
-            childrenToChoose.Sort();
             string move = childrenToChoose[childrenToChoose.Count - 1].GetMove();
-            
+
             return move;
         }
     }
