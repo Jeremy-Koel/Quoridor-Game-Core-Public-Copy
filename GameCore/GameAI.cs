@@ -1377,46 +1377,46 @@ namespace GameCore
                     }
                     else
                     {
-                        if (isHardAI)
-                        {
-                            if (possibleWalls == null)
-                            {
-                                possibleWalls = GetBestNonImmediateBlockWalls(BoardUtil.PlayerCoordinateToString(playerLocations[turn == 0 ? 1 : 0]));
-                            }
+                        //    if (isHardAI)
+                        //    {
+                        //        if (possibleWalls == null)
+                        //        {
+                        //            possibleWalls = GetBestNonImmediateBlockWalls(BoardUtil.PlayerCoordinateToString(playerLocations[turn == 0 ? 1 : 0]));
+                        //        }
 
-                            if (possibleBlocks.Count > 0)
-                            {
-                                wallMove = possibleWalls[0].Item1;
+                        //        if (possibleBlocks.Count > 0)
+                        //        {
+                        //            wallMove = possibleWalls[0].Item1;
 
-                                for (int i = 1; (childrensMoves.Contains(wallMove) || illegalWalls.Contains(wallMove)) && i < possibleWalls.Count; ++i)
-                                {
-                                    wallMove = possibleWalls[i].Item1;
-                                }
+                        //            for (int i = 1; (childrensMoves.Contains(wallMove) || illegalWalls.Contains(wallMove)) && i < possibleWalls.Count; ++i)
+                        //            {
+                        //                wallMove = possibleWalls[i].Item1;
+                        //            }
 
-                                if (childrensMoves.Contains(wallMove) && illegalWalls.Contains(wallMove))
-                                {
-                                    for (int i = 0; i < possibleWalls.Count && illegalWalls.Contains(wallMove); ++i)
-                                    {
-                                        wallMove = possibleWalls[i].Item1;
-                                    }
-                                    if (illegalWalls.Contains(wallMove))
-                                    {
-                                        return FindPlayerMove(true);
-                                    }
-                                    else
-                                    {
-                                        return wallMove;
-                                    }
-                                }
-                                else
-                                {
-                                    return wallMove;
-                                }
-                            }
-                        }
-                        else
-                        {
-                            if (possibleBlocks == null)
+                        //            if (childrensMoves.Contains(wallMove) && illegalWalls.Contains(wallMove))
+                        //            {
+                        //                for (int i = 0; i < possibleWalls.Count && illegalWalls.Contains(wallMove); ++i)
+                        //                {
+                        //                    wallMove = possibleWalls[i].Item1;
+                        //                }
+                        //                if (illegalWalls.Contains(wallMove))
+                        //                {
+                        //                    return FindPlayerMove(true);
+                        //                }
+                        //                else
+                        //                {
+                        //                    return wallMove;
+                        //                }
+                        //            }
+                        //            else
+                        //            {
+                        //                return wallMove;
+                        //            }
+                        //        }
+                        //    }
+                        //    else
+                        //    {
+                        if (possibleBlocks == null)
                             {
                                 possibleBlocks = GetBlockingWalls(BoardUtil.PlayerCoordinateToString(playerLocations[turn == 0 ? 1 : 0]));
                             }
@@ -1450,7 +1450,7 @@ namespace GameCore
                                     return wallMove;
                                 }
                             }
-                        }
+                        //}
                     }
 
                     if (wallMove != null)
@@ -2202,7 +2202,7 @@ namespace GameCore
 
             List<Thread> simulatedGames = new List<Thread>();
 
-            for (int i = 0; i < 8; ++i)
+            for (int i = 0; i < 1; ++i)
             {
                 Thread simulatedGameThread;
 
