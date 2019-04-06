@@ -1535,13 +1535,13 @@ namespace GameCore
                 string horizontalPlacement = placement + "h";
                 string verticalPlacement = placement + "v";
 
-                if (!illegalWalls.Contains(horizontalPlacement) && !possibleBlocksList.Contains(horizontalPlacement) && opponentEstimate < MinimumHeuristicEstimate(horizontalPlacement, opponentGoal) /*placement[1] != Convert.ToChar(opponent[1] + (turn == 0 ? 1 : -1))*/)
+                if (!illegalWalls.Contains(horizontalPlacement) && !possibleBlocksList.Contains(horizontalPlacement) && opponentEstimate < (MinimumHeuristicEstimate(horizontalPlacement, opponentGoal) + AverageHeuristicEstimateOfNearbyWalls(horizontalPlacement, opponentGoal)) / 2 /*placement[1] != Convert.ToChar(opponent[1] + (turn == 0 ? 1 : -1))*/)
                 {
-                    validBlocks.Add(new Tuple<string, double>(horizontalPlacement, MinimumHeuristicEstimate(horizontalPlacement, goal) + AverageHeuristicEstimateOfNearbyWalls(horizontalPlacement, opponentGoal)));
+                    validBlocks.Add(new Tuple<string, double>(horizontalPlacement, MinimumHeuristicEstimate(horizontalPlacement, goal) + AverageHeuristicEstimateOfNearbyWalls(horizontalPlacement, goal)));
                 }
-                if (!illegalWalls.Contains(verticalPlacement) && !possibleBlocksList.Contains(verticalPlacement) && opponentEstimate < MinimumHeuristicEstimate(verticalPlacement, opponentGoal))
+                if (!illegalWalls.Contains(verticalPlacement) && !possibleBlocksList.Contains(verticalPlacement) && opponentEstimate < (MinimumHeuristicEstimate(verticalPlacement, opponentGoal) + AverageHeuristicEstimateOfNearbyWalls(verticalPlacement, opponentGoal)) / 2)
                 {
-                    validBlocks.Add(new Tuple<string, double>(verticalPlacement, MinimumHeuristicEstimate(horizontalPlacement, goal) + AverageHeuristicEstimateOfNearbyWalls(verticalPlacement, opponentGoal)));
+                    validBlocks.Add(new Tuple<string, double>(verticalPlacement, MinimumHeuristicEstimate(horizontalPlacement, goal) + AverageHeuristicEstimateOfNearbyWalls(verticalPlacement, goal)));
                 }
 
             }
