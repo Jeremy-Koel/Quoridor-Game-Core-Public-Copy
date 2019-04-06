@@ -424,7 +424,7 @@ namespace GameCore
                     }
                     if (possibleHorizontalWalls.Contains(Convert.ToChar(wallString[0] + 1).ToString() + wallString[1]))
                     {
-                        illegalWalls.Add(Convert.ToChar(wallString[0] + 2).ToString() + wallString[1] + "h");
+                        illegalWalls.Add(Convert.ToChar(wallString[0] + 1).ToString() + wallString[1] + "h");
                     }
                 }
                 else
@@ -1980,15 +1980,8 @@ namespace GameCore
 
             childrenToChoose.Sort();
             string move = childrenToChoose[childrenToChoose.Count - 1].GetMove();
-
-            if(move == "e7")
-            {
-                Console.WriteLine("Hmmm...");
-            }
-
+            
             return move;
         }
-
-
     }
 }
