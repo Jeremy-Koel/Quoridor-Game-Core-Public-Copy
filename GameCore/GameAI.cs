@@ -1083,7 +1083,8 @@ namespace GameCore
 
                 if (locationToStart.Length > 2)
                 {
-                    start = playerLocations[goal == 1 ? 0 : 1];
+                    start = playerLocations[goal == 9 ? 1 : 0];
+                    goal = goal == 9 ? 1 : 9;
 
                     wallCoordinate = new WallCoordinate(locationToStart);
                 }
@@ -1278,7 +1279,7 @@ namespace GameCore
         private bool CanBlockToIncreasePathByLargeAmount()
         {
             string opponent = BoardUtil.PlayerCoordinateToString(playerLocations[turn == 0 ? 1 : 0]);
-            double opponentPath = MinimumHeuristicEstimate(opponent, turn == 0 ? 9 : 1);
+            double opponentPath = MinimumHeuristicEstimate(opponent, turn == 0 ? 1 : 9);
             bool blockExistsThatBlocksForMoreThanTwo = false;
 
             foreach (Tuple<string, double> wall in possibleBlocks)
@@ -1447,16 +1448,18 @@ namespace GameCore
             foreach (string placement in blockingWalls)
             {
                 string horizontalPlacement = placement + "h";
+                double horizontalHeuristic = MinimumHeuristicEstimate(horizontalPlacement, goal);
                 string verticalPlacement = placement + "v";
+                double verticalHeuristic = MinimumHeuristicEstimate(verticalPlacement, goal);
 
-                if (!illegalWalls.Contains(horizontalPlacement) && opponentEstimate < MinimumHeuristicEstimate(horizontalPlacement, opponentGoal) /*placement[1] != Convert.ToChar(opponent[1] + (turn == 0 ? 1 : -1))*/)
+                if (!illegalWalls.Contains(horizontalPlacement) && opponentEstimate < horizontalHeuristic /*placement[1] != Convert.ToChar(opponent[1] + (turn == 0 ? 1 : -1))*/)
                 {
-                    validBlocks.Add(new Tuple<string, double>(horizontalPlacement, MinimumHeuristicEstimate(horizontalPlacement, goal)));
+                    validBlocks.Add(new Tuple<string, double>(horizontalPlacement, horizontalHeuristic));
                     possibleBlocksList.Add(horizontalPlacement);
                 }
-                if (!illegalWalls.Contains(verticalPlacement) && opponentEstimate < MinimumHeuristicEstimate(verticalPlacement, opponentGoal))
+                if (!illegalWalls.Contains(verticalPlacement) && opponentEstimate < verticalHeuristic)
                 {
-                    validBlocks.Add(new Tuple<string, double>(verticalPlacement, MinimumHeuristicEstimate(horizontalPlacement, goal)));
+                    validBlocks.Add(new Tuple<string, double>(verticalPlacement, verticalHeuristic));
                     possibleBlocksList.Add(verticalPlacement);
                 }
 
