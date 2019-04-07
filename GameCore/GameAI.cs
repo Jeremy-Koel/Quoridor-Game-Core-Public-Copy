@@ -1251,7 +1251,7 @@ namespace GameCore
 
         private string FindPlayerMove(bool calledFromFindWall = false)
         {
-            bool canBlockForGain = (DoesOpponentHaveEndRowMove() || CanBlockToIncreasePathByLargeAmount()) && wallsRemaining[turn == 0 ? 0 : 1] > 0 && AtLeastOneBlockLegal() && !calledFromFindWall && !DoIHaveAEndRowMove();
+            bool canBlockForGain = (DoesOpponentHaveEndRowMove()/* || CanBlockToIncreasePathByLargeAmount()*/) && wallsRemaining[turn == 0 ? 0 : 1] > 0 && AtLeastOneBlockLegal() && !calledFromFindWall && !DoIHaveAEndRowMove();
             if (!canBlockForGain)
             {
                 string move = null;
