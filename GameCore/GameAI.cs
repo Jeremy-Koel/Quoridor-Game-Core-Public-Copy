@@ -2160,8 +2160,6 @@ namespace GameCore
         public MonteCarlo(GameBoard boardState, bool isHard = false)
         {
             isHardAI = isHard;
-            List<string> test = new List<string>();
-            test[0] = "yeet";
             TreeSearch = new MonteCarloNode(boardState.GetPlayerCoordinate(GameBoard.PlayerEnum.ONE), boardState.GetPlayerCoordinate(GameBoard.PlayerEnum.TWO),
                                                               boardState.GetPlayerWallCount(GameBoard.PlayerEnum.ONE), boardState.GetPlayerWallCount(GameBoard.PlayerEnum.TWO),
                                                               boardState.GetWalls(), boardState.GetWhoseTurn() == 1 ? GameBoard.PlayerEnum.ONE : GameBoard.PlayerEnum.TWO,
