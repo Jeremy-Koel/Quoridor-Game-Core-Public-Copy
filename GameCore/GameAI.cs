@@ -1490,26 +1490,22 @@ namespace GameCore
 
                 if (!illegalWalls.Contains(horizontalPlacement) && !possibleBlocksList.Contains(horizontalPlacement))
                 {
-                    Tuple<double, int> heuristicEstimatePlayer = AverageHeuristicEstimateOfNearbyWalls(horizontalPlacement, goal);
-                    Tuple<double, int> heuristicEstimateOpponent = AverageHeuristicEstimateOfNearbyWalls(horizontalPlacement, opponentGoal);
-                    double horizontalHeuristic = (MinimumHeuristicEstimate(horizontalPlacement, goal) + heuristicEstimatePlayer.Item1) / 2;
-                    double opponentHorizontalHeuristic = (MinimumHeuristicEstimate(horizontalPlacement, opponentGoal) + heuristicEstimateOpponent.Item1) / 2;
+                    Tuple<double, int> heuristicEstimateOpponent = AverageHeuristicEstimateOfNearbyWalls(horizontalPlacement, goal);
+                    double opponentHorizontalHeuristic = (MinimumHeuristicEstimate(horizontalPlacement, goal) + heuristicEstimateOpponent.Item1) / heuristicEstimateOpponent.Item2;
 
-                    if (opponentEstimate < opponentHorizontalHeuristic && horizontalHeuristic < opponentHorizontalHeuristic)
+                    if (opponentEstimate < opponentHorizontalHeuristic)
                     {
-                        validBlocks.Add(new Tuple<string, double>(horizontalPlacement, opponentHorizontalHeuristic - horizontalHeuristic));
+                        validBlocks.Add(new Tuple<string, double>(horizontalPlacement, opponentHorizontalHeuristic));
                     }
                 }
                 if (!illegalWalls.Contains(verticalPlacement) && !possibleBlocksList.Contains(verticalPlacement))
                 {
-                    Tuple<double, int> heuristicEstimatePlayer = AverageHeuristicEstimateOfNearbyWalls(verticalPlacement, goal);
-                    Tuple<double, int> heuristicEstimateOpponent = AverageHeuristicEstimateOfNearbyWalls(verticalPlacement, opponentGoal);
-                    double verticalHeuristic = (MinimumHeuristicEstimate(verticalPlacement, goal) + heuristicEstimatePlayer.Item1) / 2;
-                    double opponentVerticalHeuristic = (MinimumHeuristicEstimate(verticalPlacement, opponentGoal) + heuristicEstimateOpponent.Item1) / 2;
+                    Tuple<double, int> heuristicEstimateOpponent = AverageHeuristicEstimateOfNearbyWalls(verticalPlacement, goal);
+                    double opponentVerticalHeuristic = (MinimumHeuristicEstimate(verticalPlacement, goal) + heuristicEstimateOpponent.Item1) / heuristicEstimateOpponent.Item2;
 
-                    if (opponentEstimate < opponentVerticalHeuristic && verticalHeuristic < opponentVerticalHeuristic)
+                    if (opponentEstimate < opponentVerticalHeuristic)
                     {
-                        validBlocks.Add(new Tuple<string, double>(verticalPlacement, opponentVerticalHeuristic - verticalHeuristic));
+                        validBlocks.Add(new Tuple<string, double>(verticalPlacement, opponentVerticalHeuristic));
                     }
                 }
 
@@ -1593,10 +1589,32 @@ namespace GameCore
                 total = AddWallTotalToList(nearbyWalls, total, newWall, goal);
             }
 
-            return new Tuple<double, int>(total / nearbyWalls.Count, )
+            return new Tuple<double, int>(total / nearbyWalls.Count, AmountOfOpposingWallsThatImpairMe(nearbyWalls));
         }
 
-        private double AverageHeuristicEstimateOfNearbyWallsVertical(string wallPlacement, int goal)
+        private int AmountOfOpposingWallsThatImpairMe(List<Tuple<string, double>> nearbyWalls)
+        {
+            int numImpairingWalls = 0;
+            int goal = turn == 0 ? 9 : 1;
+            double currentEstimate = MinimumHeuristicEstimate(BoardUtil.PlayerCoordinateToString(playerLocations[turn == 0 ? 0 : 1]), goal);
+
+            foreach (Tuple<string, double> wall in nearbyWalls)
+            {
+                if (currentEstimate < MinimumHeuristicEstimate(wall.Item1, goal))
+                {
+                    ++numImpairingWalls;
+                }
+            }
+
+            if (numImpairingWalls <= 1)
+            {
+                numImpairingWalls = 2;
+            }
+
+            return numImpairingWalls;
+        }
+
+        private Tuple<double, int> AverageHeuristicEstimateOfNearbyWallsVertical(string wallPlacement, int goal)
         {
             List<Tuple<string, double>> nearbyWalls = new List<Tuple<string, double>>();
             double total = 0;
@@ -1653,10 +1671,8 @@ namespace GameCore
                 string newWall = Convert.ToChar(wallPlacement[0] - 2).ToString() + wallPlacement[1] + 'h';
                 total = AddWallTotalToList(nearbyWalls, total, newWall, goal);
             }
-
-            possibleWalls = new List<Tuple<string, double>>(nearbyWalls);
-
-            return total / nearbyWalls.Count;
+            
+            return new Tuple<double, int>(total / nearbyWalls.Count, AmountOfOpposingWallsThatImpairMe(nearbyWalls));
         }
 
         double AddWallTotalToList(List<Tuple<string, double>> nearbyWalls, double total, string newWall, int goal)
