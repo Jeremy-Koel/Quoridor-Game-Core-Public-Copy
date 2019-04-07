@@ -1251,23 +1251,29 @@ namespace GameCore
 
         private string FindPlayerMove(bool calledFromFindWall = false)
         {
-            bool canBlockForGain = (DoesOpponentHaveEndRowMove() || CanBlockToIncreasePathByLargeAmount()) && wallsRemaining[turn == 0 ? 0 : 1] > 0 && AtLeastOneBlockLegal() && !calledFromFindWall && !DoIHaveAEndRowMove();
+            bool canBlockForGain = (DoesOpponentHaveEndRowMove() /*|| CanBlockToIncreasePathByLargeAmount()*/) && wallsRemaining[turn == 0 ? 0 : 1] > 0 && AtLeastOneBlockLegal() && !calledFromFindWall && !DoIHaveAEndRowMove();
             if (!canBlockForGain)
             {
                 string move = null;
 
                 move = possibleMoves[0].Item1;
 
-                for (int i = 1; childrensMoves.Contains(move) && i < possibleMoves.Count; ++i)
+                lock (playerLocations)
                 {
-                    move = possibleMoves[i].Item1;
-                }
+                    PlayerCoordinate tmp = playerLocations[turn == 0 ? 0 : 1];
+                    playerLocations[turn == 0 ? 0 : 1] = new PlayerCoordinate(move);
+                    if (!AllNewOpponentMovesAdjacent() && playerLocations.Count > 1)
+                    {
+                        do
+                        {
+                            possibleMoves.RemoveAt(0);
 
-                if (childrensMoves.Contains(move))
-                {
-                    move = possibleMoves[randomPercentileChance.Next(0, possibleMoves.Count)].Item1;
-                }
+                            move = possibleMoves[0].Item1;
+                            playerLocations[turn == 0 ? 0 : 1] = new PlayerCoordinate(move);
 
+                        } while (!AllNewOpponentMovesAdjacent() && playerLocations.Count > 1);
+                    }
+                }
 
                 return move;
             }
@@ -1275,6 +1281,44 @@ namespace GameCore
             {
                 return FindWall(true);
             }
+        }
+
+        private bool AllNewOpponentMovesAdjacent()
+        {
+            List <Tuple<string, double>> possibleOpponentMoves = PossibleMovesFromPosition(turn == 0 ? 1 : 0, turn == 0 ? 0 : 1);
+            bool allMovesAdjacent = true;
+
+            if (possibleOpponentMoves.Count < 5)
+            {
+                string opponent = BoardUtil.PlayerCoordinateToString(playerLocations[turn == 0 ? 1 : 0])
+                for (int i = 0; i < possibleOpponentMoves.Count && allMovesAdjacent; ++i)
+                {
+                    if (possibleOpponentMoves[i].Item1[0] == opponent[0])
+                    {
+                        if (possibleOpponentMoves[i].Item1[1] != Convert.ToChar(opponent[1] - 1) && possibleOpponentMoves[i].Item1[1] != Convert.ToChar(opponent[1] + 1))
+                        {
+
+                        }
+                    }
+                    else if (possibleOpponentMoves[i].Item1[1] == BoardUtil.PlayerCoordinateToString(playerLocations[turn == 0 ? 1 : 0])[1])
+                    {
+                        if (possibleOpponentMoves[i].Item1[0] != Convert.ToChar(opponent[0] - 1) && possibleOpponentMoves[i].Item1[0] != Convert.ToChar(opponent[0] + 1))
+                        {
+
+                        }
+                    }
+                    else
+                    {
+                        allMovesAdjacent = false;
+                    }
+                }
+            }
+            else
+            {
+                allMovesAdjacent = false;
+            }
+
+            return allMovesAdjacent;
         }
 
         private bool CanBlockToIncreasePathByLargeAmount()
