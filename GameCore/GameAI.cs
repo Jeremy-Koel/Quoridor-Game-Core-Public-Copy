@@ -1258,15 +1258,15 @@ namespace GameCore
 
                 move = possibleMoves[0].Item1;
 
-                for (int i = 1; childrensMoves.Contains(move) && i < possibleMoves.Count; ++i)
-                {
-                    move = possibleMoves[i].Item1;
-                }
+                //for (int i = 1; childrensMoves.Contains(move) && i < possibleMoves.Count; ++i)
+                //{
+                //    move = possibleMoves[i].Item1;
+                //}
 
-                if (childrensMoves.Contains(move))
-                {
-                    move = possibleMoves[randomPercentileChance.Next(0, possibleMoves.Count)].Item1;
-                }
+                //if (childrensMoves.Contains(move))
+                //{
+                //    move = possibleMoves[randomPercentileChance.Next(0, possibleMoves.Count)].Item1;
+                //}
 
 
                 return move;
