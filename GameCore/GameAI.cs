@@ -405,6 +405,23 @@ namespace GameCore
             int myTurn = turn == 0 ? 0 : 1;
             int opponentTurn = turn == 0 ? 1 : 0;
             possibleMoves = PossibleMovesFromPosition(myTurn, opponentTurn);
+
+            int indexToStartDeletions = -1;
+            double lowestValue = possibleMoves[0].Item2;
+
+            for (int i = 1; i < possibleMoves.Count && indexToStartDeletions == -1; i++)
+            {
+                if (possibleMoves[i].Item2 != lowestValue)
+                {
+                    indexToStartDeletions = i;
+                }
+            }
+
+            if (indexToStartDeletions != -1)
+            {
+                possibleMoves.RemoveRange(indexToStartDeletions, possibleMoves.Count - indexToStartDeletions);
+            }
+
             possibleBlocks = GetBlockingWalls(BoardUtil.PlayerCoordinateToString(playerLocations[opponentTurn]));
 
             //if (isHardAI)
@@ -529,6 +546,22 @@ namespace GameCore
             if (possibleMoves.Count == 0)
             {
                 possibleMoves = PossibleMovesFromPosition(myTurn, opponentTurn);
+            }
+
+            int indexToStartDeletions = -1;
+            double lowestValue = possibleMoves[0].Item2;
+
+            for (int i = 1; i < possibleMoves.Count && indexToStartDeletions == -1; i++)
+            {
+                if (possibleMoves[i].Item2 != lowestValue)
+                {
+                    indexToStartDeletions = i;
+                }
+            }
+
+            if (indexToStartDeletions != -1)
+            {
+                possibleMoves.RemoveRange(indexToStartDeletions, possibleMoves.Count - indexToStartDeletions);
             }
 
             int locationOfPreviousMove = DoesMoveListContain(possibleMoves, parent.lastPlayerMove[myTurn]);
@@ -666,6 +699,22 @@ namespace GameCore
                     possibleMoves = PossibleMovesFromPosition(myTurn, opponentTurn);
                 }
 
+                int indexToStartDeletions = -1;
+                double lowestValue = possibleMoves[0].Item2;
+
+                for (int i = 1; i < possibleMoves.Count && indexToStartDeletions == -1; i++)
+                {
+                    if (possibleMoves[i].Item2 != lowestValue)
+                    {
+                        indexToStartDeletions = i;
+                    }
+                }
+
+                if (indexToStartDeletions != -1)
+                {
+                    possibleMoves.RemoveRange(indexToStartDeletions, possibleMoves.Count - indexToStartDeletions);
+                }
+
                 int locationOfPreviousMove = DoesMoveListContain(possibleMoves, childParent.lastPlayerMove[myTurn]);
 
                 if (possibleMoves.Count != 1 && locationOfPreviousMove != -1)
@@ -716,15 +765,15 @@ namespace GameCore
 
         private void PossibleHorizontalJumps(List<Tuple<string, double>> validMoves, int goal, int direction)
         {
-            if (playerLocations[turn == 0 ? 0 : 1].Col + (3 * direction) < 17 && playerLocations[turn == 0 ? 0 : 1].Col + (3 * direction) > -1)
+            if (playerLocations[goal == 9 ? 0 : 1].Col + (3 * direction) < 17 && playerLocations[goal == 9 ? 0 : 1].Col + (3 * direction) > -1)
             {
-                if (!board[playerLocations[turn == 0 ? 0 : 1].Row].Get(playerLocations[turn == 0 ? 0 : 1].Col + (3 * direction)))
+                if (!board[playerLocations[goal == 9 ? 0 : 1].Row].Get(playerLocations[goal == 9 ? 0 : 1].Col + (3 * direction)))
                 {
                     StringBuilder sb = new StringBuilder();
 
-                    sb.Append(Convert.ToChar(97 + (playerLocations[turn == 0 ? 1 : 0].Col / 2) + (1 * direction) > 105 ? 105
-                                            : 97 + (playerLocations[turn == 0 ? 1 : 0].Col / 2) + (1 * direction) < 97 ? 97
-                                            : 97 + (playerLocations[turn == 0 ? 1 : 0].Col / 2) + (1 * direction)));
+                    sb.Append(Convert.ToChar(97 + (playerLocations[goal == 9 ? 1 : 0].Col / 2) + (1 * direction) > 105 ? 105
+                                            : 97 + (playerLocations[goal == 9 ? 1 : 0].Col / 2) + (1 * direction) < 97 ? 97
+                                            : 97 + (playerLocations[goal == 9 ? 1 : 0].Col / 2) + (1 * direction)));
                     sb.Append(9 - (playerLocations[turn == 0 ? 1 : 0].Row / 2));
 
                     validMoves.Add(new Tuple<string, double>(sb.ToString(), MinimumHeuristicEstimate(sb.ToString(), goal)));
@@ -770,16 +819,16 @@ namespace GameCore
 
         private void PossibleVerticalJumps(List<Tuple<string, double>> validMoves, int goal, int direction)
         {
-            if (playerLocations[turn == 0 ? 0 : 1].Row + (3 * direction) < 17 && playerLocations[turn == 0 ? 0 : 1].Row + (3 * direction) > -1)
+            if (playerLocations[goal == 9 ? 0 : 1].Row + (3 * direction) < 17 && playerLocations[goal == 9 ? 0 : 1].Row + (3 * direction) > -1)
             {
-                if (!board[playerLocations[turn == 0 ? 0 : 1].Row + (3 * direction)].Get(playerLocations[turn == 0 ? 0 : 1].Col))
+                if (!board[playerLocations[goal == 9 ? 0 : 1].Row + (3 * direction)].Get(playerLocations[goal == 9 ? 0 : 1].Col))
                 {
                     StringBuilder sb = new StringBuilder();
 
-                    sb.Append(Convert.ToChar(97 + (playerLocations[turn == 0 ? 1 : 0].Col / 2)));
-                    sb.Append(value: 9 - (playerLocations[turn == 0 ? 1 : 0].Row / 2) - (1 * direction) > 9 ? 9
-                                   : 9 - (playerLocations[turn == 0 ? 1 : 0].Row / 2) - (1 * direction) < 1 ? 1
-                                   : 9 - (playerLocations[turn == 0 ? 1 : 0].Row / 2) - (1 * direction));
+                    sb.Append(Convert.ToChar(97 + (playerLocations[goal == 9 ? 1 : 0].Col / 2)));
+                    sb.Append(value: 9 - (playerLocations[goal == 9 ? 1 : 0].Row / 2) - (1 * direction) > 9 ? 9
+                                   : 9 - (playerLocations[goal == 9 ? 1 : 0].Row / 2) - (1 * direction) < 1 ? 1
+                                   : 9 - (playerLocations[goal == 9 ? 1 : 0].Row / 2) - (1 * direction));
 
                     validMoves.Add(new Tuple<string, double>(sb.ToString(), MinimumHeuristicEstimate(sb.ToString(), goal)));
                 }
@@ -873,21 +922,6 @@ namespace GameCore
                     if (lValue.Item2 == rValue.Item2) return 0;
                     else return lValue.Item2.CompareTo(rValue.Item2);
                 });
-                int indexToStartDeletions = -1;
-                double lowestValue = validMoves[0].Item2;
-
-                for (int i = 1; i < validMoves.Count && indexToStartDeletions == -1; i++)
-                {
-                    if (validMoves[i].Item2 != lowestValue)
-                    {
-                        indexToStartDeletions = i;
-                    }
-                }
-
-                if (indexToStartDeletions != -1)
-                {
-                    validMoves.RemoveRange(indexToStartDeletions, validMoves.Count - indexToStartDeletions);
-                }
 
                 return validMoves;
             }
@@ -1256,23 +1290,24 @@ namespace GameCore
             {
                 string move = null;
 
-                move = possibleMoves[0].Item1;
-
-                lock (playerLocations)
+                lock (boardAccess)
                 {
+                    move = possibleMoves[0].Item1;
+
                     PlayerCoordinate tmp = playerLocations[turn == 0 ? 0 : 1];
                     playerLocations[turn == 0 ? 0 : 1] = new PlayerCoordinate(move);
-                    if (!AllNewOpponentMovesAdjacent() && playerLocations.Count > 1)
+                    if (!AllNewOpponentMovesAdjacent() && possibleMoves.Count > 1)
                     {
-                        do
+                        while (!AllNewOpponentMovesAdjacent() && possibleMoves.Count > 1)
                         {
                             possibleMoves.RemoveAt(0);
 
                             move = possibleMoves[0].Item1;
                             playerLocations[turn == 0 ? 0 : 1] = new PlayerCoordinate(move);
 
-                        } while (!AllNewOpponentMovesAdjacent() && playerLocations.Count > 1);
+                        }
                     }
+                    playerLocations[turn == 0 ? 0 : 1] = new PlayerCoordinate(BoardUtil.PlayerCoordinateToString(tmp));
                 }
 
                 return move;
@@ -1281,6 +1316,44 @@ namespace GameCore
             {
                 return FindWall(true);
             }
+        }
+
+        private bool AllNewOpponentMovesAdjacent()
+        {
+            List<Tuple<string, double>> possibleOpponentMoves = PossibleMovesFromPosition(turn == 0 ? 1 : 0, turn == 0 ? 0 : 1);
+            bool allMovesAdjacent = true;
+
+            if (possibleOpponentMoves.Count < 5)
+            {
+                string opponent = BoardUtil.PlayerCoordinateToString(playerLocations[turn == 0 ? 1 : 0]);
+                for (int i = 0; i < possibleOpponentMoves.Count && allMovesAdjacent; ++i)
+                {
+                    if (possibleOpponentMoves[i].Item1[0] == opponent[0])
+                    {
+                        if (possibleOpponentMoves[i].Item1[1] != Convert.ToChar(opponent[1] - 1) && possibleOpponentMoves[i].Item1[1] != Convert.ToChar(opponent[1] + 1))
+                        {
+                            allMovesAdjacent = false;
+                        }
+                    }
+                    else if (possibleOpponentMoves[i].Item1[1] == BoardUtil.PlayerCoordinateToString(playerLocations[turn == 0 ? 1 : 0])[1])
+                    {
+                        if (possibleOpponentMoves[i].Item1[0] != Convert.ToChar(opponent[0] - 1) && possibleOpponentMoves[i].Item1[0] != Convert.ToChar(opponent[0] + 1))
+                        {
+                            allMovesAdjacent = false;
+                        }
+                    }
+                    else
+                    {
+                        allMovesAdjacent = false;
+                    }
+                }
+            }
+            else
+            {
+                allMovesAdjacent = false;
+            }
+
+            return allMovesAdjacent;
         }
 
         private bool CanBlockToIncreasePathByLargeAmount()
@@ -2233,3 +2306,4 @@ namespace GameCore
         }
     }
 }
+
