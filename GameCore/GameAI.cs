@@ -1258,16 +1258,22 @@ namespace GameCore
 
                 move = possibleMoves[0].Item1;
 
-                //for (int i = 1; childrensMoves.Contains(move) && i < possibleMoves.Count; ++i)
-                //{
-                //    move = possibleMoves[i].Item1;
-                //}
+                lock (playerLocations)
+                {
+                    PlayerCoordinate tmp = playerLocations[turn == 0 ? 0 : 1];
+                    playerLocations[turn == 0 ? 0 : 1] = new PlayerCoordinate(move);
+                    if (!AllNewOpponentMovesAdjacent() && playerLocations.Count > 1)
+                    {
+                        do
+                        {
+                            possibleMoves.RemoveAt(0);
 
-                //if (childrensMoves.Contains(move))
-                //{
-                //    move = possibleMoves[randomPercentileChance.Next(0, possibleMoves.Count)].Item1;
-                //}
+                            move = possibleMoves[0].Item1;
+                            playerLocations[turn == 0 ? 0 : 1] = new PlayerCoordinate(move);
 
+                        } while (!AllNewOpponentMovesAdjacent() && playerLocations.Count > 1);
+                    }
+                }
 
                 return move;
             }
