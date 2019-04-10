@@ -2293,7 +2293,7 @@ namespace GameCore
 
         private void ThreadedTreeSearchHard(Stopwatch timer, MonteCarloNode MonteCarlo)
         {
-            for (int i = 0; i < 10000 /*&&*/ /*timer.Elapsed.TotalSeconds < 4*/; ++i)
+            for (/*int i = 0*/; /*i < 10000*/ /*&&*/ timer.Elapsed.TotalSeconds < 4; /*++i*/)
             {
                 List<Tuple<string, MonteCarloNode>> path = new List<Tuple<string, MonteCarloNode>>();
                 MonteCarlo.Backpropagate(MonteCarlo.ExpandOptions(MonteCarlo.SelectNode(MonteCarlo, path)), path);
