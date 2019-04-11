@@ -419,7 +419,14 @@ namespace GameCore
                 possibleMoves.RemoveRange(indexToStartDeletions, possibleMoves.Count - indexToStartDeletions);
             }
 
-            possibleBlocks = GetBlockingWalls(BoardUtil.PlayerCoordinateToString(playerLocations[opponentTurn]));
+            if (!isHardAI)
+            {
+                possibleBlocks = GetBlockingWalls(BoardUtil.PlayerCoordinateToString(playerLocations[opponentTurn]));
+            }
+            else
+            {
+                possibleBlocks = GetBlockingWalls(BoardUtil.PlayerCoordinateToString(playerLocations[opponentTurn]), BoardUtil.PlayerCoordinateToString(playerLocations[myTurn]));
+            }
 
             //if (isHardAI)
             //{
@@ -598,12 +605,15 @@ namespace GameCore
 
             if (wallsRemaining[myTurn] > 0)
             {
-                possibleBlocks = GetBlockingWalls(BoardUtil.PlayerCoordinateToString(playerLocations[opponentTurn]));
 
-                //if (isHardAI)
-                //{
-                //    possibleWalls = GetBestNonImmediateBlockWalls(BoardUtil.PlayerCoordinateToString(playerLocations[opponentTurn]));
-                //}
+                if (!isHardAI)
+                {
+                    possibleBlocks = GetBlockingWalls(BoardUtil.PlayerCoordinateToString(playerLocations[opponentTurn]));
+                }
+                else
+                {
+                    possibleBlocks = GetBlockingWalls(BoardUtil.PlayerCoordinateToString(playerLocations[opponentTurn]), BoardUtil.PlayerCoordinateToString(playerLocations[myTurn]));
+                }
 
             }
         }
@@ -757,13 +767,14 @@ namespace GameCore
 
                 if (wallsRemaining[myTurn] > 0)
                 {
-                    possibleBlocks = GetBlockingWalls(BoardUtil.PlayerCoordinateToString(playerLocations[opponentTurn]));
-
-                    //if (isHardAI)
-                    //{
-                    //    possibleWalls = GetBestNonImmediateBlockWalls(BoardUtil.PlayerCoordinateToString(playerLocations[opponentTurn]));
-                    //}
-
+                    if (!isHardAI)
+                    {
+                        possibleBlocks = GetBlockingWalls(BoardUtil.PlayerCoordinateToString(playerLocations[opponentTurn]));
+                    }
+                    else
+                    {
+                        possibleBlocks = GetBlockingWalls(BoardUtil.PlayerCoordinateToString(playerLocations[opponentTurn]), BoardUtil.PlayerCoordinateToString(playerLocations[myTurn]));
+                    }
                 }
             }
         }
@@ -1458,12 +1469,20 @@ namespace GameCore
                 {
                     string wallMove = null;
                     PlayerCoordinate opponent = turn == 0 ? playerLocations[1] : playerLocations[0];
+                    PlayerCoordinate player = turn == 0 ? playerLocations[0] : playerLocations[1];
 
                     if (randomPercentileChance.Next(0, 100) >= 50)
                     {
                         if (possibleBlocks == null)
                         {
-                            possibleBlocks = GetBlockingWalls(BoardUtil.PlayerCoordinateToString(playerLocations[turn == 0 ? 1 : 0]));
+                            if (!isHardAI)
+                            {
+                                possibleBlocks = GetBlockingWalls(BoardUtil.PlayerCoordinateToString(opponent));
+                            }
+                            else
+                            {
+                                possibleBlocks = GetBlockingWalls(BoardUtil.PlayerCoordinateToString(opponent), BoardUtil.PlayerCoordinateToString(player));
+                            }
                         }
 
                         if (possibleBlocks.Count > 0)
@@ -1473,47 +1492,22 @@ namespace GameCore
                     }
                     else
                     {
-                        //if (isHardAI)
-                        //{
-                        //    if (possibleWalls == null)
-                        //    {
-                        //        possibleWalls = GetBestNonImmediateBlockWalls(BoardUtil.PlayerCoordinateToString(playerLocations[turn == 0 ? 1 : 0]));
-                        //    }
-
-                        //    if (possibleWalls.Count > 0)
-                        //    {
-                        //        wallMove = possibleWalls[0].Item1;
-
-                        //        for (int i = 1; (childrensMoves.Contains(wallMove) || illegalWalls.Contains(wallMove)) && i < possibleWalls.Count; ++i)
-                        //        {
-                        //            wallMove = possibleWalls[i].Item1;
-                        //        }
-
-                        //        if (childrensMoves.Contains(wallMove) && illegalWalls.Contains(wallMove))
-                        //        {
-                        //            for (int i = 0; i < possibleWalls.Count && illegalWalls.Contains(wallMove); ++i)
-                        //            {
-                        //                wallMove = possibleWalls[i].Item1;
-                        //            }
-                        //            if (illegalWalls.Contains(wallMove))
-                        //            {
-                        //                wallMove = FindPlayerMove(true);
-                        //            }
-                        //        }
-                        //    }
-                        //}
-                        //else
-                        //{
-                            if (possibleBlocks == null)
+                        if (possibleBlocks == null)
+                        {
+                            if (!isHardAI)
                             {
-                                possibleBlocks = GetBlockingWalls(BoardUtil.PlayerCoordinateToString(playerLocations[turn == 0 ? 1 : 0]));
+                                possibleBlocks = GetBlockingWalls(BoardUtil.PlayerCoordinateToString(opponent));
                             }
-
-                            if (possibleBlocks.Count > 0)
+                            else
                             {
-                                wallMove = possibleBlocks[0].Item1;
+                                possibleBlocks = GetBlockingWalls(BoardUtil.PlayerCoordinateToString(opponent), BoardUtil.PlayerCoordinateToString(player));
                             }
-                        //}
+                        }
+
+                        if (possibleBlocks.Count > 0)
+                        {
+                            wallMove = possibleBlocks[0].Item1;
+                        }
                     }
 
                     if (wallMove != null)
@@ -1537,7 +1531,7 @@ namespace GameCore
 
         }
 
-        private List<Tuple<string, double>> GetBlockingWalls(string opponent)
+        private List<Tuple<string, double>> GetBlockingWalls(string opponent, string player = null)
         {
             Populate();
             int goal = turn == 0 ? 9 : 1;
@@ -1591,6 +1585,32 @@ namespace GameCore
                         if (PlaceWall(turn, new WallCoordinate(verticalPlacement)))
                         {
                             blockingWalls.Add(verticalPlacement);
+                        }
+                    }
+                }
+                for (char col = Convert.ToChar(player[0] - difficultyMod); col < player[0] + difficultyMod; col++)
+                {
+                    for (char row = Convert.ToChar(player[1] - difficultyMod); row < player[1] + difficultyMod; row++)
+                    {
+                        if (possibleWalls.Contains(col.ToString() + row.ToString()))
+                        {
+                            string horizontalPlacement = col.ToString() + row.ToString() + "h";
+                            string verticalPlacement = col.ToString() + row.ToString() + "v";
+
+                            if (!illegalWalls.Contains(horizontalPlacement))
+                            {
+                                if (PlaceWall(turn, new WallCoordinate(horizontalPlacement)))
+                                {
+                                    blockingWalls.Add(horizontalPlacement);
+                                }
+                            }
+                            if (!illegalWalls.Contains(verticalPlacement))
+                            {
+                                if (PlaceWall(turn, new WallCoordinate(verticalPlacement)))
+                                {
+                                    blockingWalls.Add(verticalPlacement);
+                                }
+                            }
                         }
                     }
                 }
