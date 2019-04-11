@@ -114,6 +114,11 @@ namespace GameCore
             }
         }
 
+        public List<string> GetPossibleWalls()
+        {
+            return possibleWalls;
+        }
+
         public PlayerCoordinate GetPlayerCoordinate(int player)
         {
             if (player == 1)
