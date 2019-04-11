@@ -896,9 +896,9 @@ namespace GameCore
             int goal = playerSpot == 0 ? 9 : 1;
             lock (boardAccess)
             {
-                Populate();
                 if (PlayersAreAdjacent())
                 {
+                    Populate();
                     if (playerLocations[currentPlayer].Row == playerLocations[opponent].Row)
                     {
                         if (playerLocations[currentPlayer].Col < playerLocations[opponent].Col)
@@ -922,6 +922,7 @@ namespace GameCore
                         }
                     }
                 }
+                Populate();
                 if (playerLocations[currentPlayer].Row + 1 < 17 && !board[playerLocations[currentPlayer].Row + 1].Get(playerLocations[currentPlayer].Col)
                     && (playerLocations[currentPlayer].Row + 2 != playerLocations[opponent].Row || playerLocations[currentPlayer].Col != playerLocations[opponent].Col))
                 {
@@ -931,6 +932,8 @@ namespace GameCore
                     sb.Append(9 - (playerLocations[currentPlayer].Row / 2) - 1 < 1 ? 1 : 9 - (playerLocations[currentPlayer].Row / 2) - 1);
                     validMoves.Add(new Tuple<string, double>(sb.ToString(), MinimumHeuristicEstimate(sb.ToString(), goal)));
                 }
+                Unpopulate();
+                Populate();
                 if (playerLocations[currentPlayer].Row - 1 > -1 && !board[playerLocations[currentPlayer].Row - 1].Get(playerLocations[currentPlayer].Col)
                      && (playerLocations[currentPlayer].Row - 2 != playerLocations[opponent].Row || playerLocations[currentPlayer].Col != playerLocations[opponent].Col))
                 {
@@ -940,6 +943,8 @@ namespace GameCore
                     sb.Append(9 - (playerLocations[currentPlayer].Row / 2) + 1 > 9 ? 9 : 9 - (playerLocations[currentPlayer].Row / 2) + 1);
                     validMoves.Add(new Tuple<string, double>(sb.ToString(), MinimumHeuristicEstimate(sb.ToString(), goal)));
                 }
+                Unpopulate();
+                Populate();
                 if (playerLocations[currentPlayer].Col + 1 < 17 && !board[playerLocations[currentPlayer].Row].Get(playerLocations[currentPlayer].Col + 1)
                     && (playerLocations[currentPlayer].Row != playerLocations[opponent].Row || playerLocations[currentPlayer].Col + 2 != playerLocations[opponent].Col))
                 {
@@ -949,6 +954,8 @@ namespace GameCore
                     sb.Append(9 - (playerLocations[currentPlayer].Row / 2));
                     validMoves.Add(new Tuple<string, double>(sb.ToString(), MinimumHeuristicEstimate(sb.ToString(), goal)));
                 }
+                Unpopulate();
+                Populate();
                 if (playerLocations[currentPlayer].Col - 1 > -1 && !board[playerLocations[currentPlayer].Row].Get(playerLocations[currentPlayer].Col - 1)
                     && (playerLocations[currentPlayer].Row != playerLocations[opponent].Row || playerLocations[currentPlayer].Col - 2 != playerLocations[opponent].Col))
                 {
@@ -958,8 +965,8 @@ namespace GameCore
                     sb.Append(9 - (playerLocations[currentPlayer].Row / 2));
                     validMoves.Add(new Tuple<string, double>(sb.ToString(), MinimumHeuristicEstimate(sb.ToString(), goal)));
                 }
-
                 Unpopulate();
+
 
                 validMoves.Sort(delegate (Tuple<string, double> lValue, Tuple<string, double> rValue)
                 {
@@ -1153,25 +1160,24 @@ namespace GameCore
 
         public double MinimumHeuristicEstimate(string locationToStart, int goal)
         {
+            int EndRow = goal;
+            PlayerCoordinate start;
+            WallCoordinate wallCoordinate = null;
+
+            if (locationToStart.Length > 2)
+            {
+                start = playerLocations[goal == 9 ? 1 : 0];
+                goal = goal == 9 ? 1 : 9;
+
+                wallCoordinate = new WallCoordinate(locationToStart);
+            }
+            else
+            {
+                start = new PlayerCoordinate(locationToStart);
+            }
+
             lock (boardAccess)
             {
-                int EndRow = goal;
-
-                PlayerCoordinate start;
-                WallCoordinate wallCoordinate = null;
-
-                if (locationToStart.Length > 2)
-                {
-                    start = playerLocations[goal == 9 ? 1 : 0];
-                    goal = goal == 9 ? 1 : 9;
-
-                    wallCoordinate = new WallCoordinate(locationToStart);
-                }
-                else
-                {
-                    start = new PlayerCoordinate(locationToStart);
-                }
-
                 if (wallCoordinate != null)
                 {
                     board[wallCoordinate.StartRow].Set(wallCoordinate.StartCol, true);
@@ -1199,9 +1205,8 @@ namespace GameCore
 
                     //ResetPlayerMoveValues(wallCoordinate, mid);
                 }
-
-                return possibleMinimumHeuristic;
             }
+            return possibleMinimumHeuristic;}
         }
 
         private double HeuristicCostEstimate(PlayerCoordinate start, PlayerCoordinate goal)
@@ -1533,7 +1538,6 @@ namespace GameCore
 
         private List<Tuple<string, double>> GetBlockingWalls(string opponent, string player = null)
         {
-            Populate();
             int goal = turn == 0 ? 9 : 1;
             int opponentGoal = turn == 0 ? 1 : 9;
             int difficultyMod = isHardAI == true ? 2 : 1;
@@ -1628,7 +1632,6 @@ namespace GameCore
                 }
             }
 
-            Unpopulate();
             //if (turn == 0)
             //{
             //    return validBlocks.OrderByDescending(vB => vB.Item2).ThenBy(vB => vB.Item1[2]).ToList();
