@@ -482,6 +482,19 @@ namespace GameCore
                     }
                 }
             }
+            foreach(string wall in possibleWalls)
+            {
+                string vertical = wall + "v";
+                string horizontal = wall + "h";
+                if (!illegalWalls.Contains(vertical) && WallIsAdjacentToCurrentlyPlacedWalls(new WallCoordinate(vertical)) && !PlaceWall(turn, new WallCoordinate(vertical)))
+                {
+                    illegalWalls.Add(vertical);
+                }
+                if (!illegalWalls.Contains(horizontal) && WallIsAdjacentToCurrentlyPlacedWalls(new WallCoordinate(horizontal)) && !PlaceWall(turn, new WallCoordinate(horizontal)))
+                {
+                    illegalWalls.Add(horizontal);
+                }
+            }
         }
         /// <summary>
         /// MonteCarloNode Constructor to create a node which corresponds to a wall being placed
@@ -497,7 +510,7 @@ namespace GameCore
         /// <param name="currentTurn"></param>
         /// <param name="depth"></param>
         /// <param name="childParent"></param>
-        private MonteCarloNode(string move, List<Dictionary<string, Tuple<double, double>>> totals, List<PlayerCoordinate> players, List<int> wallCounts, List<WallCoordinate> wallCoordinates, WallCoordinate newWallCoordinate, GameBoard.PlayerEnum currentTurn, int depth, MonteCarloNode childParent)
+        private MonteCarloNode(string move, List<Dictionary<string, Tuple<double, double>>> totals, List<PlayerCoordinate> players, List<int> wallCounts, List<WallCoordinate> wallCoordinates, WallCoordinate newWallCoordinate, List<string> illegalMoves, GameBoard.PlayerEnum currentTurn, int depth, MonteCarloNode childParent)
         {
 
             turn = currentTurn;
@@ -517,7 +530,7 @@ namespace GameCore
 
             walls = new List<WallCoordinate>(wallCoordinates);
 
-            illegalWalls = new List<string>();
+            illegalWalls = new List<string>(illegalMoves);
 
             children = new List<MonteCarloNode>();
             childrensMoves = new List<string>();
@@ -619,7 +632,7 @@ namespace GameCore
         /// <param name="availableWalls"></param>
         /// <param name="illegalWallPlacements"></param>
         /// <param name="childParent"></param>
-        private MonteCarloNode(string move, List<Dictionary<string, Tuple<double, double>>> totals, int depth, MonteCarloNode childParent)
+        private MonteCarloNode(string move, List<Dictionary<string, Tuple<double, double>>> totals, List<string> illegalMoves, int depth, MonteCarloNode childParent)
         {
             parent = childParent;
             board = childParent.GetBoard();
@@ -664,7 +677,7 @@ namespace GameCore
 
             wallsRemaining = new List<int>(childParent.wallsRemaining);
 
-            illegalWalls = new List<string>();
+            illegalWalls = new List<string>(illegalMoves);
             walls = new List<WallCoordinate>(childParent.walls);
             possibleWalls = new List<string>();
 
@@ -1305,7 +1318,7 @@ namespace GameCore
 
         private string FindPlayerMove(bool calledFromFindWall = false)
         {
-            bool canBlockForGain = (DoesOpponentHaveEndRowMove() || CanBlockToIncreasePathByLargeAmount()) && wallsRemaining[turn == 0 ? 0 : 1] > 0 && AtLeastOneBlockLegal() && !calledFromFindWall && !DoIHaveAEndRowMove();
+            bool canBlockForGain = (DoesOpponentHaveEndRowMove() /*|| CanBlockToIncreasePathByLargeAmount()*/) && wallsRemaining[turn == 0 ? 0 : 1] > 0 && AtLeastOneBlockLegal() && !calledFromFindWall && !DoIHaveAEndRowMove();
             if (!canBlockForGain)
             {
                 string move = null;
@@ -1529,12 +1542,13 @@ namespace GameCore
             Populate();
             int goal = turn == 0 ? 9 : 1;
             int opponentGoal = turn == 0 ? 1 : 9;
+            int difficultyMod = isHardAI == true ? 2 : 1;
             double opponentEstimate = MinimumHeuristicEstimate(opponent, opponentGoal);
 
             List<string> blockingWalls = new List<string>();
-            for (char col = Convert.ToChar(opponent[0] - 1); col < opponent[0] + 1; col++)
+            for (char col = Convert.ToChar(opponent[0] - difficultyMod); col < opponent[0] + difficultyMod; col++)
             {
-                for (char row = Convert.ToChar(opponent[1] - 1); row < opponent[1] + 1; row++)
+                for (char row = Convert.ToChar(opponent[1] - difficultyMod); row < opponent[1] + difficultyMod; row++)
                 {
                     if (possibleWalls.Contains(col.ToString() + row.ToString()))
                     {
@@ -1543,11 +1557,17 @@ namespace GameCore
 
                         if (!illegalWalls.Contains(horizontalPlacement))
                         {
-                            blockingWalls.Add(horizontalPlacement);
+                            if (PlaceWall(turn, new WallCoordinate(horizontalPlacement)))
+                            {
+                                blockingWalls.Add(horizontalPlacement);
+                            }
                         }
                         if (!illegalWalls.Contains(verticalPlacement))
                         {
-                            blockingWalls.Add(verticalPlacement);
+                            if (PlaceWall(turn, new WallCoordinate(verticalPlacement)))
+                            {
+                                blockingWalls.Add(verticalPlacement);
+                            }
                         }
                     }
                 }
@@ -1559,13 +1579,19 @@ namespace GameCore
                 {
                     string horizontalPlacement = placement + "h";
                     string verticalPlacement = placement + "v";
-                    if (possibleWalls.Contains(placement) && !illegalWalls.Contains(horizontalPlacement) && WallIsAdjacentToCurrentlyPlacedWalls(new WallCoordinate(horizontalPlacement)))
+                    if (possibleWalls.Contains(placement) && !illegalWalls.Contains(horizontalPlacement) && (WallIsAdjacentToCurrentlyPlacedWalls(new WallCoordinate(horizontalPlacement))))
                     {
-                        blockingWalls.Add(horizontalPlacement);
+                        if (PlaceWall(turn, new WallCoordinate(horizontalPlacement)))
+                        {
+                            blockingWalls.Add(horizontalPlacement);
+                        }
                     }
                     if (possibleWalls.Contains(placement) && !illegalWalls.Contains(verticalPlacement) && WallIsAdjacentToCurrentlyPlacedWalls(new WallCoordinate(verticalPlacement)))
                     {
-                        blockingWalls.Add(verticalPlacement);
+                        if (PlaceWall(turn, new WallCoordinate(verticalPlacement)))
+                        {
+                            blockingWalls.Add(verticalPlacement);
+                        }
                     }
                 }
             }
@@ -1963,13 +1989,13 @@ namespace GameCore
                 if (path.Count > 0 && ExistsWithin(nextNode, path))
                 {
                     List<MonteCarloNode> listOfChildren = new List<MonteCarloNode>(root.children);
-                    listOfChildren.Remove(nextNode);
+                    //listOfChildren.Remove(nextNode);
                     nextNode = SelectionAlgorithm(listOfChildren);
 
                     while (path.Count > 0 && ExistsWithin(nextNode, path))
                     {
                         listOfChildren = new List<MonteCarloNode>(listOfChildren);
-                        listOfChildren.Remove(nextNode);
+                        //listOfChildren.Remove(nextNode);
                         nextNode = SelectionAlgorithm(listOfChildren);
                     }
 
@@ -2011,7 +2037,7 @@ namespace GameCore
         {
             lock (childrenAccess)
             {
-                List<MonteCarloNode> newList = children.OrderBy(o => o.GetVisits()).ToList();
+                List<MonteCarloNode> newList = children.OrderBy(o => o.GetScoreRatio()).ToList();
 
                 return newList[newList.Count - 1];
             }
@@ -2112,7 +2138,7 @@ namespace GameCore
                             {
                                 if (!childrensMoves.Contains(move))
                                 {
-                                    MonteCarloNode newNode = new MonteCarloNode(move, moveTotals, playerLocations, wallsRemaining, walls, new WallCoordinate(move), turn, depthCheck + 1, this);
+                                    MonteCarloNode newNode = new MonteCarloNode(move, moveTotals, playerLocations, wallsRemaining, walls, new WallCoordinate(move), illegalWalls, turn, depthCheck + 1, this);
                                     if (!visitedNodes.ContainsKey(newNode.IdString()))
                                     {
                                         children.Add(newNode);
@@ -2155,7 +2181,7 @@ namespace GameCore
                         {
                             if (!childrensMoves.Contains(move))
                             {
-                                MonteCarloNode newNode = new MonteCarloNode(move, moveTotals, depthCheck + 1, this);
+                                MonteCarloNode newNode = new MonteCarloNode(move, moveTotals, illegalWalls, depthCheck + 1, this);
                                 if (!visitedNodes.ContainsKey(newNode.IdString()))
                                 {
                                     children.Add(newNode);
@@ -2332,7 +2358,7 @@ namespace GameCore
             }
 
             timer.Stop();
-            //#endif
+            ////#endif
             Console.WriteLine("Score: " + TreeSearch.GetScore());
             Console.WriteLine("Visits: " + TreeSearch.GetVisits());
             List<MonteCarloNode> childrenToChoose = TreeSearch.GetChildrenNodes().OrderBy(o => o.GetVisits()).ToList();
