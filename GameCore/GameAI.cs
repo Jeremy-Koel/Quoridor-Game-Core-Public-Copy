@@ -1346,7 +1346,7 @@ namespace GameCore
 
         private string FindPlayerMove(bool calledFromFindWall = false)
         {
-            bool canBlockForGain = (DoesOpponentHaveEndRowMove() /*|| CanBlockToIncreasePathByLargeAmount()*/) && wallsRemaining[turn == 0 ? 0 : 1] > 0 && AtLeastOneBlockLegal() && !calledFromFindWall && !DoIHaveAEndRowMove();
+            bool canBlockForGain = (DoesOpponentHaveEndRowMove() || isHardAI == true ? CanBlockToIncreasePathByLargeAmount() : false ) && wallsRemaining[turn == 0 ? 0 : 1] > 0 && AtLeastOneBlockLegal() && !calledFromFindWall && !DoIHaveAEndRowMove();
             if (!canBlockForGain)
             {
                 string move = null;
@@ -2357,7 +2357,7 @@ namespace GameCore
 
         private void ThreadedTreeSearchHard(Stopwatch timer, MonteCarloNode MonteCarlo)
         {
-            for (/*int i = 0*/; /*i < 10000*/ /*&&*/ timer.Elapsed.TotalSeconds < 4; /*++i*/)
+            for (/*int i = 0*/; /*i < 10000*/ /*&&*/ timer.Elapsed.TotalSeconds < 3; /*++i*/)
             {
                 List<Tuple<string, MonteCarloNode>> path = new List<Tuple<string, MonteCarloNode>>();
                 MonteCarlo.Backpropagate(MonteCarlo.ExpandOptions(MonteCarlo.SelectNode(MonteCarlo, path)), path);
