@@ -1999,6 +1999,48 @@ namespace GameCore
             }
         }
 
+        private void SetPlayerMoveValues(WallCoordinate wallCoordinate, Tuple<int, int> mid)
+        {
+            if (wallCoordinate.Orientation == WallCoordinate.WallOrientation.Horizontal)
+            {
+                SetPlayerMoveValuesHorizontal(wallCoordinate, mid);
+            }
+            else
+            {
+                SetPlayerMoveValuesVertical(wallCoordinate, mid);
+            }
+        }
+
+        private void SetPlayerMoveValuesHorizontal(WallCoordinate wallCoordinate, Tuple<int, int> mid)
+        {
+            ++possibleMoveValues[(mid.Item1 + 1) / 2, (mid.Item2 + 1) / 2];
+            ++possibleMoveValues[(mid.Item1 - 1) / 2, (mid.Item2 + 1) / 2];
+
+            ++possibleMoveValues[(mid.Item1 + 1) / 2, (mid.Item2 - 1) / 2];
+            ++possibleMoveValues[(mid.Item1 - 1) / 2, (mid.Item2 - 1) / 2];
+
+            ++possibleMoveValues[(mid.Item1 + 1) / 2, (mid.Item2 + 1) / 2];
+            ++possibleMoveValues[(mid.Item1 - 1) / 2, (mid.Item2 + 1) / 2];
+
+            ++possibleMoveValues[(mid.Item1 + 1) / 2, (mid.Item2 - 1) / 2];
+            ++possibleMoveValues[(mid.Item1 - 1) / 2, (mid.Item2 - 1) / 2];
+        }
+
+        private void SetPlayerMoveValuesVertical(WallCoordinate wallCoordinate, Tuple<int, int> mid)
+        {
+            ++possibleMoveValues[(mid.Item1 + 1) / 2, (mid.Item2 + 1) / 2];
+            ++possibleMoveValues[(mid.Item1 - 1) / 2, (mid.Item2 + 1) / 2];
+
+            ++possibleMoveValues[(mid.Item1 + 1) / 2, (mid.Item2 - 1) / 2];
+            ++possibleMoveValues[(mid.Item1 - 1) / 2, (mid.Item2 - 1) / 2];
+
+            ++possibleMoveValues[(mid.Item1 + 1) / 2, (mid.Item2 + 1) / 2];
+            ++possibleMoveValues[(mid.Item1 - 1) / 2, (mid.Item2 + 1) / 2];
+
+            ++possibleMoveValues[(mid.Item1 + 1) / 2, (mid.Item2 - 1) / 2];
+            ++possibleMoveValues[(mid.Item1 - 1) / 2, (mid.Item2 - 1) / 2];
+        }
+
         private void Unpopulate()
         {
             foreach (var wallCoordinate in walls)
