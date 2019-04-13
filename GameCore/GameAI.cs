@@ -270,17 +270,7 @@ namespace GameCore
 
                     if (current.Row == goalRowForBoard)
                     {
-                        if (shortestPath != 0)
-                        {
-                            if (nextMove.DistanceFromStart < shortestPath)
-                            {
-                                shortestPath = nextMove.DistanceFromStart;
-                            }
-                        }
-                        else
-                        {
-                            shortestPath = nextMove.DistanceFromStart;
-                        }
+                        shortestPath = nextMove.DistanceFromStart;
                     }
 
                     for (int i = 0; i < 4; ++i)
@@ -1501,7 +1491,7 @@ namespace GameCore
                                 possibleBlocks = GetBlockingWalls(BoardUtil.PlayerCoordinateToString(opponent), BoardUtil.PlayerCoordinateToString(player));
                             }
                         }
-                  
+
                         if (possibleBlocks.Count > 0)
                         {
                             wallMove = possibleBlocks[0].Item1;
