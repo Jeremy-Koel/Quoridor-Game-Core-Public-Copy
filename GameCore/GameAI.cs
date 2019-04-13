@@ -266,7 +266,7 @@ namespace GameCore
                 if (path != null && !exhaustedPaths.Contains(path))
                 {
                     PlayerCoordinate pathCoord = new PlayerCoordinate(path);
-                    possiblePaths.Enqueue(new MoveEvaluation(path, HeuristicCostEstimate(pathCoord, new PlayerCoordinate(path[0].ToString() + goalRow.ToString())) + 2 + possibleMoveValues[, 2));
+                    possiblePaths.Enqueue(new MoveEvaluation(path, HeuristicCostEstimate(pathCoord, new PlayerCoordinate(path[0].ToString() + goalRow.ToString())) + 2, 2));
                 }
             }
 
@@ -319,7 +319,8 @@ namespace GameCore
                         }
                         if (path != null && !exhaustedPaths.Contains(path))
                         {
-                            possiblePaths.Enqueue(new MoveEvaluation(path, HeuristicCostEstimate(new PlayerCoordinate(path), new PlayerCoordinate(path[0].ToString() + goalRow.ToString())) + nextMove.DistanceFromStart + 1, nextMove.DistanceFromStart + 1));
+                            PlayerCoordinate pathCoord = new PlayerCoordinate(path);
+                            possiblePaths.Enqueue(new MoveEvaluation(path, HeuristicCostEstimate(pathCoord, new PlayerCoordinate(path[0].ToString() + goalRow.ToString())) + nextMove.DistanceFromStart + 1, nextMove.DistanceFromStart + 1));
                         }
                     }
                 }
@@ -1567,6 +1568,9 @@ namespace GameCore
             int goal = turn == 0 ? 9 : 1;
             int opponentGoal = turn == 0 ? 1 : 9;
             int difficultyMod = isHardAI == true ? 2 : 1;
+
+            Populate();
+
             double opponentEstimate = MinimumHeuristicEstimate(opponent, opponentGoal);
 
             List<string> blockingWalls = new List<string>();
@@ -1579,6 +1583,7 @@ namespace GameCore
                         string horizontalPlacement = col.ToString() + row.ToString() + "h";
                         string verticalPlacement = col.ToString() + row.ToString() + "v";
 
+                        Populate();
                         if (!illegalWalls.Contains(horizontalPlacement))
                         {
                             if (PlaceWall(turn, new WallCoordinate(horizontalPlacement)))
@@ -1586,6 +1591,7 @@ namespace GameCore
                                 blockingWalls.Add(horizontalPlacement);
                             }
                         }
+                        Populate();
                         if (!illegalWalls.Contains(verticalPlacement))
                         {
                             if (PlaceWall(turn, new WallCoordinate(verticalPlacement)))
@@ -1603,6 +1609,7 @@ namespace GameCore
                 {
                     string horizontalPlacement = placement + "h";
                     string verticalPlacement = placement + "v";
+                    Populate();
                     if (possibleWalls.Contains(placement) && !illegalWalls.Contains(horizontalPlacement) && (WallIsAdjacentToCurrentlyPlacedWalls(new WallCoordinate(horizontalPlacement))))
                     {
                         if (PlaceWall(turn, new WallCoordinate(horizontalPlacement)))
@@ -1610,6 +1617,7 @@ namespace GameCore
                             blockingWalls.Add(horizontalPlacement);
                         }
                     }
+                    Populate();
                     if (possibleWalls.Contains(placement) && !illegalWalls.Contains(verticalPlacement) && WallIsAdjacentToCurrentlyPlacedWalls(new WallCoordinate(verticalPlacement)))
                     {
                         if (PlaceWall(turn, new WallCoordinate(verticalPlacement)))
@@ -1627,6 +1635,7 @@ namespace GameCore
                             string horizontalPlacement = col.ToString() + row.ToString() + "h";
                             string verticalPlacement = col.ToString() + row.ToString() + "v";
 
+                            Populate();
                             if (!illegalWalls.Contains(horizontalPlacement))
                             {
                                 if (PlaceWall(turn, new WallCoordinate(horizontalPlacement)))
@@ -1634,6 +1643,7 @@ namespace GameCore
                                     blockingWalls.Add(horizontalPlacement);
                                 }
                             }
+                            Populate();
                             if (!illegalWalls.Contains(verticalPlacement))
                             {
                                 if (PlaceWall(turn, new WallCoordinate(verticalPlacement)))
@@ -1657,7 +1667,7 @@ namespace GameCore
                     possibleBlocksList.Add(placement);
                 }
             }
-
+            Unpopulate();
             //if (turn == 0)
             //{
             //    return validBlocks.OrderByDescending(vB => vB.Item2).ThenBy(vB => vB.Item1[2]).ToList();
@@ -2007,50 +2017,8 @@ namespace GameCore
 
                 board[wallCoordinate.EndRow].Set(wallCoordinate.EndCol, true);
 
-                SetPlayerMoveValues(wallCoordinate, mid);
+                //SetPlayerMoveValues(wallCoordinate, mid);
             }
-        }
-
-        private void SetPlayerMoveValues(WallCoordinate wallCoordinate, Tuple<int, int> mid)
-        {
-            if (wallCoordinate.Orientation == WallCoordinate.WallOrientation.Horizontal)
-            {
-                SetPlayerMoveValuesHorizontal(wallCoordinate, mid);
-            }
-            else
-            {
-                SetPlayerMoveValuesVertical(wallCoordinate, mid);
-            }
-        }
-
-        private void SetPlayerMoveValuesHorizontal(WallCoordinate wallCoordinate, Tuple<int, int> mid)
-        {
-            ++possibleMoveValues[(mid.Item1 + 1) / 2, (mid.Item2 + 1) / 2];
-            ++possibleMoveValues[(mid.Item1 - 1) / 2, (mid.Item2 + 1) / 2];
-
-            ++possibleMoveValues[(mid.Item1 + 1) / 2, (mid.Item2 - 1) / 2];
-            ++possibleMoveValues[(mid.Item1 - 1) / 2, (mid.Item2 - 1) / 2];
-
-            ++possibleMoveValues[(mid.Item1 + 1) / 2, (mid.Item2 + 1) / 2];
-            ++possibleMoveValues[(mid.Item1 - 1) / 2, (mid.Item2 + 1) / 2];
-
-            ++possibleMoveValues[(mid.Item1 + 1) / 2, (mid.Item2 - 1) / 2];
-            ++possibleMoveValues[(mid.Item1 - 1) / 2, (mid.Item2 - 1) / 2];
-        }
-
-        private void SetPlayerMoveValuesVertical(WallCoordinate wallCoordinate, Tuple<int, int> mid)
-        {
-            ++possibleMoveValues[(mid.Item1 + 1) / 2, (mid.Item2 + 1) / 2];
-            ++possibleMoveValues[(mid.Item1 - 1) / 2, (mid.Item2 + 1) / 2];
-
-            ++possibleMoveValues[(mid.Item1 + 1) / 2, (mid.Item2 - 1) / 2];
-            ++possibleMoveValues[(mid.Item1 - 1) / 2, (mid.Item2 - 1) / 2];
-
-            ++possibleMoveValues[(mid.Item1 + 1) / 2, (mid.Item2 + 1) / 2];
-            ++possibleMoveValues[(mid.Item1 - 1) / 2, (mid.Item2 + 1) / 2];
-
-            ++possibleMoveValues[(mid.Item1 + 1) / 2, (mid.Item2 - 1) / 2];
-            ++possibleMoveValues[(mid.Item1 - 1) / 2, (mid.Item2 - 1) / 2];
         }
 
         private void Unpopulate()
@@ -2063,52 +2031,10 @@ namespace GameCore
                 board[mid.Item1].Set(mid.Item2, false);
 
                 board[wallCoordinate.EndRow].Set(wallCoordinate.EndCol, false);
-                ResetPlayerMoveValues(wallCoordinate, mid);
+                //ResetPlayerMoveValues(wallCoordinate, mid);
             }
         }
-
-        private void ResetPlayerMoveValues(WallCoordinate wallCoordinate, Tuple<int, int> mid)
-        {
-            if (wallCoordinate.Orientation == WallCoordinate.WallOrientation.Horizontal)
-            {
-                ResetPlayerMoveValuesHorizontal(wallCoordinate, mid);
-            }
-            else
-            {
-                ResetPlayerMoveValuesVertical(wallCoordinate, mid);
-            }
-        }
-
-        private void ResetPlayerMoveValuesHorizontal(WallCoordinate wallCoordinate, Tuple<int, int> mid)
-        {
-            possibleMoveValues[(wallCoordinate.StartRow + 1) / 2, (wallCoordinate.StartCol) / 2] =
-            possibleMoveValues[(wallCoordinate.StartRow - 1) / 2, (wallCoordinate.StartCol) / 2] =
-
-            possibleMoveValues[(mid.Item1 + 1) / 2, (mid.Item2 + 1) / 2] =
-            possibleMoveValues[(mid.Item1 - 1) / 2, (mid.Item2 + 1) / 2] =
-
-            possibleMoveValues[(mid.Item1 + 1) / 2, (mid.Item2 - 1) / 2] =
-            possibleMoveValues[(mid.Item1 - 1) / 2, (mid.Item2 - 1) / 2] =
-
-            possibleMoveValues[(wallCoordinate.EndRow + 1) / 2, (wallCoordinate.EndCol) / 2] =
-            possibleMoveValues[(wallCoordinate.EndRow - 1) / 2, (wallCoordinate.EndCol) / 2] = 0;
-        }
-
-        private void ResetPlayerMoveValuesVertical(WallCoordinate wallCoordinate, Tuple<int, int> mid)
-        {
-            possibleMoveValues[(wallCoordinate.EndRow) / 2, (wallCoordinate.EndCol + 1) / 2] =
-            possibleMoveValues[(wallCoordinate.EndRow) / 2, (wallCoordinate.EndCol - 1) / 2] =
-
-            possibleMoveValues[(mid.Item1 + 1) / 2, (mid.Item2 + 1) / 2] =
-            possibleMoveValues[(mid.Item1 - 1) / 2, (mid.Item2 + 1) / 2] =
-
-            possibleMoveValues[(mid.Item1 + 1) / 2, (mid.Item2 - 1) / 2] =
-            possibleMoveValues[(mid.Item1 - 1) / 2, (mid.Item2 - 1) / 2] =
-
-            possibleMoveValues[(wallCoordinate.StartRow) / 2, (wallCoordinate.StartCol - 1) / 2] =
-            possibleMoveValues[(wallCoordinate.StartRow) / 2, (wallCoordinate.StartCol - 1) / 2] = 0;
-        }
-
+      
         //Selection Phase Code
         /// <summary>
         /// SelectNode selects a node at random given a nodes children. If there are no nodes available the function returns -1 otherwise it returns the index of the selcted node.
