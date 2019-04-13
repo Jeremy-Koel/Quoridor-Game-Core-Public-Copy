@@ -142,7 +142,6 @@ namespace GameCore
         private static readonly double historyInfluence = 1;
         private static GameBoard.PlayerEnum monteCarloPlayerEnum;
         private static string MonteCarloPlayer;
-        private static int[,] possibleMoveValues;
         private static Random randomPercentileChance;
         private static List<BitArray> board;
         private static List<Dictionary<string, Tuple<double, double>>> moveTotals;
@@ -366,16 +365,6 @@ namespace GameCore
             moveTotals.Add(new Dictionary<string, Tuple<double, double>>());
             possibleBlocksList = new List<string>();
             isHardAI = difficulty;
-
-            possibleMoveValues = new int[9, 9];
-
-            for (int r = 0; r < 9; r++)
-            {
-                for (int c = 0; c < 9; c++)
-                {
-                    possibleMoveValues[r, c] = 0;
-                }
-            }
 
             for (int i = 0; i < TOTAL_ROWS; i++)
             {
@@ -1152,6 +1141,14 @@ namespace GameCore
             {
                 return true;
             }
+            if (wallToPlace.StartRow + 2 < 17 && board[wallToPlace.StartRow + 2].Get(wallToPlace.StartCol))
+            {
+                return true;
+            }
+            if (wallToPlace.StartRow - 2 > -1 && board[wallToPlace.StartRow - 2].Get(wallToPlace.StartCol))
+            {
+                return true;
+            }
 
             return false;
         }
@@ -1583,18 +1580,16 @@ namespace GameCore
                         string horizontalPlacement = col.ToString() + row.ToString() + "h";
                         string verticalPlacement = col.ToString() + row.ToString() + "v";
 
-                        Populate();
                         if (!illegalWalls.Contains(horizontalPlacement))
                         {
-                            if (PlaceWall(turn, new WallCoordinate(horizontalPlacement)))
+                            if (PlaceWall(turn, new WallCoordinate(horizontalPlacement)) && !blockingWalls.Contains(horizontalPlacement))
                             {
                                 blockingWalls.Add(horizontalPlacement);
                             }
                         }
-                        Populate();
                         if (!illegalWalls.Contains(verticalPlacement))
                         {
-                            if (PlaceWall(turn, new WallCoordinate(verticalPlacement)))
+                            if (PlaceWall(turn, new WallCoordinate(verticalPlacement)) && !blockingWalls.Contains(verticalPlacement))
                             {
                                 blockingWalls.Add(verticalPlacement);
                             }
@@ -1609,20 +1604,26 @@ namespace GameCore
                 {
                     string horizontalPlacement = placement + "h";
                     string verticalPlacement = placement + "v";
-                    Populate();
                     if (possibleWalls.Contains(placement) && !illegalWalls.Contains(horizontalPlacement) && (WallIsAdjacentToCurrentlyPlacedWalls(new WallCoordinate(horizontalPlacement))))
                     {
-                        if (PlaceWall(turn, new WallCoordinate(horizontalPlacement)))
+                        if (PlaceWall(turn, new WallCoordinate(horizontalPlacement)) && !blockingWalls.Contains(horizontalPlacement))
                         {
                             blockingWalls.Add(horizontalPlacement);
                         }
-                    }
-                    Populate();
-                    if (possibleWalls.Contains(placement) && !illegalWalls.Contains(verticalPlacement) && WallIsAdjacentToCurrentlyPlacedWalls(new WallCoordinate(verticalPlacement)))
-                    {
-                        if (PlaceWall(turn, new WallCoordinate(verticalPlacement)))
+                        if (PlaceWall(turn, new WallCoordinate(verticalPlacement)) && !blockingWalls.Contains(verticalPlacement))
                         {
                             blockingWalls.Add(verticalPlacement);
+                        }
+                    }
+                    else if (possibleWalls.Contains(placement) && !illegalWalls.Contains(verticalPlacement) && WallIsAdjacentToCurrentlyPlacedWalls(new WallCoordinate(verticalPlacement)))
+                    {
+                        if (PlaceWall(turn, new WallCoordinate(verticalPlacement)) && !blockingWalls.Contains(verticalPlacement))
+                        {
+                            blockingWalls.Add(verticalPlacement);
+                        }
+                        if (PlaceWall(turn, new WallCoordinate(horizontalPlacement)) && !blockingWalls.Contains(horizontalPlacement))
+                        {
+                            blockingWalls.Add(horizontalPlacement);
                         }
                     }
                 }
@@ -1635,18 +1636,16 @@ namespace GameCore
                             string horizontalPlacement = col.ToString() + row.ToString() + "h";
                             string verticalPlacement = col.ToString() + row.ToString() + "v";
 
-                            Populate();
                             if (!illegalWalls.Contains(horizontalPlacement))
                             {
-                                if (PlaceWall(turn, new WallCoordinate(horizontalPlacement)))
+                                if (PlaceWall(turn, new WallCoordinate(horizontalPlacement)) && !blockingWalls.Contains(horizontalPlacement))
                                 {
                                     blockingWalls.Add(horizontalPlacement);
                                 }
                             }
-                            Populate();
                             if (!illegalWalls.Contains(verticalPlacement))
                             {
-                                if (PlaceWall(turn, new WallCoordinate(verticalPlacement)))
+                                if (PlaceWall(turn, new WallCoordinate(verticalPlacement)) && !blockingWalls.Contains(verticalPlacement))
                                 {
                                     blockingWalls.Add(verticalPlacement);
                                 }
@@ -1658,6 +1657,7 @@ namespace GameCore
 
                 List<Tuple<string, double>> validBlocks = new List<Tuple<string, double>>();
 
+            Populate();
             foreach (string placement in blockingWalls)
             {
                 double heuristicEstimate = MinimumHeuristicEstimate(placement, goal);
