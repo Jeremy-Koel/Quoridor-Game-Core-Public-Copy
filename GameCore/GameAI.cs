@@ -265,7 +265,8 @@ namespace GameCore
                 }
                 if (path != null && !exhaustedPaths.Contains(path))
                 {
-                    possiblePaths.Enqueue(new MoveEvaluation(path, HeuristicCostEstimate(new PlayerCoordinate(path), new PlayerCoordinate(path[0].ToString() + goalRow.ToString())) + 2, 2));
+                    PlayerCoordinate pathCoord = new PlayerCoordinate(path);
+                    possiblePaths.Enqueue(new MoveEvaluation(path, HeuristicCostEstimate(pathCoord, new PlayerCoordinate(path[0].ToString() + goalRow.ToString())) + 2 + possibleMoveValues[, 2));
                 }
             }
 
@@ -2006,7 +2007,7 @@ namespace GameCore
 
                 board[wallCoordinate.EndRow].Set(wallCoordinate.EndCol, true);
 
-                //SetPlayerMoveValues(wallCoordinate, mid);
+                SetPlayerMoveValues(wallCoordinate, mid);
             }
         }
 
@@ -2062,8 +2063,50 @@ namespace GameCore
                 board[mid.Item1].Set(mid.Item2, false);
 
                 board[wallCoordinate.EndRow].Set(wallCoordinate.EndCol, false);
-                //ResetPlayerMoveValues(wallCoordinate, mid);
+                ResetPlayerMoveValues(wallCoordinate, mid);
             }
+        }
+
+        private void ResetPlayerMoveValues(WallCoordinate wallCoordinate, Tuple<int, int> mid)
+        {
+            if (wallCoordinate.Orientation == WallCoordinate.WallOrientation.Horizontal)
+            {
+                ResetPlayerMoveValuesHorizontal(wallCoordinate, mid);
+            }
+            else
+            {
+                ResetPlayerMoveValuesVertical(wallCoordinate, mid);
+            }
+        }
+
+        private void ResetPlayerMoveValuesHorizontal(WallCoordinate wallCoordinate, Tuple<int, int> mid)
+        {
+            possibleMoveValues[(wallCoordinate.StartRow + 1) / 2, (wallCoordinate.StartCol) / 2] =
+            possibleMoveValues[(wallCoordinate.StartRow - 1) / 2, (wallCoordinate.StartCol) / 2] =
+
+            possibleMoveValues[(mid.Item1 + 1) / 2, (mid.Item2 + 1) / 2] =
+            possibleMoveValues[(mid.Item1 - 1) / 2, (mid.Item2 + 1) / 2] =
+
+            possibleMoveValues[(mid.Item1 + 1) / 2, (mid.Item2 - 1) / 2] =
+            possibleMoveValues[(mid.Item1 - 1) / 2, (mid.Item2 - 1) / 2] =
+
+            possibleMoveValues[(wallCoordinate.EndRow + 1) / 2, (wallCoordinate.EndCol) / 2] =
+            possibleMoveValues[(wallCoordinate.EndRow - 1) / 2, (wallCoordinate.EndCol) / 2] = 0;
+        }
+
+        private void ResetPlayerMoveValuesVertical(WallCoordinate wallCoordinate, Tuple<int, int> mid)
+        {
+            possibleMoveValues[(wallCoordinate.EndRow) / 2, (wallCoordinate.EndCol + 1) / 2] =
+            possibleMoveValues[(wallCoordinate.EndRow) / 2, (wallCoordinate.EndCol - 1) / 2] =
+
+            possibleMoveValues[(mid.Item1 + 1) / 2, (mid.Item2 + 1) / 2] =
+            possibleMoveValues[(mid.Item1 - 1) / 2, (mid.Item2 + 1) / 2] =
+
+            possibleMoveValues[(mid.Item1 + 1) / 2, (mid.Item2 - 1) / 2] =
+            possibleMoveValues[(mid.Item1 - 1) / 2, (mid.Item2 - 1) / 2] =
+
+            possibleMoveValues[(wallCoordinate.StartRow) / 2, (wallCoordinate.StartCol - 1) / 2] =
+            possibleMoveValues[(wallCoordinate.StartRow) / 2, (wallCoordinate.StartCol - 1) / 2] = 0;
         }
 
         //Selection Phase Code
