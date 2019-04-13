@@ -142,6 +142,7 @@ namespace GameCore
         private static readonly double historyInfluence = 1;
         private static GameBoard.PlayerEnum monteCarloPlayerEnum;
         private static string MonteCarloPlayer;
+        private static int[,] possibleMoveValues;
         private static Random randomPercentileChance;
         private static List<BitArray> board;
         private static List<Dictionary<string, Tuple<double, double>>> moveTotals;
@@ -363,6 +364,16 @@ namespace GameCore
             moveTotals.Add(new Dictionary<string, Tuple<double, double>>());
             possibleBlocksList = new List<string>();
             isHardAI = difficulty;
+
+            possibleMoveValues = new int[9, 9];
+
+            for (int r = 0; r < 9; r++)
+            {
+                for (int c = 0; c < 9; c++)
+                {
+                    possibleMoveValues[r, c] = 0;
+                }
+            }
 
             for (int i = 0; i < TOTAL_ROWS; i++)
             {
