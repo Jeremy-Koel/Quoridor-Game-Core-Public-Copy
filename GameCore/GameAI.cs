@@ -120,7 +120,14 @@ namespace GameCore
 
             public int CompareTo(MoveEvaluation moveEvaluation)
             {
-                return value.CompareTo(moveEvaluation.value);
+                if (distanceFromStart != moveEvaluation.distanceFromStart)
+                {
+                    return distanceFromStart.CompareTo(moveEvaluation.distanceFromStart);
+                }
+                else
+                {
+                    return value.CompareTo(moveEvaluation.value);
+                }
             }
         }
 
@@ -189,7 +196,7 @@ namespace GameCore
             return timesVisited;
         }
 
-        private int ShortestPathfinder(string move, int goalRow)
+        private int ShortestPathfinder(string move, int goalRow, PlayerCoordinate startingPoint = null)
         {
             PlayerCoordinate start;
             string startString;
@@ -219,6 +226,11 @@ namespace GameCore
             PriorityQueue<MoveEvaluation> possiblePaths = new PriorityQueue<MoveEvaluation>();
             HashSet<string> exhaustedPaths = new HashSet<string>();
             exhaustedPaths.Add(startString);
+
+            if (startingPoint != null)
+            {
+                exhaustedPaths.Add(BoardUtil.PlayerCoordinateToString(startingPoint));
+            }
 
             for (int i = 0; i < 4; ++i)
             {
@@ -250,9 +262,9 @@ namespace GameCore
                         }
                         break;
                 }
-                if (path != null)
+                if (path != null && !exhaustedPaths.Contains(path))
                 {
-                    possiblePaths.Enqueue(new MoveEvaluation(path, HeuristicCostEstimate(new PlayerCoordinate(path), new PlayerCoordinate(path[0].ToString() + goalRow.ToString())) + 1, 1));
+                    possiblePaths.Enqueue(new MoveEvaluation(path, HeuristicCostEstimate(new PlayerCoordinate(path), new PlayerCoordinate(path[0].ToString() + goalRow.ToString())) + 2, 2));
                 }
             }
 
@@ -314,6 +326,7 @@ namespace GameCore
             return shortestPath;
 
         }
+
 
         //public double GetStateValue()
         //{
@@ -896,6 +909,7 @@ namespace GameCore
             int goal = playerSpot == 0 ? 9 : 1;
             lock (boardAccess)
             {
+                Populate();
                 if (PlayersAreAdjacent())
                 {
                     Populate();
@@ -922,7 +936,6 @@ namespace GameCore
                         }
                     }
                 }
-                Populate();
                 if (playerLocations[currentPlayer].Row + 1 < 17 && !board[playerLocations[currentPlayer].Row + 1].Get(playerLocations[currentPlayer].Col)
                     && (playerLocations[currentPlayer].Row + 2 != playerLocations[opponent].Row || playerLocations[currentPlayer].Col != playerLocations[opponent].Col))
                 {
@@ -932,8 +945,6 @@ namespace GameCore
                     sb.Append(9 - (playerLocations[currentPlayer].Row / 2) - 1 < 1 ? 1 : 9 - (playerLocations[currentPlayer].Row / 2) - 1);
                     validMoves.Add(new Tuple<string, double>(sb.ToString(), MinimumHeuristicEstimate(sb.ToString(), goal)));
                 }
-                Unpopulate();
-                Populate();
                 if (playerLocations[currentPlayer].Row - 1 > -1 && !board[playerLocations[currentPlayer].Row - 1].Get(playerLocations[currentPlayer].Col)
                      && (playerLocations[currentPlayer].Row - 2 != playerLocations[opponent].Row || playerLocations[currentPlayer].Col != playerLocations[opponent].Col))
                 {
@@ -943,8 +954,6 @@ namespace GameCore
                     sb.Append(9 - (playerLocations[currentPlayer].Row / 2) + 1 > 9 ? 9 : 9 - (playerLocations[currentPlayer].Row / 2) + 1);
                     validMoves.Add(new Tuple<string, double>(sb.ToString(), MinimumHeuristicEstimate(sb.ToString(), goal)));
                 }
-                Unpopulate();
-                Populate();
                 if (playerLocations[currentPlayer].Col + 1 < 17 && !board[playerLocations[currentPlayer].Row].Get(playerLocations[currentPlayer].Col + 1)
                     && (playerLocations[currentPlayer].Row != playerLocations[opponent].Row || playerLocations[currentPlayer].Col + 2 != playerLocations[opponent].Col))
                 {
@@ -954,8 +963,6 @@ namespace GameCore
                     sb.Append(9 - (playerLocations[currentPlayer].Row / 2));
                     validMoves.Add(new Tuple<string, double>(sb.ToString(), MinimumHeuristicEstimate(sb.ToString(), goal)));
                 }
-                Unpopulate();
-                Populate();
                 if (playerLocations[currentPlayer].Col - 1 > -1 && !board[playerLocations[currentPlayer].Row].Get(playerLocations[currentPlayer].Col - 1)
                     && (playerLocations[currentPlayer].Row != playerLocations[opponent].Row || playerLocations[currentPlayer].Col - 2 != playerLocations[opponent].Col))
                 {
@@ -1175,6 +1182,7 @@ namespace GameCore
             {
                 start = new PlayerCoordinate(locationToStart);
             }
+            double possibleMinimumHeuristic;
 
             lock (boardAccess)
             {
@@ -1190,9 +1198,15 @@ namespace GameCore
                     //SetPlayerMoveValues(wallCoordinate, mid);
                 }
 
-                double possibleMinimumHeuristic;
 
-                possibleMinimumHeuristic = ShortestPathfinder(BoardUtil.PlayerCoordinateToString(start), goal);
+                if (locationToStart.Length > 2)
+                {
+                    possibleMinimumHeuristic = ShortestPathfinder(BoardUtil.PlayerCoordinateToString(start), goal);
+                }
+                else
+                {
+                    possibleMinimumHeuristic = ShortestPathfinder(BoardUtil.PlayerCoordinateToString(start), goal, playerLocations[goal == 9 ? 0 : 1]);
+                }
 
                 if (wallCoordinate != null)
                 {
@@ -1206,7 +1220,7 @@ namespace GameCore
                     //ResetPlayerMoveValues(wallCoordinate, mid);
                 }
             }
-            return possibleMinimumHeuristic;}
+            return possibleMinimumHeuristic;
         }
 
         private double HeuristicCostEstimate(PlayerCoordinate start, PlayerCoordinate goal)
