@@ -18,6 +18,7 @@ namespace GameCore
     /// </summary>
     class MonteCarloNode : IComparable<MonteCarloNode>
     {
+        /// Code Received from https://visualstudiomagazine.com/Articles/2012/11/01/Priority-Queues-with-C.aspx
         public class PriorityQueue<T> where T : IComparable<T>
         {
             private List<T> data;
@@ -100,7 +101,8 @@ namespace GameCore
                 return true; // passed all checks
             } // IsConsistent
         } // PriorityQueue
-
+        /// End of received code
+        
         private class MoveEvaluation : IComparable<MoveEvaluation>
         {
             private string move;
@@ -419,6 +421,15 @@ namespace GameCore
             possibleMoves = PossibleMovesFromPosition(myTurn, opponentTurn);
 
             int indexToStartDeletions = -1;
+
+            if (possibleMoves[0].Item2 == 0)
+            {
+                while (possibleMoves[0].Item2 == 0)
+                {
+                    possibleMoves.RemoveAt(0);
+                }
+            }
+
             double lowestValue = possibleMoves[0].Item2;
 
             for (int i = 1; i < possibleMoves.Count && indexToStartDeletions == -1; i++)
@@ -434,6 +445,14 @@ namespace GameCore
                 possibleMoves.RemoveRange(indexToStartDeletions, possibleMoves.Count - indexToStartDeletions);
             }
 
+            int locationOfPreviousMove = DoesMoveListContain(possibleMoves, lastPlayerMove[myTurn]);
+
+            if (possibleMoves.Count != 1 && locationOfPreviousMove != -1)
+            {
+                possibleMoves.RemoveAt(locationOfPreviousMove);
+            }
+
+
             if (!isHardAI)
             {
                 possibleBlocks = GetBlockingWalls(BoardUtil.PlayerCoordinateToString(playerLocations[opponentTurn]));
@@ -447,14 +466,6 @@ namespace GameCore
             //{
             //    possibleWalls = GetBestNonImmediateBlockWalls(BoardUtil.PlayerCoordinateToString(playerLocations[opponentTurn]));
             //}
-
-            int locationOfPreviousMove = DoesMoveListContain(possibleMoves, lastPlayerMove[myTurn]);
-
-            if (possibleMoves.Count != 1 && locationOfPreviousMove != -1)
-            {
-                possibleMoves.RemoveAt(locationOfPreviousMove);
-            }
-
             gameOver = false;
             parent = null;
         }
@@ -552,6 +563,8 @@ namespace GameCore
 
             walls = new List<WallCoordinate>(wallCoordinates);
 
+            walls.Add(newWallCoordinate);
+
             illegalWalls = new List<string>(illegalMoves);
 
             children = new List<MonteCarloNode>();
@@ -568,8 +581,6 @@ namespace GameCore
                     possibleWalls.Add(Convert.ToChar(97 + characterIndex).ToString() + numberIndex.ToString());
                 }
             }
-
-            walls.Add(newWallCoordinate);
 
             SetIllegalWalls();
 
@@ -1500,39 +1511,30 @@ namespace GameCore
                     PlayerCoordinate opponent = turn == 0 ? playerLocations[1] : playerLocations[0];
                     PlayerCoordinate player = turn == 0 ? playerLocations[0] : playerLocations[1];
 
-                    if (randomPercentileChance.Next(0, 100) >= 50)
+                    if (possibleBlocks == null)
                     {
-                        if (possibleBlocks == null)
-                        {
-                            if (!isHardAI)
-                            {
-                                possibleBlocks = GetBlockingWalls(BoardUtil.PlayerCoordinateToString(opponent));
-                            }
-                            else
-                            {
-                                possibleBlocks = GetBlockingWalls(BoardUtil.PlayerCoordinateToString(opponent), BoardUtil.PlayerCoordinateToString(player));
-                            }
-                        }
+                        possibleBlocks = GetBlockingWalls(BoardUtil.PlayerCoordinateToString(opponent));
+                    }
+                    if (!isHardAI)
+                    {
 
                         if (possibleBlocks.Count > 0)
                         {
                             wallMove = possibleBlocks[0].Item1;
+
+                            for (int i = 1; i < possibleBlocks.Count && childrensMoves.Contains(wallMove); i++)
+                            {
+                                wallMove = possibleBlocks[i].Item1;
+                            }
+
+                            if (childrensMoves.Contains(wallMove))
+                            {
+                                wallMove = possibleBlocks[randomPercentileChance.Next(0, possibleBlocks.Count)].Item1;
+                            }
                         }
                     }
                     else
                     {
-                        if (possibleBlocks == null)
-                        {
-                            if (!isHardAI)
-                            {
-                                possibleBlocks = GetBlockingWalls(BoardUtil.PlayerCoordinateToString(opponent));
-                            }
-                            else
-                            {
-                                possibleBlocks = GetBlockingWalls(BoardUtil.PlayerCoordinateToString(opponent), BoardUtil.PlayerCoordinateToString(player));
-                            }
-                        }
-
                         if (possibleBlocks.Count > 0)
                         {
                             wallMove = possibleBlocks[0].Item1;
@@ -1610,7 +1612,7 @@ namespace GameCore
                         {
                             blockingWalls.Add(horizontalPlacement);
                         }
-                        if (PlaceWall(turn, new WallCoordinate(verticalPlacement)) && !blockingWalls.Contains(verticalPlacement))
+                        if (PlaceWall(turn, new WallCoordinate(verticalPlacement)) && !illegalWalls.Contains(verticalPlacement) && !blockingWalls.Contains(verticalPlacement))
                         {
                             blockingWalls.Add(verticalPlacement);
                         }
@@ -1621,7 +1623,7 @@ namespace GameCore
                         {
                             blockingWalls.Add(verticalPlacement);
                         }
-                        if (PlaceWall(turn, new WallCoordinate(horizontalPlacement)) && !blockingWalls.Contains(horizontalPlacement))
+                        if (PlaceWall(turn, new WallCoordinate(horizontalPlacement)) && !illegalWalls.Contains(horizontalPlacement) && !blockingWalls.Contains(horizontalPlacement))
                         {
                             blockingWalls.Add(horizontalPlacement);
                         }
@@ -2378,7 +2380,7 @@ namespace GameCore
 
         private void ThreadedTreeSearchHard(Stopwatch timer, MonteCarloNode MonteCarlo)
         {
-            for (/*int i = 0*/; /*i < 10000*/ /*&&*/ timer.Elapsed.TotalSeconds < 4; /*++i*/)
+            for (/*int i = 0 */;/* i < 10000*/ /*&&*/ timer.Elapsed.TotalSeconds < 4; /*++i*/)
             {
                 List<Tuple<string, MonteCarloNode>> path = new List<Tuple<string, MonteCarloNode>>();
                 MonteCarlo.Backpropagate(MonteCarlo.ExpandOptions(MonteCarlo.SelectNode(MonteCarlo, path)), path);
