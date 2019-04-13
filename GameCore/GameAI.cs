@@ -120,7 +120,14 @@ namespace GameCore
 
             public int CompareTo(MoveEvaluation moveEvaluation)
             {
-                return value.CompareTo(moveEvaluation.value) ;
+                if (distanceFromStart != moveEvaluation.distanceFromStart)
+                {
+                    return distanceFromStart.CompareTo(moveEvaluation.distanceFromStart);
+                }
+                else
+                {
+                    return value.CompareTo(moveEvaluation.value);
+                }
             }
         }
 
@@ -252,7 +259,7 @@ namespace GameCore
                 }
                 if (path != null)
                 {
-                    possiblePaths.Enqueue(new MoveEvaluation(path, HeuristicCostEstimate(new PlayerCoordinate(path), new PlayerCoordinate(path[0].ToString() + goalRow.ToString())) + 1, 1));
+                    possiblePaths.Enqueue(new MoveEvaluation(path, HeuristicCostEstimate(new PlayerCoordinate(path), new PlayerCoordinate(path[0].ToString() + goalRow.ToString())) + 2, 2));
                 }
             }
 
@@ -319,7 +326,7 @@ namespace GameCore
                         }
                     }
                 }
-            } while (possiblePaths.Count() > 0);
+            } while (possiblePaths.Count() > 0 && shortestPath == 0);
 
             return shortestPath;
 
@@ -499,14 +506,16 @@ namespace GameCore
                     }
                 }
             }
-            foreach(string wall in possibleWalls)
+            foreach (string wall in possibleWalls)
             {
                 string vertical = wall + "v";
                 string horizontal = wall + "h";
+                Populate();
                 if (!illegalWalls.Contains(vertical) && WallIsAdjacentToCurrentlyPlacedWalls(new WallCoordinate(vertical)) && !PlaceWall(turn, new WallCoordinate(vertical)))
                 {
                     illegalWalls.Add(vertical);
                 }
+                Populate();
                 if (!illegalWalls.Contains(horizontal) && WallIsAdjacentToCurrentlyPlacedWalls(new WallCoordinate(horizontal)) && !PlaceWall(turn, new WallCoordinate(horizontal)))
                 {
                     illegalWalls.Add(horizontal);
@@ -708,9 +717,7 @@ namespace GameCore
                     possibleWalls.Add(Convert.ToChar(97 + characterIndex).ToString() + numberIndex.ToString());
                 }
             }
-
-            SetIllegalWalls();
-
+            
             children = new List<MonteCarloNode>();
             childrensMoves = new List<string>();
 
@@ -804,7 +811,6 @@ namespace GameCore
 
                     validMoves.Add(new Tuple<string, double>(sb.ToString(), MinimumHeuristicEstimate(sb.ToString(), goal)));
                 }
-                Populate();
                 if (!board[playerLocations[goal == 9 ? 0 : 1].Row + 1].Get(playerLocations[goal == 9 ? 0 : 1].Col + 2 * direction))
                 {
                     StringBuilder sb = new StringBuilder();
@@ -822,7 +828,6 @@ namespace GameCore
         {
             if (playerLocations[goal == 9 ? 0 : 1].Col + (3 * direction) < 17 && playerLocations[goal == 9 ? 0 : 1].Col + (3 * direction) > -1)
             {
-                Populate();
                 if (!board[playerLocations[goal == 9 ? 0 : 1].Row].Get(playerLocations[goal == 9 ? 0 : 1].Col + (3 * direction)))
                 {
                     StringBuilder sb = new StringBuilder();
@@ -860,7 +865,6 @@ namespace GameCore
 
                     validMoves.Add(new Tuple<string, double>(sb.ToString(), MinimumHeuristicEstimate(sb.ToString(), goal)));
                 }
-                Populate();
                 if (!board[playerLocations[goal == 9 ? 0 : 1].Row + 2 * direction].Get(playerLocations[goal == 9 ? 0 : 1].Col - 1))
                 {
                     StringBuilder sb = new StringBuilder();
@@ -878,7 +882,6 @@ namespace GameCore
         {
             if (playerLocations[goal == 9 ? 0 : 1].Row + (3 * direction) < 17 && playerLocations[goal == 9 ? 0 : 1].Row + (3 * direction) > -1)
             {
-                Populate();
                 if (!board[playerLocations[goal == 9 ? 0 : 1].Row + (3 * direction)].Get(playerLocations[goal == 9 ? 0 : 1].Col))
                 {
                     StringBuilder sb = new StringBuilder();
@@ -910,6 +913,7 @@ namespace GameCore
             int goal = playerSpot == 0 ? 9 : 1;
             lock (boardAccess)
             {
+                Populate();
                 if (PlayersAreAdjacent())
                 {
                     if (playerLocations[currentPlayer].Row == playerLocations[opponent].Row)
@@ -936,7 +940,6 @@ namespace GameCore
                     }
                 }
 
-                Populate();
                 if (playerLocations[currentPlayer].Row + 1 < 17 && !board[playerLocations[currentPlayer].Row + 1].Get(playerLocations[currentPlayer].Col)
                     && (playerLocations[currentPlayer].Row + 2 != playerLocations[opponent].Row || playerLocations[currentPlayer].Col != playerLocations[opponent].Col))
                 {
@@ -946,7 +949,6 @@ namespace GameCore
                     sb.Append(9 - (playerLocations[currentPlayer].Row / 2) - 1 < 1 ? 1 : 9 - (playerLocations[currentPlayer].Row / 2) - 1);
                     validMoves.Add(new Tuple<string, double>(sb.ToString(), MinimumHeuristicEstimate(sb.ToString(), goal)));
                 }
-                Populate();
                 if (playerLocations[currentPlayer].Row - 1 > -1 && !board[playerLocations[currentPlayer].Row - 1].Get(playerLocations[currentPlayer].Col)
                      && (playerLocations[currentPlayer].Row - 2 != playerLocations[opponent].Row || playerLocations[currentPlayer].Col != playerLocations[opponent].Col))
                 {
@@ -956,7 +958,6 @@ namespace GameCore
                     sb.Append(9 - (playerLocations[currentPlayer].Row / 2) + 1 > 9 ? 9 : 9 - (playerLocations[currentPlayer].Row / 2) + 1);
                     validMoves.Add(new Tuple<string, double>(sb.ToString(), MinimumHeuristicEstimate(sb.ToString(), goal)));
                 }
-                Populate();
                 if (playerLocations[currentPlayer].Col + 1 < 17 && !board[playerLocations[currentPlayer].Row].Get(playerLocations[currentPlayer].Col + 1)
                     && (playerLocations[currentPlayer].Row != playerLocations[opponent].Row || playerLocations[currentPlayer].Col + 2 != playerLocations[opponent].Col))
                 {
@@ -966,7 +967,6 @@ namespace GameCore
                     sb.Append(9 - (playerLocations[currentPlayer].Row / 2));
                     validMoves.Add(new Tuple<string, double>(sb.ToString(), MinimumHeuristicEstimate(sb.ToString(), goal)));
                 }
-                Populate();
                 if (playerLocations[currentPlayer].Col - 1 > -1 && !board[playerLocations[currentPlayer].Row].Get(playerLocations[currentPlayer].Col - 1)
                     && (playerLocations[currentPlayer].Row != playerLocations[opponent].Row || playerLocations[currentPlayer].Col - 2 != playerLocations[opponent].Col))
                 {
@@ -1637,15 +1637,14 @@ namespace GameCore
 
             foreach (string placement in blockingWalls)
             {
-                Populate();
                 double heuristicEstimate = MinimumHeuristicEstimate(placement, goal);
-                Unpopulate();
                 if (opponentEstimate < heuristicEstimate)
                 {
                     validBlocks.Add(new Tuple<string, double>(placement, heuristicEstimate));
                     possibleBlocksList.Add(placement);
                 }
             }
+            Unpopulate();
 
             //if (turn == 0)
             //{
@@ -1655,126 +1654,7 @@ namespace GameCore
             //{
             return validBlocks.OrderBy(vB => vB.Item2).ThenBy(vB => vB.Item1[2]).ToList();
             //}
-        }
-
-
-        private List<Tuple<string, double>> GetBestNonImmediateBlockWalls(string opponent)
-        {
-            Populate();
-            int goal = turn == 0 ? 9 : 1;
-            int opponentGoal = turn == 0 ? 1 : 9;
-            double opponentEstimate = MinimumHeuristicEstimate(opponent, opponentGoal);
-
-            List<Tuple<string, double>> validBlocks = new List<Tuple<string, double>>();
-
-            foreach (string placement in possibleWalls)
-            {
-                string horizontalPlacement = placement + "h";
-                string verticalPlacement = placement + "v";
-
-                if (!illegalWalls.Contains(horizontalPlacement) && !possibleBlocksList.Contains(horizontalPlacement))
-                {
-                    Tuple<double, int> heuristicEstimateOpponent = AverageHeuristicEstimateOfNearbyWalls(horizontalPlacement, goal);
-                    double opponentHorizontalHeuristic = (MinimumHeuristicEstimate(horizontalPlacement, goal) + heuristicEstimateOpponent.Item1) / heuristicEstimateOpponent.Item2;
-
-                    if (opponentEstimate < opponentHorizontalHeuristic)
-                    {
-                        validBlocks.Add(new Tuple<string, double>(horizontalPlacement, opponentHorizontalHeuristic));
-                    }
-                }
-                if (!illegalWalls.Contains(verticalPlacement) && !possibleBlocksList.Contains(verticalPlacement))
-                {
-                    Tuple<double, int> heuristicEstimateOpponent = AverageHeuristicEstimateOfNearbyWalls(verticalPlacement, goal);
-                    double opponentVerticalHeuristic = (MinimumHeuristicEstimate(verticalPlacement, goal) + heuristicEstimateOpponent.Item1) / heuristicEstimateOpponent.Item2;
-
-                    if (opponentEstimate < opponentVerticalHeuristic)
-                    {
-                        validBlocks.Add(new Tuple<string, double>(verticalPlacement, opponentVerticalHeuristic));
-                    }
-                }
-
-            }
-            Unpopulate();
-            if (turn == 0)
-            {
-                return validBlocks.OrderBy(vB => vB.Item2).ThenBy(vB => vB.Item1[2]).ToList();
-            }
-            else
-            {
-                return validBlocks.OrderByDescending(vB => vB.Item2).ThenBy(vB => vB.Item1[2]).ToList();
-            }
-        }
-
-        private Tuple<double, int> AverageHeuristicEstimateOfNearbyWalls(string wallPlacement, int goal)
-        {
-            if (wallPlacement[2] == 'h')
-            {
-                return AverageHeuristicEstimateOfNearbyWallsHorizontal(wallPlacement, goal);
-            }
-            else
-            {
-                return AverageHeuristicEstimateOfNearbyWallsVertical(wallPlacement, goal);
-            }
-        }
-
-        private Tuple<double, int> AverageHeuristicEstimateOfNearbyWallsHorizontal(string wallPlacement, int goal)
-        {
-            List<Tuple<string, double>> nearbyWalls = new List<Tuple<string, double>>();
-            double total = 0;
-
-            if (Convert.ToChar(wallPlacement[0] - 1) >= 'a')
-            {
-                string newWall = Convert.ToChar(wallPlacement[0] - 1).ToString() + wallPlacement[1] + 'v';
-                total = AddWallTotalToList(nearbyWalls, total, newWall, goal);
-                if (Convert.ToChar(wallPlacement[1] + 1) < '9')
-                {
-                    newWall = Convert.ToChar(wallPlacement[0] - 1).ToString() + Convert.ToChar(wallPlacement[1] + 1).ToString() + 'v';
-                    total = AddWallTotalToList(nearbyWalls, total, newWall, goal);
-                }
-                if (Convert.ToChar(wallPlacement[1] - 1) >= '1')
-                {
-                    newWall = Convert.ToChar(wallPlacement[0] - 1).ToString() + Convert.ToChar(wallPlacement[1] - 1).ToString() + 'v';
-                    total = AddWallTotalToList(nearbyWalls, total, newWall, goal);
-                }
-                if (Convert.ToChar(wallPlacement[0] - 2) >= 'a')
-                {
-                    newWall = Convert.ToChar(wallPlacement[0] - 2).ToString() + wallPlacement[1] + 'h';
-                    total = AddWallTotalToList(nearbyWalls, total, newWall, goal);
-                }
-            }
-            if (Convert.ToChar(wallPlacement[0] + 1) < 'i')
-            {
-                string newWall = Convert.ToChar(wallPlacement[0] + 1).ToString() + wallPlacement[1] + 'v';
-                total = AddWallTotalToList(nearbyWalls, total, newWall, goal);
-                if (Convert.ToChar(wallPlacement[1] + 1) < '9')
-                {
-                    newWall = Convert.ToChar(wallPlacement[0] + 1).ToString() + Convert.ToChar(wallPlacement[1] + 1).ToString() + 'v';
-                    total = AddWallTotalToList(nearbyWalls, total, newWall, goal);
-                }
-                if (Convert.ToChar(wallPlacement[1] - 1) >= '1')
-                {
-                    newWall = Convert.ToChar(wallPlacement[0] + 1).ToString() + Convert.ToChar(wallPlacement[1] - 1).ToString() + 'v';
-                    total = AddWallTotalToList(nearbyWalls, total, newWall, goal);
-                }
-                if (Convert.ToChar(wallPlacement[0] + 2) < 'i')
-                {
-                    newWall = Convert.ToChar(wallPlacement[0] + 2).ToString() + wallPlacement[1] + 'h';
-                    total = AddWallTotalToList(nearbyWalls, total, newWall, goal);
-                }
-            }
-            if (Convert.ToChar(wallPlacement[1] + 1) < '9')
-            {
-                string newWall = wallPlacement[0] + Convert.ToChar(wallPlacement[1] + 1).ToString() + 'v';
-                total = AddWallTotalToList(nearbyWalls, total, newWall, goal);
-            }
-            if (Convert.ToChar(wallPlacement[1] - 1) >= '1')
-            {
-                string newWall = wallPlacement[0] + Convert.ToChar(wallPlacement[1] - 1).ToString() + 'v';
-                total = AddWallTotalToList(nearbyWalls, total, newWall, goal);
-            }
-
-            return new Tuple<double, int>(total / nearbyWalls.Count, AmountOfOpposingWallsThatImpairMe(nearbyWalls));
-        }
+        }                    
 
         private int AmountOfOpposingWallsThatImpairMe(List<Tuple<string, double>> nearbyWalls)
         {
@@ -1798,67 +1678,6 @@ namespace GameCore
             return numImpairingWalls;
         }
 
-        private Tuple<double, int> AverageHeuristicEstimateOfNearbyWallsVertical(string wallPlacement, int goal)
-        {
-            List<Tuple<string, double>> nearbyWalls = new List<Tuple<string, double>>();
-            double total = 0;
-
-            if (Convert.ToChar(wallPlacement[1] - 1) >= '1')
-            {
-                string newWall = wallPlacement[0] + Convert.ToChar(wallPlacement[1] - 1).ToString() + 'h';
-                total = AddWallTotalToList(nearbyWalls, total, newWall, goal);
-
-                if (Convert.ToChar(wallPlacement[0] + 1) < 'i')
-                {
-                    newWall = Convert.ToChar(wallPlacement[0] + 1).ToString() + Convert.ToChar(wallPlacement[1] - 1).ToString() + 'h';
-                    total = AddWallTotalToList(nearbyWalls, total, newWall, goal);
-                }
-                if (Convert.ToChar(wallPlacement[0] - 1) >= 'a')
-                {
-                    newWall = Convert.ToChar(wallPlacement[0] - 1).ToString() + Convert.ToChar(wallPlacement[1] - 1).ToString() + 'h';
-                    total = AddWallTotalToList(nearbyWalls, total, newWall, goal);
-                }
-                if (Convert.ToChar(wallPlacement[1] - 2) >= '1')
-                {
-                    newWall = wallPlacement[0] + Convert.ToChar(wallPlacement[1] - 2).ToString() + 'v';
-                    total = AddWallTotalToList(nearbyWalls, total, newWall, goal);
-                }
-            }
-            if (Convert.ToChar(wallPlacement[1] + 1) < '9')
-            {
-                string newWall = wallPlacement[0] + Convert.ToChar(wallPlacement[1] + 1).ToString() + 'h';
-                total = AddWallTotalToList(nearbyWalls, total, newWall, goal);
-
-                if (Convert.ToChar(wallPlacement[0] + 1) < 'i')
-                {
-                    newWall = Convert.ToChar(wallPlacement[0] + 1).ToString() + Convert.ToChar(wallPlacement[1] + 1).ToString() + 'h';
-                    total = AddWallTotalToList(nearbyWalls, total, newWall, goal);
-                }
-                if (Convert.ToChar(wallPlacement[0] - 1) >= 'a')
-                {
-                    newWall = Convert.ToChar(wallPlacement[0] - 1).ToString() + Convert.ToChar(wallPlacement[1] + 1).ToString() + 'h';
-                    total = AddWallTotalToList(nearbyWalls, total, newWall, goal);
-                }
-                if (Convert.ToChar(wallPlacement[1] + 2) < '9')
-                {
-                    newWall = wallPlacement[0] + Convert.ToChar(wallPlacement[1] + 2).ToString() + 'v';
-                    total = AddWallTotalToList(nearbyWalls, total, newWall, goal);
-                }
-            }
-            if (Convert.ToChar(wallPlacement[0] + 1) < 'i')
-            {
-                string newWall = Convert.ToChar(wallPlacement[0] + 1).ToString() + wallPlacement[1] + 'h';
-                total = AddWallTotalToList(nearbyWalls, total, newWall, goal);
-            }
-            if (Convert.ToChar(wallPlacement[0] - 2) >= 'a')
-            {
-                string newWall = Convert.ToChar(wallPlacement[0] - 2).ToString() + wallPlacement[1] + 'h';
-                total = AddWallTotalToList(nearbyWalls, total, newWall, goal);
-            }
-            
-            return new Tuple<double, int>(total / nearbyWalls.Count, AmountOfOpposingWallsThatImpairMe(nearbyWalls));
-        }
-
         double AddWallTotalToList(List<Tuple<string, double>> nearbyWalls, double total, string newWall, int goal)
         {
             if (!illegalWalls.Contains(newWall))
@@ -1869,114 +1688,7 @@ namespace GameCore
             }
             return total;
         }
-
-        private Tuple<bool, string> GetValidJumpMove(List<PlayerCoordinate> players)
-        {
-            StringBuilder sb = new StringBuilder();
-            Tuple<bool, string> possibleJump = new Tuple<bool, string>(false, null);
-            int move = randomPercentileChance.Next(0, 3);
-
-            if (players[turn == 0 ? 0 : 1].Row == players[turn == 0 ? 1 : 0].Row && players[turn == 0 ? 0 : 1].Col + 2 == players[turn == 0 ? 1 : 0].Col)
-            {
-                switch (move)
-                {
-                    case 0:
-                        // East Jump
-                        sb.Append(Convert.ToChar(97 + (players[turn == 0 ? 1 : 0].Col / 2) + 1));
-                        sb.Append(9 - (players[turn == 0 ? 1 : 0].Row / 2));
-                        possibleJump = new Tuple<bool, string>(true, sb.ToString());
-                        break;
-                    case 1:
-                        // Northeast Jump
-                        sb.Append(Convert.ToChar(97 + (players[turn == 0 ? 1 : 0].Col / 2)));
-                        sb.Append(9 - (players[turn == 0 ? 1 : 0].Row / 2) + 1);
-                        possibleJump = new Tuple<bool, string>(true, sb.ToString());
-                        break;
-                    case 2:
-                        // Southeast Jump
-                        sb.Append(Convert.ToChar(97 + (players[turn == 0 ? 1 : 0].Col / 2)));
-                        sb.Append(9 - (players[turn == 0 ? 1 : 0].Row / 2) - 1);
-                        possibleJump = new Tuple<bool, string>(true, sb.ToString());
-                        break;
-                }
-            }
-            else if (players[turn == 0 ? 0 : 1].Row == players[turn == 0 ? 1 : 0].Row && players[turn == 0 ? 0 : 1].Col == players[turn == 0 ? 1 : 0].Col + 2)
-            {
-                switch (move)
-                {
-                    case 0:
-                        // West Jump
-                        sb.Append(Convert.ToChar(97 + (players[turn == 0 ? 1 : 0].Col / 2) - 1));
-                        sb.Append(9 - (players[turn == 0 ? 1 : 0].Row / 2));
-                        possibleJump = new Tuple<bool, string>(true, sb.ToString());
-                        break;
-                    case 1:
-                        // Northwest Jump
-                        sb.Append(Convert.ToChar(97 + (players[turn == 0 ? 1 : 0].Col / 2)));
-                        sb.Append(9 - (players[turn == 0 ? 1 : 0].Row / 2) + 1);
-                        possibleJump = new Tuple<bool, string>(true, sb.ToString());
-                        break;
-                    case 2:
-                        // Southwest Jump
-                        sb.Append(Convert.ToChar(97 + (players[turn == 0 ? 1 : 0].Col / 2)));
-                        sb.Append(9 - (players[turn == 0 ? 1 : 0].Row / 2) - 1);
-                        possibleJump = new Tuple<bool, string>(true, sb.ToString());
-                        break;
-                }
-            }
-            else if (players[turn == 0 ? 0 : 1].Row == players[turn == 0 ? 1 : 0].Row + 2 && players[turn == 0 ? 0 : 1].Col == players[turn == 0 ? 1 : 0].Col)
-            {
-                switch (move)
-                {
-                    case 0:
-                        // North Jump
-                        sb.Append(Convert.ToChar(97 + (players[turn == 0 ? 1 : 0].Col / 2)));
-                        sb.Append(9 - (players[turn == 0 ? 1 : 0].Row / 2) + 1 > 9 ? 9 : (9 - (players[turn == 0 ? 1 : 0].Row / 2) + 1));
-                        possibleJump = new Tuple<bool, string>(true, sb.ToString());
-                        break;
-                    case 1:
-                        // Northeast Jump
-                        sb.Append(Convert.ToChar(97 + (players[turn == 0 ? 1 : 0].Col / 2) + 1));
-                        sb.Append(9 - (players[turn == 0 ? 1 : 0].Row / 2));
-                        possibleJump = new Tuple<bool, string>(true, sb.ToString());
-                        break;
-                    case 2:
-                        // Northwest Jump
-                        sb.Append(Convert.ToChar(97 + (players[turn == 0 ? 1 : 0].Col / 2) - 1));
-                        sb.Append(9 - (players[turn == 0 ? 1 : 0].Row / 2));
-                        possibleJump = new Tuple<bool, string>(true, sb.ToString());
-                        break;
-                }
-            }
-            else if (players[turn == 0 ? 0 : 1].Row == players[turn == 0 ? 1 : 0].Row - 2 && players[turn == 0 ? 0 : 1].Col == players[turn == 0 ? 1 : 0].Col)
-            {
-                switch (move)
-                {
-                    case 0:
-                        // South Jump
-                        sb.Append(Convert.ToChar(97 + (players[turn == 0 ? 1 : 0].Col / 2)));
-                        sb.Append(9 - (players[turn == 0 ? 1 : 0].Row / 2) - 1 < 1 ? 1 : (9 - (players[turn == 0 ? 1 : 0].Row / 2) - 1));
-                        possibleJump = new Tuple<bool, string>(true, sb.ToString());
-                        break;
-                    case 1:
-                        // Southeast Jump
-                        sb.Append(Convert.ToChar(97 + (players[turn == 0 ? 1 : 0].Col / 2) + 1));
-                        sb.Append(9 - (players[turn == 0 ? 1 : 0].Row / 2));
-                        possibleJump = new Tuple<bool, string>(true, sb.ToString());
-                        break;
-                    case 2:
-                        // Southwest Jump
-                        sb.Append(Convert.ToChar(97 + (players[turn == 0 ? 1 : 0].Col / 2) - 1));
-                        sb.Append(9 - (players[turn == 0 ? 1 : 0].Row / 2));
-                        possibleJump = new Tuple<bool, string>(true, sb.ToString());
-                        break;
-                }
-            }
-
-            return possibleJump;
-
-        }
-
+        
         private bool PlayersAreAdjacent()
         {
             return (playerLocations[turn == 0 ? 0 : 1].Row == playerLocations[turn == 0 ? 1 : 0].Row && playerLocations[turn == 0 ? 0 : 1].Col + 2 == playerLocations[turn == 0 ? 1 : 0].Col && !board[playerLocations[turn == 0 ? 0 : 1].Row].Get(playerLocations[turn == 0 ? 0 : 1].Col + 1))
@@ -2371,7 +2083,7 @@ namespace GameCore
 
             List<Thread> simulatedGames = new List<Thread>();
 
-            for (int i = 0; i < 8; ++i)
+            for (int i = 0; i < 4; ++i)
             {
                 Thread simulatedGameThread;
 
