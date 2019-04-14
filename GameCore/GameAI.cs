@@ -606,6 +606,15 @@ namespace GameCore
             }
 
             int indexToStartDeletions = -1;
+
+            if (possibleMoves[0].Item2 == 0)
+            {
+                while (possibleMoves[0].Item2 == 0)
+                {
+                    possibleMoves.RemoveAt(0);
+                }
+            }
+
             double lowestValue = possibleMoves[0].Item2;
 
             for (int i = 1; i < possibleMoves.Count && indexToStartDeletions == -1; i++)
@@ -769,6 +778,15 @@ namespace GameCore
                 }
 
                 int indexToStartDeletions = -1;
+
+                if (possibleMoves[0].Item2 == 0)
+                {
+                    while (possibleMoves[0].Item2 == 0)
+                    {
+                        possibleMoves.RemoveAt(0);
+                    }
+                }
+
                 double lowestValue = possibleMoves[0].Item2;
 
                 for (int i = 1; i < possibleMoves.Count && indexToStartDeletions == -1; i++)
@@ -1628,33 +1646,7 @@ namespace GameCore
                             blockingWalls.Add(horizontalPlacement);
                         }
                     }
-                }
-                for (char col = Convert.ToChar(player[0] - difficultyMod); col < player[0] + difficultyMod; col++)
-                {
-                    for (char row = Convert.ToChar(player[1] - difficultyMod); row < player[1] + difficultyMod; row++)
-                    {
-                        if (possibleWalls.Contains(col.ToString() + row.ToString()))
-                        {
-                            string horizontalPlacement = col.ToString() + row.ToString() + "h";
-                            string verticalPlacement = col.ToString() + row.ToString() + "v";
-
-                            if (!illegalWalls.Contains(horizontalPlacement))
-                            {
-                                if (PlaceWall(turn, new WallCoordinate(horizontalPlacement)) && !blockingWalls.Contains(horizontalPlacement))
-                                {
-                                    blockingWalls.Add(horizontalPlacement);
-                                }
-                            }
-                            if (!illegalWalls.Contains(verticalPlacement))
-                            {
-                                if (PlaceWall(turn, new WallCoordinate(verticalPlacement)) && !blockingWalls.Contains(verticalPlacement))
-                                {
-                                    blockingWalls.Add(verticalPlacement);
-                                }
-                            }
-                        }
-                    }
-                }
+                }               
             }
 
                 List<Tuple<string, double>> validBlocks = new List<Tuple<string, double>>();
@@ -2053,7 +2045,7 @@ namespace GameCore
                     //listOfChildren.Remove(nextNode);
                     nextNode = SelectionAlgorithm(listOfChildren);
 
-                    while (path.Count > 0 && ExistsWithin(nextNode, path))
+                    while (listOfChildren.Count > 0 && ExistsWithin(nextNode, path))
                     {
                         listOfChildren = new List<MonteCarloNode>(listOfChildren);
                         //listOfChildren.Remove(nextNode);
