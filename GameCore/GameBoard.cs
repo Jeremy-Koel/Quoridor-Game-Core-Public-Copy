@@ -487,11 +487,11 @@ namespace GameCore
             PlayerCoordinate playerCoordinate = GetCurrentPlayerCoodinate();
             PlayerCoordinate opponentCoord = GetCurrentOpponentCoordinate();
 
-            if (playerCoordinate.Row + 1 < 17 && playerCoordinate.Row - 1 > -1
-                       && playerCoordinate.Col + 2 * direction < 17 && playerCoordinate.Col + 2 * direction > -1)
+            if (playerCoordinate.Row + 1 < 17                 
+                && playerCoordinate.Col + 2 * direction < 17                
+                && playerCoordinate.Col + 2 * direction > -1          
+                && board[playerCoordinate.Row + 1, playerCoordinate.Col + 2 * direction] != WALL)
             {
-                if (board[playerCoordinate.Row - 1, playerCoordinate.Col + 2 * direction] != WALL)
-                {
                     StringBuilder sb = new StringBuilder();
 
                     sb.Append(Convert.ToChar(97 + (opponentCoord.Col / 2)));
@@ -499,17 +499,19 @@ namespace GameCore
                                    : 9 - (opponentCoord.Row / 2) + 1);
 
                     validMoves.Add(sb.ToString());
-                }
-                if (board[playerCoordinate.Row + 1, playerCoordinate.Col + 2 * direction] != WALL)
-                {
-                    StringBuilder sb = new StringBuilder();
+            }
+            if (playerCoordinate.Row - 1 > -1             
+                && playerCoordinate.Col + 2 * direction < 17       
+                && playerCoordinate.Col + 2 * direction > -1             
+                && board[playerCoordinate.Row - 1, playerCoordinate.Col + 2 * direction] != WALL)
+            {
+                StringBuilder sb = new StringBuilder();
 
-                    sb.Append(Convert.ToChar(97 + (opponentCoord.Col / 2)));
-                    sb.Append(value: 9 - (opponentCoord.Row / 2) - 1 < 1 ? 1
-                                   : 9 - (opponentCoord.Row / 2) - 1);
+                sb.Append(Convert.ToChar(97 + (opponentCoord.Col / 2)));
+                sb.Append(value: 9 - (opponentCoord.Row / 2) - 1 < 1 ? 1
+                               : 9 - (opponentCoord.Row / 2) - 1);
 
-                    validMoves.Add(sb.ToString());
-                }
+                validMoves.Add(sb.ToString());
             }
         }
 
@@ -547,11 +549,11 @@ namespace GameCore
             PlayerCoordinate playerCoordinate = GetCurrentPlayerCoodinate();
             PlayerCoordinate opponentCoord = GetCurrentOpponentCoordinate();
 
-            if (playerCoordinate.Col + 1 < 17 && playerCoordinate.Col - 1 > -1
-                        && playerCoordinate.Row + 2 * direction < 17 && playerCoordinate.Row + 2 * direction > -1)
+            if (playerCoordinate.Col + 1 < 17 
+                && playerCoordinate.Row + 2 * direction < 17 
+                && playerCoordinate.Row + 2 * direction > -1
+                && board[playerCoordinate.Row + 2 * direction, playerCoordinate.Col + 1] != WALL)
             {
-                if (board[playerCoordinate.Row + 2 * direction, playerCoordinate.Col + 1] != WALL)
-                {
                     StringBuilder sb = new StringBuilder();
 
                     sb.Append(Convert.ToChar(value: 97 + (opponentCoord.Col / 2) + 1 > 105 ? 105
@@ -559,17 +561,19 @@ namespace GameCore
                     sb.Append(9 - (opponentCoord.Row / 2));
 
                     validMoves.Add(sb.ToString());
-                }
-                if (board[playerCoordinate.Row + 2 * direction, playerCoordinate.Col - 1] != WALL)
-                {
-                    StringBuilder sb = new StringBuilder();
+            }
+            if (playerCoordinate.Col - 1 > -1 
+                && playerCoordinate.Row + 2 * direction < 17 
+                && playerCoordinate.Row + 2 * direction > -1
+                && board[playerCoordinate.Row + 2 * direction, playerCoordinate.Col - 1] != WALL)
+            {
+                StringBuilder sb = new StringBuilder();
 
-                    sb.Append(Convert.ToChar(value: 97 + (opponentCoord.Col / 2) - 1 < 97 ? 97
-                                                  : 97 + (opponentCoord.Col / 2) - 1));
-                    sb.Append(9 - (opponentCoord.Row / 2));
+                sb.Append(Convert.ToChar(value: 97 + (opponentCoord.Col / 2) - 1 < 97 ? 97
+                                              : 97 + (opponentCoord.Col / 2) - 1));
+                sb.Append(9 - (opponentCoord.Row / 2));
 
-                    validMoves.Add(sb.ToString());
-                }
+                validMoves.Add(sb.ToString());
             }
         }
 

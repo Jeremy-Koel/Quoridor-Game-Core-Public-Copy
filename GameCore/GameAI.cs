@@ -825,29 +825,31 @@ namespace GameCore
 
         private void PossibleHorizontalDiagonalJumps(List<Tuple<string, double>> validMoves, int goal, int direction)
         {
-            if (playerLocations[goal == 9 ? 0 : 1].Row + 1 < 17 && playerLocations[goal == 9 ? 0 : 1].Row - 1 > -1
-                       && playerLocations[goal == 9 ? 0 : 1].Col + 2 * direction < 17 && playerLocations[goal == 9 ? 0 : 1].Col + 2 * direction > -1)
+            if (playerLocations[goal == 9 ? 0 : 1].Row + 1 < 17
+                && playerLocations[goal == 9 ? 0 : 1].Col + 2 * direction < 17
+                && playerLocations[goal == 9 ? 0 : 1].Col + 2 * direction > -1 
+                && !board[playerLocations[goal == 9 ? 0 : 1].Row - 1].Get(playerLocations[goal == 9 ? 0 : 1].Col + 2 * direction))
             {
-                if (!board[playerLocations[goal == 9 ? 0 : 1].Row - 1].Get(playerLocations[goal == 9 ? 0 : 1].Col + 2 * direction))
-                {
-                    StringBuilder sb = new StringBuilder();
+                StringBuilder sb = new StringBuilder();
 
-                    sb.Append(Convert.ToChar(97 + (playerLocations[goal == 9 ? 1 : 0].Col / 2)));
-                    sb.Append(value: 9 - (playerLocations[goal == 9 ? 1 : 0].Row / 2) + 1 > 9 ? 9
-                                   : 9 - (playerLocations[goal == 9 ? 1 : 0].Row / 2) + 1);
+                sb.Append(Convert.ToChar(97 + (playerLocations[goal == 9 ? 1 : 0].Col / 2)));
+                sb.Append(value: 9 - (playerLocations[goal == 9 ? 1 : 0].Row / 2) + 1 > 9 ? 9
+                               : 9 - (playerLocations[goal == 9 ? 1 : 0].Row / 2) + 1);
 
-                    validMoves.Add(new Tuple<string, double>(sb.ToString(), MinimumHeuristicEstimate(sb.ToString(), goal)));
-                }
-                if (!board[playerLocations[goal == 9 ? 0 : 1].Row + 1].Get(playerLocations[goal == 9 ? 0 : 1].Col + 2 * direction))
-                {
-                    StringBuilder sb = new StringBuilder();
+                validMoves.Add(new Tuple<string, double>(sb.ToString(), MinimumHeuristicEstimate(sb.ToString(), goal)));
+            }
+            if (playerLocations[goal == 9 ? 0 : 1].Row - 1 > -1
+                && playerLocations[goal == 9 ? 0 : 1].Col + 2 * direction < 17
+                && playerLocations[goal == 9 ? 0 : 1].Col + 2 * direction > -1
+                && !board[playerLocations[goal == 9 ? 0 : 1].Row + 1].Get(playerLocations[goal == 9 ? 0 : 1].Col + 2 * direction))
+            {
+                StringBuilder sb = new StringBuilder();
 
-                    sb.Append(Convert.ToChar(97 + (playerLocations[goal == 9 ? 1 : 0].Col / 2)));
-                    sb.Append(value: 9 - (playerLocations[goal == 9 ? 1 : 0].Row / 2) - 1 < 1 ? 1
-                                   : 9 - (playerLocations[goal == 9 ? 1 : 0].Row / 2) - 1);
+                sb.Append(Convert.ToChar(97 + (playerLocations[goal == 9 ? 1 : 0].Col / 2)));
+                sb.Append(value: 9 - (playerLocations[goal == 9 ? 1 : 0].Row / 2) - 1 < 1 ? 1
+                               : 9 - (playerLocations[goal == 9 ? 1 : 0].Row / 2) - 1);
 
-                    validMoves.Add(new Tuple<string, double>(sb.ToString(), MinimumHeuristicEstimate(sb.ToString(), goal)));
-                }
+                validMoves.Add(new Tuple<string, double>(sb.ToString(), MinimumHeuristicEstimate(sb.ToString(), goal)));
             }
         }
 
@@ -879,29 +881,31 @@ namespace GameCore
 
         private void PossibleVerticalDiagonalJumps(List<Tuple<string, double>> validMoves, int goal, int direction)
         {
-            if (playerLocations[goal == 9 ? 0 : 1].Col + 1 < 17 && playerLocations[goal == 9 ? 0 : 1].Col - 1 > -1
-                        && playerLocations[goal == 9 ? 0 : 1].Row + 2 * direction < 17 && playerLocations[goal == 9 ? 0 : 1].Row + 2 * direction > -1)
+            if (playerLocations[goal == 9 ? 0 : 1].Col + 1 < 17 
+                && playerLocations[goal == 9 ? 0 : 1].Row + 2 * direction < 17
+                && playerLocations[goal == 9 ? 0 : 1].Row + 2 * direction > -1
+                && !board[playerLocations[goal == 9 ? 0 : 1].Row + 2 * direction].Get(playerLocations[goal == 9 ? 0 : 1].Col + 1))
             {
-                if (!board[playerLocations[goal == 9 ? 0 : 1].Row + 2 * direction].Get(playerLocations[goal == 9 ? 0 : 1].Col + 1))
-                {
-                    StringBuilder sb = new StringBuilder();
+                StringBuilder sb = new StringBuilder();
 
-                    sb.Append(Convert.ToChar(value: 97 + (playerLocations[goal == 9 ? 1 : 0].Col / 2) + 1 > 105 ? 105
-                                                  : 97 + (playerLocations[goal == 9 ? 1 : 0].Col / 2) + 1));
-                    sb.Append(9 - (playerLocations[goal == 9 ? 1 : 0].Row / 2));
+                sb.Append(Convert.ToChar(value: 97 + (playerLocations[goal == 9 ? 1 : 0].Col / 2) + 1 > 105 ? 105
+                                              : 97 + (playerLocations[goal == 9 ? 1 : 0].Col / 2) + 1));
+                sb.Append(9 - (playerLocations[goal == 9 ? 1 : 0].Row / 2));
 
-                    validMoves.Add(new Tuple<string, double>(sb.ToString(), MinimumHeuristicEstimate(sb.ToString(), goal)));
-                }
-                if (!board[playerLocations[goal == 9 ? 0 : 1].Row + 2 * direction].Get(playerLocations[goal == 9 ? 0 : 1].Col - 1))
-                {
-                    StringBuilder sb = new StringBuilder();
+                validMoves.Add(new Tuple<string, double>(sb.ToString(), MinimumHeuristicEstimate(sb.ToString(), goal)));
+            }
+            if (playerLocations[goal == 9 ? 0 : 1].Col - 1 > -1
+                && playerLocations[goal == 9 ? 0 : 1].Row + 2 * direction < 17
+                && playerLocations[goal == 9 ? 0 : 1].Row + 2 * direction > -1 
+                && !board[playerLocations[goal == 9 ? 0 : 1].Row + 2 * direction].Get(playerLocations[goal == 9 ? 0 : 1].Col - 1))
+            {
+                StringBuilder sb = new StringBuilder();
 
-                    sb.Append(Convert.ToChar(value: 97 + (playerLocations[goal == 9 ? 1 : 0].Col / 2) - 1 < 97 ? 97
-                                                  : 97 + (playerLocations[goal == 9 ? 1 : 0].Col / 2) - 1));
-                    sb.Append(9 - (playerLocations[goal == 9 ? 1 : 0].Row / 2));
+                sb.Append(Convert.ToChar(value: 97 + (playerLocations[goal == 9 ? 1 : 0].Col / 2) - 1 < 97 ? 97
+                                              : 97 + (playerLocations[goal == 9 ? 1 : 0].Col / 2) - 1));
+                sb.Append(9 - (playerLocations[goal == 9 ? 1 : 0].Row / 2));
 
-                    validMoves.Add(new Tuple<string, double>(sb.ToString(), MinimumHeuristicEstimate(sb.ToString(), goal)));
-                }
+                validMoves.Add(new Tuple<string, double>(sb.ToString(), MinimumHeuristicEstimate(sb.ToString(), goal)));
             }
         }
 
@@ -1466,7 +1470,7 @@ namespace GameCore
 
             foreach (Tuple<string, double> wall in possibleBlocks)
             {
-                if (MinimumHeuristicEstimate(wall.Item1, turn == 0 ? 9 : 1) - opponentPath > 2)
+                if (MinimumHeuristicEstimate(wall.Item1, turn == 0 ? 9 : 1) - opponentPath >= 2)
                 {
                     blockExistsThatBlocksForMoreThanTwo = true;
                 }
@@ -1523,6 +1527,7 @@ namespace GameCore
         {
             lock (boardAccess)
             {
+            Unpopulate();
                 if (possibleWalls.Count > 0)
                 {
                     string wallMove = null;
@@ -1533,21 +1538,23 @@ namespace GameCore
                     {
                         possibleBlocks = GetBlockingWalls(BoardUtil.PlayerCoordinateToString(opponent));
                     }
-                    if (!isHardAI)
+                    if (isHardAI)
                     {
-
-                        if (possibleBlocks.Count > 0)
+                        lock (childrenMovesAccess)
                         {
-                            wallMove = possibleBlocks[0].Item1;
-
-                            for (int i = 1; i < possibleBlocks.Count && childrensMoves.Contains(wallMove); i++)
+                            if (possibleBlocks.Count > 0)
                             {
-                                wallMove = possibleBlocks[i].Item1;
-                            }
+                                wallMove = possibleBlocks[0].Item1;
 
-                            if (childrensMoves.Contains(wallMove))
-                            {
-                                wallMove = possibleBlocks[randomPercentileChance.Next(0, possibleBlocks.Count)].Item1;
+                                for (int i = 1; i < possibleBlocks.Count && childrensMoves.Contains(wallMove); i++)
+                                {
+                                    wallMove = possibleBlocks[i].Item1;
+                                }
+
+                                if (childrensMoves.Contains(wallMove))
+                                {
+                                    wallMove = possibleBlocks[randomPercentileChance.Next(0, possibleBlocks.Count)].Item1;
+                                }
                             }
                         }
                     }
@@ -2017,16 +2024,21 @@ namespace GameCore
 
         private void Unpopulate()
         {
-            foreach (var wallCoordinate in walls)
+            for (int i = 0; i < TOTAL_ROWS; i++)
             {
-                board[wallCoordinate.StartRow].Set(wallCoordinate.StartCol, false);
-
-                Tuple<int, int> mid = FindMidpoint(new PlayerCoordinate(wallCoordinate.StartRow, wallCoordinate.StartCol), new PlayerCoordinate(wallCoordinate.EndRow, wallCoordinate.EndCol));
-                board[mid.Item1].Set(mid.Item2, false);
-
-                board[wallCoordinate.EndRow].Set(wallCoordinate.EndCol, false);
-                //ResetPlayerMoveValues(wallCoordinate, mid);
+                board[i].SetAll(false);
             }
+            //board[0].SetAll(false);
+            //foreach (var wallCoordinate in walls)
+            //{
+            //    board[wallCoordinate.StartRow].Set(wallCoordinate.StartCol, false);
+
+            //    Tuple<int, int> mid = FindMidpoint(new PlayerCoordinate(wallCoordinate.StartRow, wallCoordinate.StartCol), new PlayerCoordinate(wallCoordinate.EndRow, wallCoordinate.EndCol));
+            //    board[mid.Item1].Set(mid.Item2, false);
+
+            //    board[wallCoordinate.EndRow].Set(wallCoordinate.EndCol, false);
+            //    //ResetPlayerMoveValues(wallCoordinate, mid);
+            //}
         }
       
         //Selection Phase Code
@@ -2115,7 +2127,6 @@ namespace GameCore
 
                 }
 
-
                 return root.children[root.FindMove(move)];
             }
             else
@@ -2178,6 +2189,7 @@ namespace GameCore
         private bool InsertChild(string move)
         {
             bool successfulInsert = false;
+
 
             if (!childrensMoves.Contains(move))
             {
@@ -2363,7 +2375,8 @@ namespace GameCore
 
         private void ThreadedTreeSearchEasy(Stopwatch timer, MonteCarloNode MonteCarlo)
         {
-            for (/*int i = 0*/; /*i < 10000*/ /*&&*/ timer.Elapsed.TotalSeconds < 2.5; /*++i*/)
+            //for (int i = 0; i < 10000; ++i)
+            while (timer.Elapsed.TotalSeconds < 2.5)
             {
                 List<Tuple<string, MonteCarloNode>> path = new List<Tuple<string, MonteCarloNode>>();
                 MonteCarlo.Backpropagate(MonteCarlo.ExpandOptions(MonteCarlo.SelectNode(MonteCarlo, path)), path);
@@ -2372,7 +2385,8 @@ namespace GameCore
 
         private void ThreadedTreeSearchHard(Stopwatch timer, MonteCarloNode MonteCarlo)
         {
-            for (/*int i = 0 */;/* i < 10000*/ /*&&*/ timer.Elapsed.TotalSeconds < 4; /*++i*/)
+            //for (int i = 0; i < 10000 ; ++i)
+            while (timer.Elapsed.TotalSeconds < 4)
             {
                 List<Tuple<string, MonteCarloNode>> path = new List<Tuple<string, MonteCarloNode>>();
                 MonteCarlo.Backpropagate(MonteCarlo.ExpandOptions(MonteCarlo.SelectNode(MonteCarlo, path)), path);
@@ -2386,7 +2400,7 @@ namespace GameCore
 
             List<Thread> simulatedGames = new List<Thread>();
 
-            for (int i = 0; i < 8; ++i)
+            for (int i = 0; i < 1; ++i)
             {
                 Thread simulatedGameThread;
 
