@@ -1389,9 +1389,19 @@ namespace GameCore
             return randomPercentileChance.Next(0, 100) >= (turn == 0 ? playerLocations[1].Row >= 8 ? randomPercentValue : 10 + (10 * value) : playerLocations[0].Row <= 8 ? randomPercentValue : 10 + (10 * value)) ? FindPlayerMove() : (turn == 0 ? wallsRemaining[0] : wallsRemaining[1]) > 0 ? FindWall() : FindPlayerMove();
         }
 
+        private bool CompareDistance(PlayerCoordinate opponent, PlayerCoordinate player, int opponentGoal, int playerGoal)
+        {
+            return MinimumHeuristicEstimate(BoardUtil.PlayerCoordinateToString(opponent), opponentGoal) < MinimumHeuristicEstimate(BoardUtil.PlayerCoordinateToString(player), playerGoal);
+        }
+
         private string FindPlayerMove(bool calledFromFindWall = false)
         {
-            bool canBlockForGain = (DoesOpponentHaveEndRowMove() /*|| CanBlockToIncreasePathByLargeAmount()*/) && wallsRemaining[turn == 0 ? 0 : 1] > 0 && AtLeastOneBlockLegal() && !calledFromFindWall && !DoIHaveAEndRowMove();
+            bool canBlockForGain = (DoesOpponentHaveEndRowMove() 
+                                    || isHardAI == true ? turn == 0 
+                                        ? (playerLocations[1].Row >= 8 ? CompareDistance(playerLocations[1], playerLocations[0], 1, 9) : false) 
+                                        : (playerLocations[0].Row <= 8 ? CompareDistance(playerLocations[0], playerLocations[1], 9, 1) : false) : false) 
+                                    && wallsRemaining[turn == 0 ? 0 : 1] > 0 && AtLeastOneBlockLegal() 
+                                    && !calledFromFindWall && !DoIHaveAEndRowMove();
             if (!canBlockForGain)
             {
                 string move = null;

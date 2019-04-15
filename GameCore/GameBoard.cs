@@ -492,13 +492,13 @@ namespace GameCore
                 && playerCoordinate.Col + 2 * direction > -1          
                 && board[playerCoordinate.Row + 1, playerCoordinate.Col + 2 * direction] != WALL)
             {
-                    StringBuilder sb = new StringBuilder();
+                StringBuilder sb = new StringBuilder();
 
-                    sb.Append(Convert.ToChar(97 + (opponentCoord.Col / 2)));
-                    sb.Append(value: 9 - (opponentCoord.Row / 2) + 1 > 9 ? 9
-                                   : 9 - (opponentCoord.Row / 2) + 1);
+                sb.Append(Convert.ToChar(97 + (opponentCoord.Col / 2)));
+                sb.Append(value: 9 - (opponentCoord.Row / 2) - 1 < 1 ? 1
+                               : 9 - (opponentCoord.Row / 2) - 1);
 
-                    validMoves.Add(sb.ToString());
+                validMoves.Add(sb.ToString());
             }
             if (playerCoordinate.Row - 1 > -1             
                 && playerCoordinate.Col + 2 * direction < 17       
@@ -508,8 +508,8 @@ namespace GameCore
                 StringBuilder sb = new StringBuilder();
 
                 sb.Append(Convert.ToChar(97 + (opponentCoord.Col / 2)));
-                sb.Append(value: 9 - (opponentCoord.Row / 2) - 1 < 1 ? 1
-                               : 9 - (opponentCoord.Row / 2) - 1);
+                sb.Append(value: 9 - (opponentCoord.Row / 2) + 1 > 9 ? 9
+                               : 9 - (opponentCoord.Row / 2) + 1);
 
                 validMoves.Add(sb.ToString());
             }
