@@ -1397,9 +1397,10 @@ namespace GameCore
         private string FindPlayerMove(bool calledFromFindWall = false)
         {
             bool canBlockForGain = (DoesOpponentHaveEndRowMove() 
-                                    || isHardAI == true ? turn == 0 
-                                        ? (playerLocations[1].Row >= 8 ? CompareDistance(playerLocations[1], playerLocations[0], 1, 9) : false) 
-                                        : (playerLocations[0].Row <= 8 ? CompareDistance(playerLocations[0], playerLocations[1], 9, 1) : false) : false) 
+                                    //|| isHardAI == true ? turn == 0 
+                                    //    ? (playerLocations[1].Row >= 12 ? CompareDistance(playerLocations[1], playerLocations[0], 1, 9) : false) 
+                                    //    : (playerLocations[0].Row <= 4 ? CompareDistance(playerLocations[0], playerLocations[1], 9, 1) : false) : false
+                                    )
                                     && wallsRemaining[turn == 0 ? 0 : 1] > 0 && AtLeastOneBlockLegal() 
                                     && !calledFromFindWall && !DoIHaveAEndRowMove();
             if (!canBlockForGain)
