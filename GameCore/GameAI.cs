@@ -2411,7 +2411,7 @@ namespace GameCore
 
             List<Thread> simulatedGames = new List<Thread>();
 
-            for (int i = 0; i < 1; ++i)
+            for (int i = 0; i < 8; ++i)
             {
                 Thread simulatedGameThread;
 
