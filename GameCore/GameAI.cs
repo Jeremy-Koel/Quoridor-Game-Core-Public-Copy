@@ -227,6 +227,13 @@ namespace GameCore
 
             PriorityQueue<MoveEvaluation> possiblePaths = new PriorityQueue<MoveEvaluation>();
             HashSet<string> exhaustedPaths = new HashSet<string>();
+
+            int shortestPath = 0;
+
+            if (start.Row == goalRowForBoard)
+            {
+                shortestPath = 1;
+            }
             exhaustedPaths.Add(startString);
 
             if (startingPoint != null)
@@ -270,8 +277,6 @@ namespace GameCore
                     possiblePaths.Enqueue(new MoveEvaluation(path, HeuristicCostEstimate(pathCoord, new PlayerCoordinate(path[0].ToString() + goalRow.ToString())) + 2, 2));
                 }
             }
-
-            int shortestPath = 0;
             MoveEvaluation nextMove;
 
             do
@@ -2396,7 +2401,7 @@ namespace GameCore
 
         private void ThreadedTreeSearchHard(Stopwatch timer, MonteCarloNode MonteCarlo)
         {
-            //for (int i = 0; i < 10000 ; ++i)
+            //for (int i = 0; i < 10000; ++i)
             while (timer.Elapsed.TotalSeconds < 4)
             {
                 List<Tuple<string, MonteCarloNode>> path = new List<Tuple<string, MonteCarloNode>>();
@@ -2411,7 +2416,7 @@ namespace GameCore
 
             List<Thread> simulatedGames = new List<Thread>();
 
-            for (int i = 0; i < 8; ++i)
+            for (int i = 0; i < 1; ++i)
             {
                 Thread simulatedGameThread;
 
